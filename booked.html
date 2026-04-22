@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Booked — Kliks Digital</title>
+  <meta name="description" content="Your strategy call is booked. Kliks Digital will be in touch within one business day.">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
+  }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1875112903440305');
+  fbq('track', 'PageView');
+  fbq('track', 'Schedule');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=1875112903440305&ev=Schedule&noscript=1"/></noscript>
+  <!-- End Facebook Pixel -->
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #644bff;
+      --orange: #ff4315;
+      --orange-dark: #c42f08;
+      --bg: #0e0d1a;
+      --bg2: #1a1828;
+      --white: #ffffff;
+      --muted: rgba(255,255,255,0.55);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.09;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
+    }
+
+    h1, h2, h3 { font-family: 'Clash Display', sans-serif; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(14,13,26,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.3s ease;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--orange); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--orange);
+      color: white;
+      border-radius: 100px;
+      padding: 16px 36px;
+      font-weight: 600;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .btn:hover { background: var(--orange-dark); transform: translateY(-2px); }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 8px;
+      z-index: 1001;
+    }
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--white);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .nav-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+    .nav-overlay a {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-overlay a:hover { color: var(--orange); }
+    body.nav-open .nav-overlay { display: flex; }
+    body.nav-open .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    body.nav-open .hamburger span:nth-child(2) { opacity: 0; }
+    body.nav-open .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── MAIN CONTENT ─── */
+    .page-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 72px 24px 0;
+      position: relative;
+    }
+
+    /* Purple glow blob */
+    .glow-blob {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(100,75,255,0.18) 0%, transparent 70%);
+      filter: blur(80px);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .booked-card {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 560px;
+      width: 100%;
+      padding: 64px 48px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 24px;
+    }
+
+    .booked-icon {
+      width: 64px;
+      height: 64px;
+      background: rgba(255,69,21,0.1);
+      border: 1px solid rgba(255,69,21,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      font-size: 28px;
+    }
+
+    .booked-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    .booked-card h1 {
+      font-size: clamp(26px, 4vw, 38px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+      margin-bottom: 16px;
+      color: var(--white);
+    }
+
+    .booked-card p {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 36px;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 48px 0;
+      margin-top: auto;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    .footer-left { display: flex; flex-direction: column; gap: 6px; }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-center { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .footer-center a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-center a:hover { color: var(--white); }
+    .footer-right { display: flex; align-items: center; gap: 20px; }
+    .footer-right a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    .footer-right a:hover { color: var(--white); }
+
+    @media (max-width: 900px) {
+      .nav-inner { padding: 0 24px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .booked-card { padding: 48px 28px; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-center { justify-content: center; }
+      .footer-right { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">KLIKS<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="index.html#process">Process</a></li>
+      <li><a href="index.html#results">Results</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#straight-up">Honest Talk</a></li>
+      <li><a href="book.html" class="btn nav-cta" style="padding:10px 22px;font-size:14px;">Free Strategy Call</a></li>
+    </ul>
+    <button class="hamburger" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="nav-overlay">
+  <a href="index.html#services" onclick="document.body.classList.remove('nav-open')">Services</a>
+  <a href="index.html#process" onclick="document.body.classList.remove('nav-open')">Process</a>
+  <a href="index.html#results" onclick="document.body.classList.remove('nav-open')">Results</a>
+  <a href="index.html#about" onclick="document.body.classList.remove('nav-open')">About</a>
+  <a href="index.html#straight-up" onclick="document.body.classList.remove('nav-open')">Honest Talk</a>
+  <a href="book.html" class="btn">Free Strategy Call</a>
+</div>
+
+<!-- MAIN -->
+<div class="page-wrap">
+  <div class="glow-blob"></div>
+  <div class="booked-card">
+    <div class="booked-icon">✓</div>
+    <span class="booked-label">Booked</span>
+    <h1>You're in. We'll be in touch within one business day.</h1>
+    <p>No pitch. No script. Just a straight conversation about your store.</p>
+    <a href="index.html" class="btn">Back to home</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <a href="index.html" class="logo">KLIKS<span>.</span></a>
+      <span class="footer-copy">&copy; 2026 Kliks Digital. All rights reserved.</span>
+    </div>
+    <div class="footer-center">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="ad-junkies.html">Ad Junkies</a>
+    </div>
+    <div class="footer-right">
+      <a href="https://www.instagram.com/kliks.digital" target="_blank">Instagram</a>
+      <a href="https://www.tiktok.com/@adjunkies" target="_blank">TikTok</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    nav.style.background = window.scrollY > 60 ? 'rgba(14,13,26,0.95)' : 'rgba(14,13,26,0.85)';
+  });
+
+  const hamburger = document.querySelector('.hamburger');
+  hamburger.addEventListener('click', () => { document.body.classList.toggle('nav-open'); });
+</script>
+
+</body>
+</html>

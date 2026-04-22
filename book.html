@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book a Strategy Call — Kliks Digital</title>
+  <meta name="description" content="We only open 3 spots per month for new clients. Tell us about your store and pick a time that works for you.">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <script async type="text/javascript" src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=QNNHsN"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #644bff;
+      --orange: #ff4315;
+      --orange-dark: #c42f08;
+      --bg: #0e0d1a;
+      --bg2: #1a1828;
+      --white: #ffffff;
+      --muted: rgba(255,255,255,0.55);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Grain */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.09;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
+    }
+
+    h1, h2, h3 { font-family: 'Clash Display', sans-serif; letter-spacing: 0; line-height: 1.08; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(14,13,26,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--orange); }
+    .nav-back {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--white); }
+
+    /* ─── PAGE LAYOUT ─── */
+    .page-wrap {
+      min-height: 100vh;
+      padding: 120px 48px 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    /* ─── LEFT COLUMN ─── */
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 16px;
+      display: block;
+    }
+    .page-title {
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.06;
+      margin-bottom: 28px;
+    }
+    .page-body p {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+      margin-bottom: 18px;
+    }
+    .page-body p strong { color: var(--white); font-weight: 600; }
+
+    /* Availability widget */
+    .avail-widget {
+      margin: 36px 0;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .avail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+    }
+    .avail-row + .avail-row { border-top: 1px solid rgba(255,255,255,0.06); }
+    .avail-month {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .avail-month.booked { color: var(--muted); text-decoration: line-through; }
+    .avail-month.open { color: var(--white); }
+    .avail-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 100px;
+      letter-spacing: 0.04em;
+    }
+    .badge-booked {
+      background: rgba(255,255,255,0.05);
+      color: var(--muted);
+    }
+    .badge-open {
+      background: rgba(255,69,21,0.12);
+      border: 1px solid rgba(255,69,21,0.25);
+      color: var(--orange);
+    }
+    .badge-open-green {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.2);
+      color: #4ade80;
+    }
+
+    /* Trust list */
+    .trust-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+    .trust-check {
+      width: 22px;
+      height: 22px;
+      background: rgba(255,69,21,0.1);
+      border: 1px solid rgba(255,69,21,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: var(--orange);
+    }
+
+    /* ─── RIGHT COLUMN — FORM ─── */
+    .form-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      padding: 48px 44px;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--orange);
+    }
+    .form-card-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0;
+    }
+    .form-card-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .book-form { display: flex; flex-direction: column; gap: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 13px 16px;
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: rgba(100,75,255,0.45); background: rgba(255,255,255,0.07); }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: rgba(255,255,255,0.28); }
+    .form-group select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
+    .form-group select option { background: #1a1828; color: white; }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+
+    .book-form { display: flex; flex-direction: column; gap: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 13px 16px;
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      width: 100%;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: rgba(100,75,255,0.45); background: rgba(255,255,255,0.07); }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: rgba(255,255,255,0.28); }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      background-color: rgba(255,255,255,0.05);
+      padding-right: 40px;
+    }
+    .form-group select option { background: #1a1828; color: white; }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+
+    .btn-submit {
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      padding: 18px 36px;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s, transform 0.2s;
+      margin-top: 4px;
+    }
+    .btn-submit:hover { background: var(--orange-dark); transform: translateY(-2px); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .form-footer-note { text-align: center; font-size: 13px; color: rgba(255,255,255,0.3); margin-top: 12px; line-height: 1.5; }
+
+    .form-error {
+      display: none;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #f87171;
+    }
+
+    .form-success { display: none; text-align: center; padding: 48px 20px; }
+    .form-success .success-icon { font-size: 52px; margin-bottom: 20px; display: block; }
+    .form-success h3 { font-family: 'Clash Display', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0; }
+    .form-success p { color: var(--muted); font-size: 15px; line-height: 1.7; }
+
+    /* ─── MARQUEE ─── */
+    .marquee-section { padding: 56px 0; overflow: hidden; border-top: 1px solid rgba(255,255,255,0.06); }
+    .marquee-label { text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 32px; }
+    .marquee-track { position: relative; -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%); }
+    .marquee-inner { display: flex; width: max-content; animation: marquee 28s linear infinite; }
+    .marquee-inner:hover { animation-play-state: paused; }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .marquee-logo { display: flex; align-items: center; justify-content: center; padding: 0 48px; flex-shrink: 0; }
+    .marquee-logo img { height: 46px; width: auto; filter: brightness(0) invert(1); opacity: 0.6; transition: opacity 0.2s ease; object-fit: contain; }
+    .marquee-logo img:hover { opacity: 1; }
+
+    /* Purple glow */
+    .bg-glow {
+      position: fixed;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(100,75,255,0.1) 0%, transparent 70%);
+      top: -200px; right: -200px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 36px 0;
+      margin-top: 40px;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--white); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .page-wrap {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        padding: 100px 24px 60px;
+      }
+      .nav-inner { padding: 0 24px; }
+      .form-card { padding: 32px 24px; }
+      .form-row { grid-template-columns: 1fr; }
+      .footer-inner { padding: 0 24px; flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<!-- NAV — logo only, no distractions -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">KLIKS<span>.</span></a>
+    <a href="index.html" class="nav-back">← Back to site</a>
+  </div>
+</nav>
+
+<!-- PAGE -->
+<div class="page-wrap">
+
+  <!-- LEFT — copy + availability -->
+  <div class="left-col">
+    <span class="section-label">Strategy Call</span>
+    <h1 class="page-title">Let's see if we're a good fit.</h1>
+
+    <div class="page-body">
+      <p>We're a boutique agency. That's not a buzzword, it means we deliberately limit how many clients we take on at once.</p>
+      <p>Every store we work with gets <strong>real attention</strong>. Not a junior account manager running a template. Not a strategy deck that collects dust. Actual work, from the same people you speak to on the call.</p>
+      <p>To keep that standard, <strong>we only open 3 spots per month</strong> for new clients. Not because we can't take more, but because above that we can't do the work properly. And doing it properly is the whole point.</p>
+    </div>
+
+    <!-- Dynamic availability widget -->
+    <div class="avail-widget" id="availWidget">
+      <!-- Rendered by JS below -->
+    </div>
+
+    <div class="trust-list">
+      <div class="trust-item">
+        <div class="trust-check">✓</div>
+        <span>Free audit included, no strings attached</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-check">✓</div>
+        <span>Adam handles your account personally</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-check">✓</div>
+        <span>No annual contract, leave any time</span>
+      </div>
+      <div class="trust-item">
+        <div class="trust-check">✓</div>
+        <span>We won't sell you a course</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT — form -->
+  <div class="right-col">
+    <div class="form-card">
+      <div id="formWrap">
+        <h2 class="form-card-title">Tell us about your store.</h2>
+        <p class="form-card-sub">Takes 2 minutes. After you submit, you'll pick a time that works for you.</p>
+
+        <form class="book-form" id="bookForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First name</label>
+              <input type="text" id="firstName" name="firstName" placeholder="Sarah" required>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last name</label>
+              <input type="text" id="lastName" name="lastName" placeholder="Johnson" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" placeholder="sarah@yourstore.com.au" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone number <span style="color:rgba(255,255,255,0.3);font-weight:400;">(optional)</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="+61 4XX XXX XXX">
+          </div>
+          <div class="form-group">
+            <label for="store">Shopify store URL <span style="color:rgba(255,255,255,0.3);font-weight:400;">(optional)</span></label>
+            <input type="url" id="store" name="store" placeholder="https://yourstore.com.au">
+          </div>
+          <div class="form-group">
+            <label for="adSpend">Monthly ad spend</label>
+            <select id="adSpend" name="adSpend" required>
+              <option value="" disabled selected>Select an option</option>
+              <option value="Under $1,000/mo">Under $1,000/mo</option>
+              <option value="$1,000 - $3,000/mo">$1,000 - $3,000/mo</option>
+              <option value="$3,000 - $5,000/mo">$3,000 - $5,000/mo</option>
+              <option value="$5,000 - $10,000/mo">$5,000 - $10,000/mo</option>
+              <option value="$10,000+/mo">$10,000+/mo</option>
+              <option value="Not running ads yet">Not running ads yet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="comment">What's the main challenge right now?</label>
+            <textarea id="comment" name="comment" placeholder="e.g. Ads running but not converting, want to scale but not sure where to start..."></textarea>
+          </div>
+
+          <div class="form-error" id="formError">Something went wrong. Please try again or email us at hello@kliks.com.au</div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">Book my spot &rarr;</button>
+          <p class="form-footer-note">After submitting you'll pick a time that works for you on Calendly.</p>
+        </form>
+      </div>
+
+      <div class="form-success" id="formSuccess">
+        <span class="success-icon">🎉</span>
+        <h3>You're in. Redirecting you now.</h3>
+        <p>Taking you to Calendly to pick your time.<br>If it doesn't redirect, <a href="https://calendly.com/kliks-hu/30min" target="_blank" style="color:#a89cff;">click here</a>.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <p class="marquee-label">Brands we've worked with or built ourselves</p>
+  <div class="marquee-track">
+    <div class="marquee-inner">
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/Flutterly_logo.png" alt="Flutterly"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/Fitzroy_Manor_logo.png" alt="Fitzroy Manor"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/sketcha_logo.png" alt="Sketcha"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/black_white_grow_logo.png" alt="Grow"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_7.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_8.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_9.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/icare_group_slicky_logo.png" alt="iCare Group"></div>
+      <!-- Duplicate for seamless loop -->
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/Flutterly_logo.png" alt="Flutterly"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/Fitzroy_Manor_logo.png" alt="Fitzroy Manor"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/sketcha_logo.png" alt="Sketcha"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/black_white_grow_logo.png" alt="Grow"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_7.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_8.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_9.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/icare_group_slicky_logo.png" alt="iCare Group"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <span class="footer-copy">&copy; 2026 Kliks Digital. All rights reserved.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="ad-junkies.html">Ad Junkies</a>
+      <a href="index.html">Back to site</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ─────────────────────────────────────────────────────
+  // CONFIG — update these each month
+  // spots: 0 = fully booked, any number = spots remaining
+  // ─────────────────────────────────────────────────────
+  const AVAILABILITY = {
+    current: { month: 'April', spots: 0 },
+    next:    { month: 'May',   spots: 2 }
+  };
+
+  // ─── Render availability widget ───
+  (function renderAvail() {
+    const { current, next } = AVAILABILITY;
+    const widget = document.getElementById('availWidget');
+    const currentBadge = current.spots === 0
+      ? `<span class="avail-badge badge-booked">Fully booked</span>`
+      : `<span class="avail-badge badge-open">${current.spots} spot${current.spots > 1 ? 's' : ''} left</span>`;
+    const nextBadge = next.spots === 0
+      ? `<span class="avail-badge badge-booked">Fully booked</span>`
+      : `<span class="avail-badge badge-open-green">${next.spots} spot${next.spots > 1 ? 's' : ''} left</span>`;
+    widget.innerHTML = `
+      <div class="avail-row">
+        <span class="avail-month ${current.spots === 0 ? 'booked' : 'open'}">${current.month} onboarding</span>
+        ${currentBadge}
+      </div>
+      <div class="avail-row">
+        <span class="avail-month open">${next.month} onboarding</span>
+        ${nextBadge}
+      </div>
+    `;
+  })();
+
+  // ─── Form submission → Klaviyo API → Calendly ───
+  const KLAVIYO_FORM_ID = 'XV8BqD';
+  const CALENDLY_URL    = 'https://calendly.com/kliks-hu/30min';
+
+  document.getElementById('bookForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn     = document.getElementById('submitBtn');
+    const errorEl = document.getElementById('formError');
+    errorEl.style.display = 'none';
+    btn.disabled    = true;
+    btn.textContent = 'Booking your spot...';
+
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName  = document.getElementById('lastName').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const phone     = document.getElementById('phone').value.trim();
+    const store     = document.getElementById('store').value.trim();
+    const adSpend   = document.getElementById('adSpend').value;
+    const comment   = document.getElementById('comment').value.trim();
+
+    if (!firstName || !email || !adSpend) {
+      errorEl.textContent = 'Please fill in your first name, email, and monthly ad spend.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Book my spot →';
+      return;
+    }
+
+    const profileAttributes = {
+      email,
+      first_name: firstName,
+      last_name:  lastName,
+      properties: {
+        store_url:        store      || undefined,
+        monthly_ad_spend: adSpend,
+        enquiry_comment:  comment   || undefined,
+        lead_source:      'Strategy Call — book.html'
+      }
+    };
+    if (phone) profileAttributes.phone_number = phone;
+
+    try {
+      await fetch(`https://a.klaviyo.com/client/form-submissions/?company_id=QNNHsN`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'revision': '2023-12-15' },
+        body: JSON.stringify({
+          data: {
+            type: 'form-submission',
+            attributes: {
+              form_id: KLAVIYO_FORM_ID,
+              profile: { data: { type: 'profile', attributes: profileAttributes } }
+            }
+          }
+        })
+      });
+    } catch (err) {
+      console.warn('Klaviyo submission issue:', err);
+      // Don't block — still redirect
+    }
+
+    document.getElementById('formWrap').style.display  = 'none';
+    document.getElementById('formSuccess').style.display = 'block';
+
+    setTimeout(() => { window.location.href = CALENDLY_URL; }, 1800);
+  });
+
+</script>
+
+</body>
+</html>

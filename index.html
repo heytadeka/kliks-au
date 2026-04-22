@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kliks Digital — Shopify Growth Agency</title>
+  <meta name="description" content="Kliks is your outsourced Shopify growth partner. Ads, creative, CRO, and Shopify, without hiring a full-time ecommerce manager.">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
+  }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1875112903440305');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=1875112903440305&ev=PageView&noscript=1"/></noscript>
+  <!-- End Facebook Pixel -->
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── ANNOUNCEMENT BAR ─── */
+    .announcement-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1001;
+      background: #0e0d1a;
+      text-align: center;
+      padding: 6px 24px;
+      border-bottom: 1px solid rgba(100,75,255,0.15);
+    }
+    .announcement-bar a {
+      color: #644bff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s;
+    }
+    .announcement-bar a:hover { opacity: 0.8; }
+    .announcement-bar .bar-arrow { color: #ff4315; }
+
+    :root {
+      --purple: #644bff;
+      --orange: #ff4315;
+      --orange-dark: #c42f08;
+      --purple-dark: #3d2dcf;
+      --bg: #0e0d1a;
+      --bg2: #1a1828;
+      --white: #ffffff;
+      --muted: rgba(255,255,255,0.55);
+      --border: rgba(100,75,255,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    section[id] { scroll-margin-top: 80px; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* Noise grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.09;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4 { font-family: 'Clash Display', sans-serif; letter-spacing: -1px; line-height: 1.08; }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .section-title {
+      font-size: clamp(34px, 4vw, 52px);
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      line-height: 1.08;
+      margin-bottom: 20px;
+    }
+
+    .section-sub {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 620px;
+      margin-bottom: 60px;
+    }
+
+    /* Layout */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
+    section { padding: 100px 0; }
+
+    /* Fade-up animation */
+    .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    /* Cards */
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 20px;
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--orange);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+    .card:hover { border-color: rgba(100,75,255,0.2); transform: translateY(-6px); }
+    .card:hover::before { transform: scaleX(1); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--orange);
+      color: white;
+      border-radius: 100px;
+      padding: 16px 36px;
+      font-weight: 600;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .btn:hover { background: var(--orange-dark); transform: translateY(-2px); }
+    .btn-lg { padding: 20px 48px; font-size: 18px; }
+
+    /* Pills */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .pill-neutral { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
+    .pill-purple { background: rgba(100,75,255,0.12); border: 1px solid rgba(100,75,255,0.25); color: #a89cff; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 40px; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(14,13,26,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.3s ease;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--orange); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links .nav-cta { color: var(--white); }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 8px;
+      z-index: 1001;
+    }
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--white);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    /* Mobile nav overlay */
+    .nav-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+    .nav-overlay a {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-overlay a:hover { color: var(--orange); }
+    body.nav-open .nav-overlay { display: flex; }
+    body.nav-open .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    body.nav-open .hamburger span:nth-child(2) { opacity: 0; }
+    body.nav-open .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      padding: 160px 48px 80px;
+    }
+    .hero-blob {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(80px);
+      opacity: 0.35;
+    }
+    .hero-blob-purple {
+      width: 600px; height: 600px;
+      background: var(--purple);
+      top: -100px; left: -100px;
+    }
+    .hero-blob-orange {
+      width: 500px; height: 500px;
+      background: var(--orange);
+      bottom: -80px; right: -80px;
+      opacity: 0.2;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 860px; }
+    .hero-intro {
+      font-style: italic;
+      color: var(--muted);
+      font-size: 18px;
+      margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-size: clamp(34px, 4vw, 60px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.04;
+      margin-bottom: 32px;
+    }
+    .hero-pills { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .hero-services {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 13px;
+      color: var(--orange);
+      margin-bottom: 36px;
+      font-weight: 600;
+    }
+
+    /* ─── STATS STRIP ─── */
+    .stats-strip {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 60px 48px;
+    }
+    .stats-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0;
+    }
+    .stat-block {
+      flex: 1;
+      padding: 0 40px;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+    .stat-block:last-child { border-right: none; }
+    .stat-block:first-child { padding-left: 0; }
+    .stat-icon { font-size: 38px; margin-bottom: 14px; display: block; }
+    .stat-num {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 52px;
+      font-weight: 800;
+      color: var(--orange);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-text { font-size: 16px; color: var(--muted); line-height: 1.55; max-width: 200px; margin: 0 auto; }
+
+    /* ─── MARQUEE ─── */
+    .marquee-section {
+      padding: 56px 0;
+      overflow: hidden;
+    }
+    .marquee-label {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+    .marquee-track {
+      position: relative;
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+    }
+    .marquee-inner {
+      display: flex;
+      width: max-content;
+      animation: marquee 28s linear infinite;
+    }
+    .marquee-inner:hover { animation-play-state: paused; }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .marquee-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 48px;
+      flex-shrink: 0;
+    }
+    .marquee-logo img {
+      height: 54px;
+      width: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.75;
+      transition: opacity 0.2s ease;
+      object-fit: contain;
+    }
+    .marquee-logo img:hover { opacity: 1; }
+
+    /* ─── SERVICES ─── */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .card-icon { font-size: 32px; margin-bottom: 20px; display: block; }
+    .card h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+    .card p { color: var(--muted); font-size: 15px; line-height: 1.75; }
+    .card p + p { margin-top: 12px; }
+    .card-full {
+      background: rgba(100,75,255,0.06);
+      border: 1px solid rgba(100,75,255,0.15);
+      border-radius: 20px;
+      padding: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-full h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: 0;
+    }
+    .card-full p { color: var(--muted); font-size: 15px; line-height: 1.75; max-width: 780px; }
+    .card-full p + p { margin-top: 12px; }
+
+    /* ─── PROCESS ─── */
+    .process-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+    .process-num {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 64px;
+      font-weight: 800;
+      color: var(--orange);
+      opacity: 0.25;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .process-card h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+    .process-card p { color: var(--muted); font-size: 15px; }
+
+    /* ─── RESULTS ─── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .metric-label {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--orange);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .metric-name {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .advantage-card {
+      background: rgba(100,75,255,0.08);
+      border: 1px solid rgba(100,75,255,0.15);
+      border-radius: 20px;
+      padding: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+    }
+    .advantage-content { flex: 1; }
+    .advantage-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 16px;
+    }
+    .advantage-content h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+    .advantage-content p { color: var(--muted); font-size: 15px; line-height: 1.75; }
+    .advantage-content p + p { margin-top: 12px; }
+    .advantage-flags { font-size: 52px; white-space: nowrap; }
+
+    /* ─── ABOUT ─── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+    .about-photo-wrap {
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      aspect-ratio: 4/5;
+    }
+    .about-photo-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px; }
+    .about-photo-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(14,13,26,0.95), transparent);
+      padding: 32px 28px 24px;
+    }
+    .about-photo-label strong { display: block; font-size: 18px; font-weight: 700; }
+    .about-photo-label span { font-size: 14px; color: var(--muted); }
+    .about-copy h2 {
+      font-size: clamp(28px, 3vw, 40px);
+      font-weight: 800;
+      letter-spacing: 0;
+      margin-bottom: 24px;
+    }
+    .about-copy p { color: var(--muted); font-size: 16px; line-height: 1.8; margin-bottom: 20px; }
+    .quote-block {
+      border-left: 3px solid var(--orange);
+      padding-left: 24px;
+      margin: 28px 0;
+      font-style: italic;
+      color: var(--white);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    .about-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+    .chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* ─── WHO WE WORK WITH ─── */
+    .who-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .who-copy p { color: var(--muted); font-size: 16px; line-height: 1.8; margin-bottom: 20px; }
+    .who-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 20px; overflow: hidden; }
+    .who-card-section { padding: 32px 36px; }
+    .who-card-section + .who-card-section { border-top: 1px solid rgba(255,255,255,0.07); }
+    .who-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .who-icon {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .who-icon-yes { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .who-icon-no { background: rgba(239,68,68,0.15); color: #f87171; }
+    .who-card-header h4 { font-family: 'Clash Display', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.01em; }
+    .who-card-section p { color: var(--muted); font-size: 15px; line-height: 1.7; }
+
+    /* ─── STRAIGHT UP ─── */
+    .article-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    .article-card-inner { padding: 60px; }
+    .article-tag {
+      display: inline-block;
+      background: rgba(100,75,255,0.12);
+      border: 1px solid rgba(100,75,255,0.2);
+      color: #a89cff;
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+    }
+    .article-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(24px, 3vw, 38px);
+      font-weight: 800;
+      letter-spacing: 0;
+      margin-bottom: 24px;
+    }
+    .article-lead {
+      font-size: 20px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+    .quote-lg {
+      position: relative;
+      padding: 24px 32px;
+      margin: 28px 0;
+    }
+    .quote-lg::before {
+      content: '"';
+      position: absolute;
+      top: -12px; left: 16px;
+      font-family: 'Clash Display', sans-serif;
+      font-size: 80px;
+      color: var(--orange);
+      opacity: 0.4;
+      line-height: 1;
+    }
+    .quote-lg p {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 700;
+      letter-spacing: 0;
+      color: var(--white);
+    }
+    .article-body p { color: var(--muted); font-size: 16px; line-height: 1.8; margin-bottom: 20px; }
+    .highlight-box {
+      background: rgba(100,75,255,0.08);
+      border: 1px solid rgba(100,75,255,0.15);
+      border-radius: 16px;
+      padding: 32px 36px;
+      margin: 32px 0;
+    }
+    .highlight-box strong { display: block; font-size: 16px; margin-bottom: 12px; color: var(--white); }
+    .highlight-box p { color: var(--muted); font-size: 15px; line-height: 1.75; margin: 0; }
+    .highlight-box p + p { margin-top: 12px; }
+    .author-footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding-top: 32px;
+      margin-top: 32px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .author-avatar {
+      width: 44px; height: 44px;
+      background: var(--orange);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .author-info strong { display: block; font-size: 15px; }
+    .author-info span { color: var(--muted); font-size: 13px; }
+
+    /* ─── CTA ─── */
+    .cta-section {
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(100,75,255,0.15) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+    .cta-label { font-size: 13px; color: rgba(255,165,0,0.7); font-weight: 500; margin-bottom: 16px; }
+    .cta-section h2 { font-size: clamp(34px, 4vw, 52px); font-weight: 800; letter-spacing: -1.5px; margin-bottom: 20px; }
+    .cta-section .section-sub { margin: 0 auto 36px; }
+    .cta-checks {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .cta-check { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); }
+    .cta-check::before { content: '✓'; color: var(--orange); font-weight: 700; }
+
+    /* ─── CONTACT ─── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+    .contact-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
+    .form-group input, .form-group textarea, .form-group select {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: rgba(100,75,255,0.4); }
+    .form-group textarea { min-height: 120px; resize: vertical; }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(255,255,255,0.3); }
+    .contact-info h3 { font-family: 'Clash Display', sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 16px; letter-spacing: 0; }
+    .contact-info > p { color: var(--muted); font-size: 16px; line-height: 1.75; margin-bottom: 32px; }
+    .contact-rows { display: flex; flex-direction: column; gap: 20px; }
+    .contact-row { display: flex; align-items: flex-start; gap: 16px; }
+    .contact-row-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .contact-row-text strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .contact-row-text span { color: var(--muted); font-size: 14px; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 48px 0;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    .footer-left { display: flex; flex-direction: column; gap: 6px; }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-center { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .footer-center a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-center a:hover { color: var(--white); }
+    .footer-right { display: flex; align-items: center; gap: 20px; }
+    .footer-right a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; display: flex; align-items: center; gap: 6px; }
+    .footer-right a:hover { color: var(--white); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .container { padding: 0 24px; }
+      .nav-inner { padding: 0 24px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      section { padding: 72px 0; }
+      .services-grid { grid-template-columns: 1fr; }
+      .process-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr; }
+      .about-grid { grid-template-columns: 1fr; }
+      .who-grid { grid-template-columns: 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .stats-inner { flex-direction: column; gap: 40px; }
+      .stat-block { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); padding: 0 0 40px; }
+      .stat-block:last-child { border-bottom: none; padding-bottom: 0; }
+      .advantage-card { flex-direction: column; }
+      .advantage-flags { font-size: 36px; }
+      .article-card-inner { padding: 32px 24px; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-center { justify-content: center; }
+      .footer-right { justify-content: center; }
+      .hero { padding: 160px 24px 80px; }
+      .stats-strip { padding: 60px 24px; }
+      .card-full { padding: 32px 24px; }
+    }
+
+    @media (max-width: 600px) {
+      .cta-checks { flex-direction: column; align-items: flex-start; padding: 0 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announcement-bar">
+  <a href="ad-junkies.html">Killer ad examples every fortnight? Join our newsletter <span class="bar-arrow">&rarr;</span></a>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="logo">KLIKS<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#straight-up">Honest Talk</a></li>
+      <li><a href="book.html" class="btn nav-cta" style="padding:10px 22px;font-size:14px;">Free Strategy Call</a></li>
+    </ul>
+    <button class="hamburger" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE NAV OVERLAY -->
+<div class="nav-overlay">
+  <a href="#services" onclick="document.body.classList.remove('nav-open')">Services</a>
+  <a href="#process" onclick="document.body.classList.remove('nav-open')">Process</a>
+  <a href="#results" onclick="document.body.classList.remove('nav-open')">Results</a>
+  <a href="#about" onclick="document.body.classList.remove('nav-open')">About</a>
+  <a href="#straight-up" onclick="document.body.classList.remove('nav-open')">Honest Talk</a>
+  <a href="book.html" class="btn">Free Strategy Call</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-blob hero-blob-purple"></div>
+  <div class="hero-content">
+    <h1>We run ads for Shopify brands.<br>We own Shopify brands.<br>There's a difference.</h1>
+    <div class="hero-pills">
+      <span class="pill pill-neutral">Boutique agency</span>
+      <span class="pill pill-purple">Founder driven</span>
+    </div>
+    <p class="hero-services">Ads &middot; Creative &middot; Shopify</p>
+    <a href="book.html" class="btn btn-lg">Get a free Shopify audit &rarr;</a>
+  </div>
+</section>
+
+<!-- STATS STRIP -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div class="stat-block fade-up">
+      <span class="stat-icon">🧪</span>
+      <p class="stat-text"><strong style="color:#fff;display:block;margin-bottom:8px;font-size:17px;">We run our own brands too</strong>So we know what it takes when it's your own money on the line.</p>
+    </div>
+    <div class="stat-block fade-up">
+      <span class="stat-icon">🎯</span>
+      <p class="stat-text"><strong style="color:#fff;display:block;margin-bottom:8px;font-size:17px;">We know what stops the scroll</strong>We create ads that people actually stop, click and buy from.</p>
+    </div>
+    <div class="stat-block fade-up">
+      <span class="stat-icon">👥</span>
+      <p class="stat-text"><strong style="color:#fff;display:block;margin-bottom:8px;font-size:17px;">We think like owners</strong>We optimise for profit and growth, not clicks or vanity metrics.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <p class="marquee-label">Brands we've worked with or built ourselves</p>
+  <div class="marquee-track">
+    <div class="marquee-inner">
+      <!-- Original set -->
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/Flutterly_logo.png" alt="Flutterly"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/Fitzroy_Manor_logo.png" alt="Fitzroy Manor"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/sketcha_logo.png" alt="Sketcha"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/black_white_grow_logo.png" alt="Grow"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_7.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_8.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_9.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/icare_group_slicky_logo.png" alt="iCare Group"></div>
+      <!-- Duplicate set for seamless loop -->
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/Flutterly_logo.png" alt="Flutterly"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/Fitzroy_Manor_logo.png" alt="Fitzroy Manor"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/sketcha_logo.png" alt="Sketcha"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/black_white_grow_logo.png" alt="Grow"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_7.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_8.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/logos_cozy_home_760digital_adam_nagy_9.png" alt="Brand"></div>
+      <div class="marquee-logo"><img src="https://kliks.com.au/cdn/shop/files/icare_group_slicky_logo.png" alt="iCare Group"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="container">
+    <span class="section-label fade-up">What we do</span>
+    <h2 class="section-title fade-up">Ads and Shopify. That's it.</h2>
+    <p class="section-sub fade-up">Because that's where most stores are leaking money.</p>
+
+    <div class="services-grid">
+      <div class="card fade-up">
+        <span class="card-icon">📣</span>
+        <h3>Ads</h3>
+        <p>Meta. Google. TikTok. Traffic is coming in, but it's not turning into revenue.</p>
+        <p>Your campaign structure might be off. Your creatives aren't doing enough to stop the scroll. The wrong people are seeing your ads.</p>
+        <p>We fix that. So visitors actually become customers.</p>
+      </div>
+      <div class="card fade-up">
+        <span class="card-icon">🛍️</span>
+        <h3>Shopify</h3>
+        <p>We're a Shopify-focused agency. Full stop.</p>
+        <p>Traffic alone doesn't pay the bills. If your store doesn't convert, that's money walking out the door.</p>
+        <p>We optimise. We build. We migrate. Shopify only.</p>
+      </div>
+      <div class="card fade-up">
+        <span class="card-icon">🎯</span>
+        <h3>Creative Strategy</h3>
+        <p>You're running ads. But the message isn't landing.</p>
+        <p>Most creatives blend in. They don't stop anyone. They don't say anything worth stopping for.</p>
+        <p>We fix the message, the hook, the angle. So your ad actually does something.</p>
+      </div>
+    </div>
+
+    <div class="card-full fade-up">
+      <h3>Think of us as your outsourced ecommerce team.</h3>
+      <p>Most Shopify store owners hit the same point. You're doing too much yourself.</p>
+      <p>Ads, store, emails, fixes, everything. Hiring someone full-time feels expensive and risky.</p>
+      <p>That's where we come in. We take this off your plate and focus on what actually grows revenue.</p>
+      <p>We offer Lite, Growth and full Manager packages depending on where you're at. Ask us about it on the call.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process" style="background:var(--bg2);">
+  <div class="container">
+    <span class="section-label fade-up">How it works</span>
+    <h2 class="section-title fade-up">What we do from day one</h2>
+    <p class="section-sub fade-up">No wasted time. In the very first strategy call we map out where you are, what's holding you back, your market, your product.</p>
+
+    <div class="process-grid">
+      <div class="card process-card fade-up">
+        <div class="process-num">01</div>
+        <h3>Audit</h3>
+        <p>We go through your store, ads and numbers properly. No fluff. Just what's working and what's not.</p>
+      </div>
+      <div class="card process-card fade-up">
+        <div class="process-num">02</div>
+        <h3>The List</h3>
+        <p>Then we show you exactly what needs fixing first. Where money is being wasted. What to focus on. All explained, nothing hidden.</p>
+      </div>
+      <div class="card process-card fade-up">
+        <div class="process-num">03</div>
+        <h3>We Execute</h3>
+        <p>We get to work. Ads, Shopify, creative, handled. You focus on your business.</p>
+      </div>
+      <div class="card process-card fade-up">
+        <div class="process-num">04</div>
+        <h3>Scale What Works</h3>
+        <p>Once something works, we push it harder. That's how growth actually happens.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="container">
+    <span class="section-label fade-up">What you can realistically expect</span>
+    <h2 class="section-title fade-up">We don't promise miracles. But we do promise these.</h2>
+    <p class="section-sub fade-up">We're a team of ad junkies, so here's what you can count on. Concrete metrics we work to improve, measurable proof it's working.</p>
+
+    <div class="results-grid">
+      <div class="card fade-up">
+        <div class="metric-label">More revenue from your ad spend</div>
+        <div class="metric-name">ROAS / POAS &uarr;</div>
+        <p style="color:var(--muted);font-size:15px;line-height:1.75;">ROAS is revenue per dollar spent on ads. POAS is profit per dollar spent. We track both, because revenue alone isn't enough. Profitable scaling is the goal.</p>
+      </div>
+      <div class="card fade-up">
+        <div class="metric-label">More customers, same budget</div>
+        <div class="metric-name">CPA &darr; — cost per acquisition</div>
+        <p style="color:var(--muted);font-size:15px;line-height:1.75;">CPA is what you pay to acquire each customer. We bring it down through better campaign structure, creative rotation and audience targeting.</p>
+      </div>
+      <div class="card fade-up">
+        <div class="metric-label">Stop burning your audience</div>
+        <div class="metric-name">Reach:Frequency &#x2696;</div>
+        <p style="color:var(--muted);font-size:15px;line-height:1.75;">If the same person sees your ad too many times, it gets more expensive and performs worse. We monitor this daily and rotate creative before it becomes a problem.</p>
+      </div>
+      <div class="card fade-up">
+        <div class="metric-label">More clicks that actually convert</div>
+        <div class="metric-name">CTR + Conversion &uarr;</div>
+        <p style="color:var(--muted);font-size:15px;line-height:1.75;">CTR (click-through rate) tells us if the ad is working. Conversion rate tells us if the store is. We optimise both ends so clicks turn into customers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" style="background:var(--bg2);">
+  <div class="container">
+    <span class="section-label fade-up">About</span>
+    <div class="about-grid">
+      <div class="about-photo-wrap fade-up">
+        <img src="https://cdn.shopify.com/s/files/1/0733/0693/1363/files/adam-ads.gif?v=1776520792" alt="Adam Nagy, Kliks founder">
+        <div class="about-photo-label">
+          <strong>Adam Nagy</strong>
+          <span>Kliks founder</span>
+        </div>
+      </div>
+      <div class="about-copy fade-up">
+        <h2>I know what it feels like when you're stuck.</h2>
+        <p>When your store is stagnating and ads aren't working, I know exactly how that feels. I've burned through my own money figuring it out. Everything we do was tested on my own businesses first. Not from a textbook. Not borrowed from a client's results. That's why when we work together, you're not paying for our learning curve.</p>
+        <div class="about-chips">
+          <span class="chip">Founder-led</span>
+          <span class="chip">No outsourcing</span>
+          <span class="chip">No juniors</span>
+          <span class="chip">Profit-focused scaling</span>
+          <span class="chip">No annual lock-in</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHO WE WORK WITH -->
+<section>
+  <div class="container">
+    <span class="section-label fade-up">Who we work with</span>
+    <h2 class="section-title fade-up">Not everyone. And we mean that.</h2>
+    <div class="who-grid" style="margin-top:16px;">
+      <div class="who-copy fade-up">
+        <p>Who do we work with? What kind of brands? This matters.</p>
+        <p>One of the goals of the first strategy call is figuring out whether we can genuinely help. If we think your product, your brand or your current situation doesn't fit our approach, or if there's just no chemistry, we'll say so straight.</p>
+        <p>Not because we're precious, but because it's better for both sides. We believe in long-term relationships and that starts with honesty.</p>
+        <p>If we can see we can genuinely add value, we floor it. 150%.</p>
+      </div>
+      <div class="who-card fade-up">
+        <div class="who-card-section">
+          <div class="who-card-header">
+            <div class="who-icon who-icon-yes">&#10003;</div>
+            <h4>Who we love working with</h4>
+          </div>
+          <p>Shopify stores serious about growth, open to honest feedback, and thinking long-term. Founders in that messy middle, some traction, ready to scale.</p>
+        </div>
+        <div class="who-card-section">
+          <div class="who-card-header">
+            <div class="who-icon who-icon-no">&#10005;</div>
+            <h4>Who we're probably not right for</h4>
+          </div>
+          <p>If you're expecting overnight miracles, not open to change, or your monthly ad spend is under $3-5k AUD, we're probably not the best fit right now. Not because we don't want to help, but because below that threshold we can't do meaningful work and show real results.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STRAIGHT UP -->
+<section id="straight-up" style="background:var(--bg2);">
+  <div class="container">
+    <span class="section-label fade-up">Straight Up</span>
+    <h2 class="section-title fade-up">What nobody tells you about marketing agencies.</h2>
+    <p class="section-sub fade-up">You didn't ask for advice. But since you're here, it's worth knowing. Look for these things when you're searching for outside help:</p>
+
+    <div class="article-card fade-up">
+      <div class="article-card-inner">
+        <span class="article-tag">01 - Tip</span>
+        <h2 class="article-title">What to ask every marketing agency before you sign anything</h2>
+        <p class="article-lead">One question that filters out 90% of agencies:</p>
+
+        <div class="quote-lg">
+          <p>"Do they run their own businesses?"</p>
+        </div>
+
+        <div class="article-body">
+          <p>If not, why would you listen to them?</p>
+          <p>If someone has never risked their own money on an ad, never watched a campaign fail, never had to explain why revenue fell short — what gives them the right to tell you how to grow your business?</p>
+          <p>Most agencies sell theory. Borrowed frameworks, never tested with anything at stake. Then they send the invoice.</p>
+        </div>
+
+        <div class="highlight-box">
+          <strong>The follow-up question:</strong>
+          <p>Can they show you a failure?</p>
+          <p>Anyone can show a case study. Just pick your best client's best month. But an agency that can show a failure, explain what went wrong, and what they learned — that's an agency actually doing the work.</p>
+          <p>Anyone who's never made a mistake is either lying or hasn't really tried anything.</p>
+        </div>
+
+        <div class="author-footer">
+          <div class="author-avatar">A</div>
+          <div class="author-info">
+            <strong>Adam</strong>
+            <span>Kliks founder, runs multiple brands in Australia and Hungary</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA SECTION -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="container" style="position:relative;z-index:1;text-align:center;">
+    <p class="cta-label">If you've read this far, you already know something needs fixing.</p>
+    <h2 class="section-title fade-up">What's the next step?</h2>
+    <p class="section-sub fade-up" style="margin:0 auto 36px;">30 minutes. No pressure. We look at your store and tell you what's actually going on. After the call we put together a proper audit. We promise we won't sell you a course. 🙂</p>
+    <div class="cta-checks fade-up">
+      <span class="cta-check">Free audit included</span>
+      <span class="cta-check">No annual contract</span>
+      <span class="cta-check">No juniors, no outsourcing</span>
+      <span class="cta-check">We won't sell you a course</span>
+    </div>
+    <a href="book.html" class="btn btn-lg fade-up">Book a free call &rarr;</a>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" style="background:var(--bg2);">
+  <div class="container">
+    <span class="section-label fade-up">Let's talk</span>
+    <h2 class="section-title fade-up">Just a few clicks to get in touch.</h2>
+    <p class="section-sub fade-up">We aim to get back to you within 24 hours.</p>
+    <p class="fade-up" style="color:var(--muted);font-size:16px;line-height:1.75;margin-bottom:40px;">No pitch call. No sales script. Just a straight look at what's going on with your store.</p>
+
+    <div class="contact-grid">
+      <form class="contact-form fade-up" action="https://formspree.io/f/mzdyragl" method="POST">
+        <div class="form-group">
+          <label for="name">Your name</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Sarah Johnson" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="sarah@yourstore.com.au" required>
+        </div>
+        <div class="form-group">
+          <label for="store">Store URL</label>
+          <input type="url" id="store" name="store" placeholder="https://yourstore.com.au">
+        </div>
+        <div class="form-group">
+          <label for="adspend">Monthly ad spend</label>
+          <input type="text" id="adspend" name="adspend" placeholder="e.g. $3,000/month">
+        </div>
+        <div class="form-group">
+          <label for="message">What's the main challenge right now?</label>
+          <textarea id="message" name="message" placeholder="e.g. ads running but not converting, want to migrate from WooCommerce, not sure why people aren't buying..."></textarea>
+        </div>
+        <button type="submit" class="btn">Send it &rarr;</button>
+      </form>
+
+      <div class="contact-info fade-up">
+        <h3>Nothing to lose.</h3>
+        <p>We currently run several of our own brands where we test daily. I, Adam, personally put together an audit of where you're at and map out a clear action plan for you.</p>
+        <div class="contact-rows">
+          <div class="contact-row">
+            <span class="contact-row-icon">📍</span>
+            <div class="contact-row-text">
+              <strong>Where we are</strong>
+              <span>Sydney, but we work from anywhere</span>
+            </div>
+          </div>
+          <div class="contact-row">
+            <span class="contact-row-icon">&#x26a1;</span>
+            <div class="contact-row-text">
+              <strong>Response time</strong>
+              <span>Within 24 hours, business days</span>
+            </div>
+          </div>
+          <div class="contact-row">
+            <span class="contact-row-icon">🛍️</span>
+            <div class="contact-row-text">
+              <strong>Who we help</strong>
+              <span>Shopify stores running or wanting to run paid ads</span>
+            </div>
+          </div>
+          <div class="contact-row">
+            <span class="contact-row-icon">🤝</span>
+            <div class="contact-row-text">
+              <strong>Commitment</strong>
+              <span>No annual contract. If it's not working, we walk.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <a href="#" class="logo">KLIKS<span>.</span></a>
+      <span class="footer-copy">&copy; 2026 Kliks Digital. All rights reserved.</span>
+    </div>
+    <div class="footer-center">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="ad-junkies.html">Ad Junkies</a>
+    </div>
+    <div class="footer-right">
+      <a href="https://www.instagram.com/kliks.digital" target="_blank">Instagram</a>
+      <a href="https://www.tiktok.com/@adjunkies" target="_blank">TikTok</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Fade-up scroll animations
+  const fadeEls = document.querySelectorAll('.fade-up');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  fadeEls.forEach(el => observer.observe(el));
+
+  // Nav scroll
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    nav.style.background = window.scrollY > 60 ? 'rgba(14,13,26,0.95)' : 'rgba(14,13,26,0.85)';
+  });
+
+  // Mobile nav
+  const hamburger = document.querySelector('.hamburger');
+  hamburger.addEventListener('click', () => { document.body.classList.toggle('nav-open'); });
+</script>
+
+</body>
+</html>

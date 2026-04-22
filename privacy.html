@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Kliks Digital</title>
+  <meta name="description" content="Kliks Digital privacy policy. Plain English.">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
+  }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1875112903440305');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=1875112903440305&ev=PageView&noscript=1"/></noscript>
+  <!-- End Facebook Pixel -->
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #644bff;
+      --orange: #ff4315;
+      --orange-dark: #c42f08;
+      --bg: #0e0d1a;
+      --bg2: #1a1828;
+      --white: #ffffff;
+      --muted: rgba(255,255,255,0.55);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.4;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
+    }
+
+    h1, h2, h3 { font-family: 'Clash Display', sans-serif; letter-spacing: -0.5px; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(14,13,26,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.3s ease;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--orange); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--orange);
+      color: white;
+      border-radius: 100px;
+      padding: 16px 36px;
+      font-weight: 600;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .btn:hover { background: var(--orange-dark); transform: translateY(-2px); }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 8px;
+      z-index: 1001;
+    }
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--white);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .nav-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+    .nav-overlay a {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-overlay a:hover { color: var(--orange); }
+    body.nav-open .nav-overlay { display: flex; }
+    body.nav-open .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    body.nav-open .hamburger span:nth-child(2) { opacity: 0; }
+    body.nav-open .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── PAGE ─── */
+    .page-header {
+      padding: 160px 48px 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .page-header .label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      display: block;
+      margin-bottom: 16px;
+    }
+    .page-header h1 {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    .page-header p {
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .privacy-body {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 48px 120px;
+    }
+
+    .privacy-section {
+      margin-bottom: 56px;
+    }
+
+    .privacy-section h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 16px;
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .privacy-section h2 .num {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--orange);
+      font-family: 'Satoshi', sans-serif;
+      background: rgba(255,69,21,0.1);
+      border: 1px solid rgba(255,69,21,0.2);
+      border-radius: 100px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+
+    .privacy-section p {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+    .privacy-section p:last-child { margin-bottom: 0; }
+
+    .privacy-section a {
+      color: #a89cff;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.2s;
+    }
+    .privacy-section a:hover { color: var(--white); }
+
+    .privacy-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 56px;
+    }
+
+    .info-box {
+      background: rgba(100,75,255,0.06);
+      border: 1px solid rgba(100,75,255,0.15);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-top: 40px;
+    }
+    .info-box p {
+      color: var(--muted);
+      font-size: 15px;
+      margin: 0;
+    }
+    .info-box strong { color: var(--white); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 48px 0;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    .footer-left { display: flex; flex-direction: column; gap: 6px; }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-center { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .footer-center a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-center a:hover { color: var(--white); }
+    .footer-right { display: flex; align-items: center; gap: 20px; }
+    .footer-right a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    .footer-right a:hover { color: var(--white); }
+
+    @media (max-width: 900px) {
+      .nav-inner { padding: 0 24px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .page-header { padding: 120px 24px 60px; }
+      .privacy-body { padding: 0 24px 80px; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-center { justify-content: center; }
+      .footer-right { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">KLIKS<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="index.html#process">Process</a></li>
+      <li><a href="index.html#results">Results</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#straight-up">Straight Up</a></li>
+      <li><a href="https://calendly.com/kliks-hu/30min" target="_blank" class="btn" style="padding:10px 22px;font-size:14px;">Free Strategy Call</a></li>
+    </ul>
+    <button class="hamburger" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="nav-overlay">
+  <a href="index.html#services" onclick="document.body.classList.remove('nav-open')">Services</a>
+  <a href="index.html#process" onclick="document.body.classList.remove('nav-open')">Process</a>
+  <a href="index.html#results" onclick="document.body.classList.remove('nav-open')">Results</a>
+  <a href="index.html#about" onclick="document.body.classList.remove('nav-open')">About</a>
+  <a href="index.html#straight-up" onclick="document.body.classList.remove('nav-open')">Straight Up</a>
+  <a href="https://calendly.com/kliks-hu/30min" target="_blank" class="btn">Free Strategy Call</a>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <span class="label">Legal</span>
+  <h1>Privacy Policy</h1>
+  <p>Plain English. Last updated April 2026.</p>
+</div>
+
+<!-- PRIVACY CONTENT -->
+<div class="privacy-body">
+
+  <div class="privacy-section">
+    <h2><span class="num">01</span> What data we collect</h2>
+    <p>When you fill out the contact form on this site, we collect your name, email address, Shopify store URL, monthly ad spend estimate, and the message you write. If you book a call through Calendly, they collect the details needed to schedule that call.</p>
+    <p>If you sign up for the Ad Junkies newsletter, we collect your email address only.</p>
+    <p>That's it. We don't run hidden tracking or collect anything beyond what you give us directly.</p>
+  </div>
+
+  <hr class="privacy-divider">
+
+  <div class="privacy-section">
+    <h2><span class="num">02</span> How we use it</h2>
+    <p>We use your contact form details to respond to your enquiry and to figure out whether we can genuinely help your business. Nothing else.</p>
+    <p>We use your email address, if you signed up for Ad Junkies, to send the newsletter. We won't use it to pitch you services unless you've asked us to.</p>
+    <p>We will never sell your data, rent it, or share it with third parties for marketing purposes.</p>
+  </div>
+
+  <hr class="privacy-divider">
+
+  <div class="privacy-section">
+    <h2><span class="num">03</span> Who else handles it</h2>
+    <p>Your contact form submissions go through <strong>Formspree</strong>, which processes and forwards them to us. Formspree is GDPR-compliant and does not use your data for any purpose other than delivery.</p>
+    <p>If you book a call, your booking details are handled by <strong>Calendly</strong>. Calendly is also GDPR-compliant. Their privacy policy is at <a href="https://calendly.com/privacy" target="_blank">calendly.com/privacy</a>.</p>
+    <p>Neither service stores your data beyond what's needed to do their job.</p>
+  </div>
+
+  <hr class="privacy-divider">
+
+  <div class="privacy-section">
+    <h2><span class="num">04</span> Cookies</h2>
+    <p>This site currently uses no cookies and runs no tracking scripts.</p>
+    <p>We may add Google Analytics 4 and a Meta Pixel in the future for advertising and analytics purposes. If and when we do, this policy will be updated to reflect that, and we'll add a cookie consent notice.</p>
+  </div>
+
+  <hr class="privacy-divider">
+
+  <div class="privacy-section">
+    <h2><span class="num">05</span> Your rights</h2>
+    <p>You can request that we delete any data we hold about you at any time. Just email us at <a href="mailto:hello@kliks.com.au">hello@kliks.com.au</a> and we'll sort it out promptly.</p>
+    <p>If you signed up for Ad Junkies, there's an unsubscribe link at the bottom of every email.</p>
+    <p>If you're in the EU or UK, you also have the right to access, correct, and port your data under GDPR. Same email address to request any of those.</p>
+  </div>
+
+  <hr class="privacy-divider">
+
+  <div class="privacy-section">
+    <h2><span class="num">06</span> Contact</h2>
+    <p>Any questions about this policy, or anything privacy-related, go to <a href="mailto:hello@kliks.com.au">hello@kliks.com.au</a>.</p>
+    <p>We're a small team and we'll get back to you within a business day.</p>
+  </div>
+
+  <div class="info-box">
+    <p><strong>Short version:</strong> We collect what you give us, we use it only to talk to you, we don't sell it, and you can ask us to delete it any time. That's the whole story.</p>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <a href="index.html" class="logo">KLIKS<span>.</span></a>
+      <span class="footer-copy">&copy; 2026 Kliks Digital. All rights reserved.</span>
+    </div>
+    <div class="footer-center">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="ad-junkies.html">Ad Junkies</a>
+      <a href="https://kliks.hu" target="_blank">kliks.hu 🇭🇺</a>
+    </div>
+    <div class="footer-right">
+      <a href="https://www.instagram.com/kliks.digital" target="_blank">Instagram</a>
+      <a href="https://www.tiktok.com/@adjunkies" target="_blank">TikTok</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    nav.style.background = window.scrollY > 60 ? 'rgba(14,13,26,0.95)' : 'rgba(14,13,26,0.85)';
+  });
+
+  const hamburger = document.querySelector('.hamburger');
+  hamburger.addEventListener('click', () => { document.body.classList.toggle('nav-open'); });
+</script>
+
+</body>
+</html>

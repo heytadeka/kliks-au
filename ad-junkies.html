@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ad Junkies — The email that actually teaches you something</title>
+  <meta name="description" content="Fortnightly ad breakdowns, creative strategy and Shopify growth tactics from someone who runs their own brands. Free. Always.">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
+  }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1875112903440305');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=1875112903440305&ev=PageView&noscript=1"/></noscript>
+  <!-- End Facebook Pixel -->
+
+  <!-- Klaviyo — replace YOUR_PUBLIC_API_KEY with your 6-char public key from Klaviyo → Settings → API Keys -->
+  <script async type="text/javascript" src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=QNNHsN"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #644bff;
+      --orange: #ff4315;
+      --orange-dark: #c42f08;
+      --purple-dark: #3d2dcf;
+      --bg: #0e0d1a;
+      --bg2: #1a1828;
+      --white: #ffffff;
+      --muted: rgba(255,255,255,0.55);
+      --border: rgba(100,75,255,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.15;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Clash Display', sans-serif; letter-spacing: 0; line-height: 1.08; }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .section-title {
+      font-size: clamp(34px, 4vw, 52px);
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      line-height: 1.08;
+      margin-bottom: 20px;
+    }
+
+    .section-sub {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 620px;
+      margin-bottom: 48px;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
+    section { padding: 100px 0; }
+
+    .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 20px;
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--orange);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+    .card:hover { border-color: rgba(100,75,255,0.2); transform: translateY(-6px); }
+    .card:hover::before { transform: scaleX(1); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--orange);
+      color: white;
+      border-radius: 100px;
+      padding: 16px 36px;
+      font-weight: 600;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .btn:hover { background: var(--orange-dark); transform: translateY(-2px); }
+    .btn-lg { padding: 20px 48px; font-size: 18px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .pill-neutral { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
+    .pill-purple { background: rgba(100,75,255,0.12); border: 1px solid rgba(100,75,255,0.25); color: #a89cff; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(14,13,26,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.3s ease;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--orange); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 8px;
+      z-index: 1001;
+    }
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--white);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .nav-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+    .nav-overlay a {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-overlay a:hover { color: var(--orange); }
+    body.nav-open .nav-overlay { display: flex; }
+    body.nav-open .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    body.nav-open .hamburger span:nth-child(2) { opacity: 0; }
+    body.nav-open .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      padding: 140px 48px 100px;
+    }
+    .hero-blob {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(80px);
+      opacity: 0.3;
+    }
+    .hero-blob-purple { width: 700px; height: 700px; background: var(--purple); top: -150px; left: -150px; }
+    .hero-blob-orange { width: 500px; height: 500px; background: var(--orange); bottom: -100px; right: -100px; opacity: 0.15; }
+    .hero-content { position: relative; z-index: 1; max-width: 780px; }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(44px, 6vw, 72px);
+      font-weight: 800;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+    }
+    .hero-sub {
+      font-size: 20px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 36px;
+      max-width: 620px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero-pills { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; }
+
+    /* Signup form */
+    .signup-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+    .signup-form input[type="text"],
+    .signup-form input[type="email"],
+    .signup-form input[type="url"] {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 16px 20px;
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .signup-form input[type="text"]:focus,
+    .signup-form input[type="email"]:focus,
+    .signup-form input[type="url"]:focus { border-color: rgba(100,75,255,0.4); }
+    .signup-form input::placeholder { color: rgba(255,255,255,0.35); }
+    .signup-form .btn { width: 100%; justify-content: center; border-radius: 12px; }
+    .form-note {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    /* ─── WHAT YOU GET ─── */
+    .what-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .card-icon { font-size: 32px; margin-bottom: 20px; display: block; }
+    .card h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      letter-spacing: 0;
+    }
+    .card p { color: var(--muted); font-size: 15px; line-height: 1.75; }
+
+    /* ─── SOCIAL PROOF ─── */
+    .social-proof {
+      text-align: center;
+      padding: 80px 0;
+    }
+    .big-quote {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(24px, 3vw, 38px);
+      font-weight: 700;
+      font-style: italic;
+      letter-spacing: 0;
+      color: var(--white);
+      max-width: 700px;
+      margin: 0 auto 20px;
+      line-height: 1.3;
+    }
+    .big-quote-attr { color: var(--muted); font-size: 15px; }
+
+    /* ─── SIGN UP SECOND ─── */
+    .signup-section { text-align: center; }
+    .signup-section h2 { font-size: clamp(34px, 4vw, 52px); font-weight: 800; letter-spacing: -0.3px; margin-bottom: 16px; }
+    .signup-section .section-sub { margin: 0 auto 36px; }
+    .signup-section .signup-form { justify-content: center; }
+    .signup-trust { font-size: 13px; color: var(--muted); margin-top: 20px; }
+
+    /* ─── WHO WRITES IT ─── */
+    .writer-section {
+      display: flex;
+      align-items: center;
+      gap: 48px;
+    }
+    .writer-photo {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 3px solid rgba(100,75,255,0.3);
+    }
+    .writer-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .writer-copy h3 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0;
+      margin-bottom: 16px;
+    }
+    .writer-copy p { color: var(--muted); font-size: 16px; line-height: 1.8; margin-bottom: 16px; }
+    .writer-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* ─── FOOTER CTA ─── */
+    .footer-cta {
+      text-align: center;
+      padding: 80px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer-cta p {
+      color: var(--muted);
+      font-size: 18px;
+      margin-bottom: 24px;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 48px 0;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    .footer-left { display: flex; flex-direction: column; gap: 6px; }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-center { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .footer-center a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-center a:hover { color: var(--white); }
+    .footer-right { display: flex; align-items: center; gap: 20px; }
+    .footer-right a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    .footer-right a:hover { color: var(--white); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .container { padding: 0 24px; }
+      .nav-inner { padding: 0 24px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      section { padding: 72px 0; }
+      .what-grid { grid-template-columns: 1fr; }
+      .writer-section { flex-direction: column; text-align: center; }
+      .writer-photo { width: 140px; height: 140px; }
+      .writer-chips { justify-content: center; }
+      .signup-form { flex-direction: column; padding: 0 16px; }
+      .signup-form input[type="email"] { border-radius: 12px; }
+      .signup-form .btn { border-radius: 12px; justify-content: center; }
+      .hero { padding: 120px 24px 80px; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-center { justify-content: center; }
+      .footer-right { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">KLIKS<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="index.html#process">Process</a></li>
+      <li><a href="index.html#results">Results</a></li>
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="index.html#straight-up">Straight Up</a></li>
+      <li><a href="https://calendly.com/kliks-hu/30min" target="_blank" class="btn" style="padding:10px 22px;font-size:14px;">Free Strategy Call</a></li>
+    </ul>
+    <button class="hamburger" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="nav-overlay">
+  <a href="index.html#services" onclick="document.body.classList.remove('nav-open')">Services</a>
+  <a href="index.html#process" onclick="document.body.classList.remove('nav-open')">Process</a>
+  <a href="index.html#results" onclick="document.body.classList.remove('nav-open')">Results</a>
+  <a href="index.html#about" onclick="document.body.classList.remove('nav-open')">About</a>
+  <a href="index.html#straight-up" onclick="document.body.classList.remove('nav-open')">Straight Up</a>
+  <a href="https://calendly.com/kliks-hu/30min" target="_blank" class="btn">Free Strategy Call</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-blob hero-blob-purple"></div>
+  <div class="hero-content">
+    <span class="hero-eyebrow">The Ad Junkies</span>
+    <h1>Most marketing emails are noise. This isn't.</h1>
+    <p class="hero-sub">Fortnightly. No fluff. No gurus.<br>Real ad breakdowns, creative thinking, and what's actually working, from someone running ads daily.</p>
+    <p style="font-size:15px;color:var(--muted);margin-bottom:32px;">For founders and marketers who don't want to run ads blindly.</p>
+    <div class="hero-pills">
+      <span class="pill pill-neutral">Free. Always.</span>
+      <span class="pill pill-purple">Fortnightly, not daily spam</span>
+    </div>
+    <div class="klaviyo-form-VaHVst"></div>
+    <p class="form-note">No spam. No selling your email. Unsubscribe whenever.</p>
+  </div>
+</section>
+
+<!-- WHAT YOU GET -->
+<section style="background:var(--bg2);">
+  <div class="container">
+    <span class="section-label fade-up">What's inside</span>
+    <h2 class="section-title fade-up">What you actually get</h2>
+
+    <div class="what-grid">
+      <div class="card fade-up">
+        <span class="card-icon">📣</span>
+        <h3>What's actually working right now</h3>
+        <p>Real campaigns. Real creative. Real outcomes.</p>
+        <p>No theory. No recycled content. Just what's working right now.</p>
+      </div>
+      <div class="card fade-up">
+        <span class="card-icon">🎯</span>
+        <h3>Creative you can actually use</h3>
+        <p>Hooks, angles, formats, broken down properly.</p>
+        <p>Not just "this worked", but why.</p>
+      </div>
+      <div class="card fade-up">
+        <span class="card-icon">🛍️</span>
+        <h3>What happens after the click</h3>
+        <p>CRO, store tweaks, and things we test on our own brands, not theory, actual changes that drive revenue.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section class="social-proof">
+  <div class="container">
+    <div class="fade-up">
+      <p class="big-quote">"One of the only marketing emails I actually read."</p>
+      <p class="big-quote-attr">— Shopify store owner, Sydney</p>
+    </div>
+  </div>
+</section>
+
+<!-- SIGN UP SECOND CTA -->
+<section class="signup-section" style="background:var(--bg2);">
+  <div class="container">
+    <h2 class="section-title fade-up">Join Ad Junkies. Or keep guessing.</h2>
+    <p class="section-sub fade-up" style="margin:0 auto 36px;">Free. Fortnightly. Leave anytime.</p>
+    <form class="signup-form fade-up" action="https://formspree.io/f/mzdyragl" method="POST">
+      <input type="hidden" name="_subject" value="Ad Junkies signup">
+      <input type="text" name="firstname" placeholder="Your first name" required>
+    <div class="klaviyo-form-VaHVst"></div>
+    <p class="signup-trust fade-up">Already trusted by Shopify founders across Australia and Hungary.</p>
+  </div>
+</section>
+
+<!-- WHO WRITES IT -->
+<section>
+  <div class="container">
+    <span class="section-label fade-up">Who writes it</span>
+    <div class="writer-section fade-up">
+      <div class="writer-photo">
+        <img src="https://cdn.shopify.com/s/files/1/0733/0693/1363/files/adam-ads.gif?v=1776520792" alt="Adam Nagy, Kliks founder">
+      </div>
+      <div class="writer-copy">
+        <h3>Adam Nagy</h3>
+        <p>I run Kliks and a handful of Shopify brands across Australia and Hungary. Everything in Ad Junkies comes from something I'm actually testing, running, or figuring out that week.</p>
+        <p>No agency-speak. No borrowed theory. Just what's working, what isn't, and why.</p>
+        <div class="writer-chips">
+          <span class="chip">Founder-led</span>
+          <span class="chip">Runs own brands</span>
+          <span class="chip">Australia + Hungary</span>
+          <span class="chip">No juniors</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER CTA -->
+<section class="footer-cta" style="background:var(--bg2);">
+  <div class="container">
+    <p class="fade-up">Want this applied to your business?</p>
+    <a href="https://calendly.com/kliks-hu/30min" target="_blank" class="btn btn-lg fade-up">Work with Kliks &rarr;</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <a href="index.html" class="logo">KLIKS<span>.</span></a>
+      <span class="footer-copy">&copy; 2026 Kliks Digital. All rights reserved.</span>
+    </div>
+    <div class="footer-center">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="ad-junkies.html">Ad Junkies</a>
+      <a href="https://kliks.hu" target="_blank">kliks.hu 🇭🇺</a>
+    </div>
+    <div class="footer-right">
+      <a href="https://www.instagram.com/kliks.digital" target="_blank">Instagram</a>
+      <a href="https://www.tiktok.com/@adjunkies" target="_blank">TikTok</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const fadeEls = document.querySelectorAll('.fade-up');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  fadeEls.forEach(el => observer.observe(el));
+
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    nav.style.background = window.scrollY > 60 ? 'rgba(14,13,26,0.95)' : 'rgba(14,13,26,0.85)';
+  });
+
+  const hamburger = document.querySelector('.hamburger');
+  hamburger.addEventListener('click', () => { document.body.classList.toggle('nav-open'); });
+</script>
+
+</body>
+</html>
