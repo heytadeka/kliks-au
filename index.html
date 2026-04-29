@@ -1114,7 +1114,10 @@
     <p class="fade-up" style="color:var(--muted);font-size:16px;line-height:1.75;margin-bottom:40px;">No pitch call. No sales script. Just a straight look at what's going on with your store.</p>
 
     <div class="contact-grid">
-      <form class="contact-form fade-up" action="https://formspree.io/f/mzdyragl" method="POST">
+      <form class="contact-form fade-up" action="https://api.web3forms.com/submit" method="POST">
+        <input type="hidden" name="access_key" value="8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5">
+        <input type="hidden" name="redirect" value="https://kliks.com.au/booked">
+        <input type="hidden" name="subject" value="New enquiry from kliks.com.au">
         <div class="form-group">
           <label for="name">Your name</label>
           <input type="text" id="name" name="name" placeholder="e.g. Sarah Johnson" required>
@@ -1135,7 +1138,6 @@
           <label for="message">What's the main challenge right now?</label>
           <textarea id="message" name="message" placeholder="e.g. ads running but not converting, want to migrate from WooCommerce, not sure why people aren't buying..."></textarea>
         </div>
-        <input type="hidden" name="_next" value="https://kliks.com.au/booked">
         <button type="submit" class="btn">Send it &rarr;</button>
       </form>
 
