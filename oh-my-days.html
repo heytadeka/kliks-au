@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oh My Days. A Proposal from Kliks</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --green:       #2a4435;
+  --green-mid:   #3a5e48;
+  --green-light: #4d7a5f;
+  --green-pale:  #d4e4da;
+  --cream:       #f5f0e6;
+  --cream-dark:  #ede7d8;
+  --terra:       #c17f5a;
+  --terra-light: #e8c4a8;
+  --terra-pale:  #f5e8dc;
+  --blush:       #e8d5c4;
+  --text:        #1e2e24;
+  --muted:       #6b7d72;
+  --muted2:      #9aada0;
+  --border:      #ddd6c8;
+  --border2:     #cec6b4;
+  --white:       #fdfaf4;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 48px;
+  background: rgba(245,240,230,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--green);
+}
+.nav-links { display: flex; gap: 28px; list-style: none; }
+.nav-links a {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--green); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  background: var(--green);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 120px 48px 72px;
+  position: relative; overflow: hidden;
+}
+.hero-texture {
+  position: absolute; inset: 0; z-index: 0; opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f5f0e6' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-circle {
+  position: absolute; bottom: -120px; right: -120px; z-index: 0;
+  width: 500px; height: 500px; border-radius: 50%;
+  border: 1px solid rgba(245,240,230,0.08);
+}
+.hero-circle2 {
+  position: absolute; bottom: -200px; right: -200px; z-index: 0;
+  width: 700px; height: 700px; border-radius: 50%;
+  border: 1px solid rgba(245,240,230,0.05);
+}
+.hero-content { position: relative; z-index: 1; max-width: 800px; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(245,240,230,0.08); border: 1px solid rgba(245,240,230,0.2);
+  border-radius: 100px; padding: 8px 18px;
+  font-size: 11px; color: var(--terra-light);
+  letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500;
+  margin-bottom: 28px;
+}
+.hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--terra); }
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(52px, 10vw, 110px);
+  line-height: 0.92; font-weight: 400; letter-spacing: -0.01em;
+  color: var(--cream); margin-bottom: 28px;
+}
+.hero-title em { font-style: italic; color: var(--terra-light); }
+.hero-sub {
+  font-size: 15px; color: rgba(245,240,230,0.65);
+  max-width: 480px; line-height: 1.85; font-weight: 300; margin-bottom: 40px;
+}
+.hero-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(245,240,230,0.07); border: 1px solid rgba(245,240,230,0.15);
+  border-radius: 100px; padding: 7px 14px;
+  font-size: 11px; color: rgba(245,240,230,0.55); letter-spacing: 0.08em; text-transform: uppercase;
+}
+.pill.accent { background: rgba(193,127,90,0.15); border-color: rgba(193,127,90,0.35); color: var(--terra-light); }
+
+/* SECTIONS */
+section { padding: 80px 48px; border-bottom: 1px solid var(--border); }
+.section-label {
+  font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--muted2); font-weight: 500; margin-bottom: 40px;
+  display: flex; align-items: center; gap: 16px;
+}
+.section-label .num { color: var(--terra); }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); max-width: 80px; }
+.section-heading {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.05; font-weight: 400; margin-bottom: 16px; color: var(--green);
+}
+.section-heading em { font-style: italic; color: var(--terra); }
+.section-intro {
+  font-size: 14px; color: var(--muted); max-width: 500px;
+  line-height: 1.85; font-weight: 300; margin-bottom: 48px;
+}
+
+/* ACCOLADE */
+.accolade-bar {
+  background: var(--green); border-radius: 16px;
+  padding: 32px 40px;
+  display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+.accolade-badge {
+  display: flex; align-items: center; gap: 16px;
+}
+.accolade-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(245,240,230,0.1); border: 1px solid rgba(245,240,230,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.accolade-text {}
+.accolade-title { font-size: 14px; font-weight: 500; color: var(--cream); margin-bottom: 3px; }
+.accolade-sub { font-size: 12px; color: rgba(245,240,230,0.5); }
+.accolade-divider { width: 1px; height: 40px; background: rgba(245,240,230,0.15); }
+.accolade-note { font-size: 13px; color: rgba(245,240,230,0.6); font-style: italic; font-family: 'Playfair Display', serif; line-height: 1.6; }
+
+/* OPPORTUNITY GRID */
+.opp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; border-radius: 16px; overflow: hidden; }
+.opp-item { background: var(--white); padding: 28px; transition: background 0.2s; }
+.opp-item:hover { background: var(--cream-dark); }
+.opp-num { font-family: 'Playfair Display', serif; font-size: 40px; color: var(--border); line-height: 1; margin-bottom: 14px; font-style: italic; }
+.opp-title { font-size: 13px; font-weight: 500; color: var(--terra); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+.opp-desc { font-size: 13px; color: var(--muted); line-height: 1.75; }
+
+/* CLEAN BREAK */
+.cleanbreak-box {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 20px; padding: 48px; position: relative; overflow: hidden;
+}
+.cleanbreak-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--terra), var(--terra-light), transparent 70%);
+}
+.cleanbreak-quote {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(22px, 3.5vw, 36px);
+  line-height: 1.25; color: var(--green); margin-bottom: 32px; font-style: italic;
+}
+.cleanbreak-quote strong { font-style: normal; color: var(--terra); }
+.cleanbreak-points { display: flex; flex-direction: column; gap: 16px; margin-bottom: 36px; }
+.cleanbreak-point { display: flex; align-items: flex-start; gap: 16px; font-size: 13px; color: var(--muted); line-height: 1.75; }
+.cb-icon {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+  background: var(--green-pale); display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--green); font-weight: 500;
+}
+.cleanbreak-divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+.cleanbreak-commitments { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.commitment {
+  background: var(--cream); border-radius: 12px; padding: 20px;
+  border: 1px solid var(--border);
+}
+.commitment-title { font-size: 12px; font-weight: 500; color: var(--green); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.commitment-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+/* ALLERGEN QUIZ */
+.quiz-wrapper { background: var(--white); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.quiz-header {
+  background: var(--green); padding: 24px 32px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+}
+.quiz-header-left {}
+.quiz-eyebrow { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--terra-light); font-weight: 500; margin-bottom: 4px; }
+.quiz-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--cream); font-style: italic; }
+.quiz-progress-wrap { display: flex; align-items: center; gap: 10px; }
+.quiz-step-label { font-size: 11px; color: rgba(245,240,230,0.5); }
+.quiz-progress-bar { width: 80px; height: 3px; background: rgba(245,240,230,0.15); border-radius: 100px; overflow: hidden; }
+.quiz-progress-fill { height: 100%; background: var(--terra); border-radius: 100px; transition: width 0.4s ease; }
+
+.quiz-body { padding: 40px 32px; min-height: 260px; }
+.quiz-q {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px; color: var(--green); margin-bottom: 28px; line-height: 1.25;
+}
+.quiz-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; margin-top: -16px; }
+
+/* allergen grid */
+.allergen-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.allergen-chip {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--cream); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 12px 14px; cursor: pointer;
+  transition: all 0.15s; font-size: 13px; color: var(--muted);
+  user-select: none;
+}
+.allergen-chip:hover { border-color: var(--green-light); color: var(--green); }
+.allergen-chip.checked { border-color: var(--terra); background: var(--terra-pale); color: var(--terra); }
+.allergen-cb {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+  border: 1.5px solid var(--border2); background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; font-size: 11px;
+}
+.allergen-chip.checked .allergen-cb { background: var(--terra); border-color: var(--terra); color: white; }
+.allergen-icon { font-size: 16px; }
+
+/* product results */
+.product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.product-card {
+  background: var(--cream); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+  transition: all 0.2s;
+}
+.product-card:hover { border-color: var(--green-light); }
+.product-card.hidden { display: none; }
+.product-emoji { font-size: 28px; margin-bottom: 10px; }
+.product-name { font-size: 14px; font-weight: 500; color: var(--green); margin-bottom: 4px; }
+.product-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.product-tag {
+  font-size: 10px; padding: 3px 9px; border-radius: 100px;
+  background: var(--green-pale); color: var(--green-mid);
+  font-weight: 500; letter-spacing: 0.05em;
+}
+.product-tag.free { background: var(--terra-pale); color: var(--terra); }
+.no-results {
+  text-align: center; padding: 40px 20px;
+  font-family: 'Playfair Display', serif; font-size: 20px;
+  color: var(--muted2); font-style: italic; display: none;
+}
+
+/* option buttons */
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-option {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--cream); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 14px 18px; cursor: pointer;
+  transition: all 0.15s; font-size: 13px; color: var(--muted);
+}
+.quiz-option:hover { border-color: var(--green-light); color: var(--green); }
+.quiz-option.selected { border-color: var(--green); background: var(--green-pale); color: var(--green); }
+.quiz-option-letter {
+  width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
+  border: 1.5px solid var(--border2); background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 500; color: var(--muted); transition: all 0.15s;
+}
+.quiz-option.selected .quiz-option-letter { background: var(--green); border-color: var(--green); color: white; }
+
+.quiz-footer {
+  padding: 20px 32px; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.quiz-hint { font-size: 11px; color: var(--muted2); font-style: italic; }
+.quiz-nav { display: flex; gap: 10px; }
+.qbtn {
+  padding: 10px 24px; border-radius: 100px; font-size: 12px; font-weight: 500;
+  letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; border: none; transition: all 0.15s;
+}
+.qbtn.sec { background: transparent; border: 1.5px solid var(--border2); color: var(--muted); }
+.qbtn.sec:hover { border-color: var(--green); color: var(--green); }
+.qbtn.pri { background: var(--green); color: var(--cream); }
+.qbtn.pri:hover { background: var(--green-mid); }
+
+.quiz-result-panel { display: none; text-align: center; padding: 48px 32px; }
+.quiz-result-panel.show { display: block; }
+.quiz-result-title { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--green); margin-bottom: 12px; font-style: italic; }
+.quiz-result-sub { font-size: 13px; color: var(--muted); max-width: 360px; margin: 0 auto 28px; line-height: 1.75; }
+.qbtn-restart { background: var(--green); color: var(--cream); padding: 12px 28px; border-radius: 100px; border: none; font-size: 12px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+/* SERVICES */
+.services-list { display: flex; flex-direction: column; gap: 2px; }
+.service-item {
+  display: flex; align-items: flex-start; gap: 24px;
+  background: var(--white); padding: 26px 30px; transition: background 0.2s;
+}
+.service-item:first-child { border-radius: 16px 16px 4px 4px; }
+.service-item:last-child { border-radius: 4px 4px 16px 16px; }
+.service-item:hover { background: var(--cream-dark); }
+.service-num { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--border); line-height: 1; min-width: 40px; padding-top: 2px; font-style: italic; }
+.service-body { flex: 1; }
+.service-title { font-size: 14px; font-weight: 500; color: var(--green); margin-bottom: 5px; }
+.service-desc { font-size: 12px; color: var(--muted); line-height: 1.8; }
+.service-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.service-tag {
+  display: inline-block; background: var(--green-pale);
+  border-radius: 100px; padding: 3px 10px;
+  font-size: 10px; color: var(--green-mid); letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500;
+}
+.service-tag.terra { background: var(--terra-pale); color: var(--terra); }
+
+/* COLLECTION CARD DEMO */
+.collection-demo { background: var(--white); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.collection-demo-header { padding: 24px 28px; border-bottom: 1px solid var(--border); }
+.demo-eyebrow { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--terra); font-weight: 500; margin-bottom: 4px; }
+.demo-title { font-size: 14px; font-weight: 500; color: var(--green); }
+.collection-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 24px; }
+.coll-card {
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border); background: var(--cream);
+  transition: all 0.2s; cursor: pointer;
+}
+.coll-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(42,68,53,0.1); }
+.coll-img {
+  height: 120px; display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+}
+.coll-img.croissants { background: linear-gradient(135deg, #f5e8c8, #ede0b0); }
+.coll-img.cakes { background: linear-gradient(135deg, #f0dde8, #e8c8d8); }
+.coll-img.pastries { background: linear-gradient(135deg, #d8ead0, #c8ddb8); }
+.coll-body { padding: 14px 16px; }
+.coll-name { font-size: 13px; font-weight: 500; color: var(--green); margin-bottom: 4px; }
+.coll-desc { font-size: 11px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+.coll-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.coll-tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; background: var(--green-pale); color: var(--green-mid); font-weight: 500; }
+.coll-tag.free { background: var(--terra-pale); color: var(--terra); }
+
+/* REVIEW STRATEGY */
+.review-box {
+  background: var(--white); border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+}
+.review-top { padding: 32px; border-bottom: 1px solid var(--border); display: flex; gap: 20px; align-items: flex-start; }
+.review-icon { font-size: 32px; }
+.review-top-text {}
+.review-top-title { font-size: 15px; font-weight: 500; color: var(--green); margin-bottom: 6px; }
+.review-top-desc { font-size: 13px; color: var(--muted); line-height: 1.75; }
+.review-stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+.review-stat { padding: 28px 24px; border-right: 1px solid var(--border); text-align: center; }
+.review-stat:last-child { border-right: none; }
+.review-stat-num { font-family: 'Playfair Display', serif; font-size: 36px; color: var(--terra); font-style: italic; line-height: 1; margin-bottom: 6px; }
+.review-stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* INVESTMENT */
+.investment-box { background: var(--white); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.investment-top { background: var(--green); padding: 40px; position: relative; overflow: hidden; }
+.investment-top::after {
+  content: ''; position: absolute; bottom: -60px; right: -60px;
+  width: 200px; height: 200px; border-radius: 50%;
+  border: 1px solid rgba(245,240,230,0.08);
+}
+.investment-top-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; }
+.investment-title { font-family: 'Playfair Display', serif; font-size: 36px; color: var(--cream); font-style: italic; margin-bottom: 6px; }
+.investment-subtitle { font-size: 13px; color: rgba(245,240,230,0.5); }
+.investment-price { font-family: 'Playfair Display', serif; font-size: 52px; color: var(--terra-light); line-height: 1; text-align: right; }
+.investment-price-label { font-size: 11px; color: rgba(245,240,230,0.4); text-align: right; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+.inv-rows { display: flex; flex-direction: column; }
+.inv-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 32px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.inv-row:last-child { border-bottom: none; }
+.inv-label { color: var(--muted); }
+.inv-val { color: var(--green); font-weight: 500; }
+.inv-val.terra { color: var(--terra); }
+.inv-val.muted { color: var(--muted2); }
+
+/* HANDSHAKE */
+.handshake-box {
+  background: var(--terra-pale); border: 1px solid var(--terra-light);
+  border-radius: 16px; padding: 32px; display: flex; gap: 20px; align-items: flex-start;
+}
+.hs-icon { font-size: 32px; flex-shrink: 0; }
+.hs-title { font-size: 15px; font-weight: 500; color: var(--terra); margin-bottom: 8px; }
+.hs-desc { font-size: 13px; color: var(--muted); line-height: 1.8; }
+
+/* CTA */
+.cta-section {
+  background: var(--green); padding: 96px 48px; text-align: center; position: relative; overflow: hidden;
+}
+.cta-texture { position: absolute; inset: 0; opacity: 0.03; background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f5f0e6' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+.cta-content { position: relative; z-index: 1; }
+.cta-heading { font-family: 'Playfair Display', serif; font-size: clamp(40px, 7vw, 80px); line-height: 1; color: var(--cream); margin-bottom: 24px; font-weight: 400; }
+.cta-heading em { font-style: italic; color: var(--terra-light); }
+.cta-sub { font-size: 15px; color: rgba(245,240,230,0.6); max-width: 400px; margin: 0 auto 40px; line-height: 1.8; font-weight: 300; }
+.cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-pri { display: inline-block; background: var(--terra); color: var(--cream); padding: 16px 36px; border-radius: 100px; font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; text-decoration: none; transition: all 0.15s; }
+.btn-pri:hover { opacity: 0.88; transform: scale(0.98); }
+.btn-sec { display: inline-block; background: transparent; color: rgba(245,240,230,0.6); padding: 16px 36px; border-radius: 100px; font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border: 1px solid rgba(245,240,230,0.2); font-family: 'DM Sans', sans-serif; text-decoration: none; transition: all 0.15s; }
+.btn-sec:hover { border-color: rgba(245,240,230,0.4); color: var(--cream); }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.footer-text { font-size: 11px; color: var(--muted2); }
+.footer-logo { color: var(--green); font-weight: 500; }
+
+/* ANIMATIONS */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.hero-content > * { animation: fadeUp 0.8s ease both; }
+.hero-badge { animation-delay: 0.1s; }
+.hero-title { animation-delay: 0.25s; }
+.hero-sub { animation-delay: 0.4s; }
+.hero-pills { animation-delay: 0.55s; }
+
+@media (max-width: 700px) {
+  nav { padding: 14px 20px; }
+  .nav-links { display: none; }
+  .hero, section { padding: 80px 20px 48px; }
+  .opp-grid, .allergen-grid, .collection-grid, .cleanbreak-commitments { grid-template-columns: 1fr; }
+  .review-stats { grid-template-columns: 1fr; }
+  .review-stat { border-right: none; border-bottom: 1px solid var(--border); }
+  .cta-section { padding: 64px 20px; }
+  footer { padding: 20px; }
+  .accolade-bar { flex-direction: column; gap: 20px; }
+  .product-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Kliks</div>
+  <ul class="nav-links">
+    <li><a href="#opportunity">Opportunity</a></li>
+    <li><a href="#trust">Our promise</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#investment">Investment</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-texture"></div>
+  <div class="hero-circle"></div>
+  <div class="hero-circle2"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><div class="hero-badge-dot"></div>A proposal prepared for</div>
+    <h1 class="hero-title">Oh My<br><em>Days.</em></h1>
+    <p class="hero-sub">We know Oh My Days well. Having worked with the brand before, we can hit the ground running within a week rather than spending months getting up to speed on your ingredients, your market, and what makes you different. This proposal is about picking up where things left off and taking it further.</p>
+    <div class="hero-pills">
+      <div class="pill accent">Ecommerce</div>
+      <div class="pill accent">Performance Marketing</div>
+      <div class="pill">Social Media</div>
+      <div class="pill">TikTok</div>
+      <div class="pill">Content</div>
+      <div class="pill">Review Strategy</div>
+    </div>
+  </div>
+</div>
+
+<!-- OPPORTUNITY -->
+<section id="opportunity">
+  <div class="section-label"><span class="num">01</span> The opportunity</div>
+
+  <div class="accolade-bar">
+    <div class="accolade-badge">
+      <div class="accolade-icon">🏆</div>
+      <div class="accolade-text">
+        <div class="accolade-title">La Liste Australian Top 50 — 2024</div>
+        <div class="accolade-sub">The only vegan bakery on the list. International recognition.</div>
+      </div>
+    </div>
+    <div class="accolade-divider"></div>
+    <div class="accolade-note">"An accolade this significant deserves to be front and centre on your site, your socials, your packaging, and every ad you run."</div>
+  </div>
+
+  <h2 class="section-heading">The ingredients are <em>world-class.</em><br>The digital presence isn't there yet.</h2>
+  <p class="section-intro">Having worked with Oh My Days before, we know the product, the audience, and the story intimately. Here is where the digital side has room to catch up.</p>
+
+  <div class="opp-grid">
+    <div class="opp-item">
+      <div class="opp-num">01</div>
+      <div class="opp-title">Reviews left unanswered</div>
+      <div class="opp-desc">Google, Yelp, and TripAdvisor reviews sitting without a response. Unanswered reviews, positive or negative, signal to new customers that nobody is home. A systematic response strategy builds trust and lifts local SEO ranking at the same time.</div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-num">02</div>
+      <div class="opp-title">No review collection strategy</div>
+      <div class="opp-desc">Reviews are coming in organically but there's no system to collect them actively. A simple post-purchase email flow and in-store QR prompt could double your review volume within 60 days, without asking customers awkwardly.</div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-num">03</div>
+      <div class="opp-title">Site feels template-driven</div>
+      <div class="opp-desc">The website works but it doesn't feel like Oh My Days. Generic icons, no allergen filtering, no collection feature cards, no founder presence. Customers who land from an ad need more than a product grid to convert.</div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-num">04</div>
+      <div class="opp-title">No paid acquisition</div>
+      <div class="opp-desc">14K followers and La Liste recognition with no performance marketing behind it. Google Shopping, Meta retargeting, and TikTok organic are all untapped, each one a direct pipeline to new customers who don't yet know you exist.</div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-num">05</div>
+      <div class="opp-title">Content without a calendar</div>
+      <div class="opp-desc">Great product, inconsistent output. A monthly shoot day and a structured content calendar turns one day of effort into 30 days of presence across Instagram, TikTok, and Google.</div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-num">06</div>
+      <div class="opp-title">Founder story untold</div>
+      <div class="opp-desc">David's fine dining background at Bentley and est. is a genuine differentiator. It doesn't need to be a big production. Even a single well-chosen photo of David in the kitchen, paired with a few honest lines about why he started Oh My Days, is enough. People buy from people. Right now that story isn't on the site.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST / CLEAN BREAK -->
+<section id="trust">
+  <div class="section-label"><span class="num">02</span> Our promise to you</div>
+  <h2 class="section-heading">A fresh start.<br><em>Done differently.</em></h2>
+  <p class="section-intro">We know the last agency experience left a bad taste. Here's how we work — and why it'll feel nothing like that.</p>
+
+  <div class="cleanbreak-box">
+    <div class="cleanbreak-quote">
+      "Your assets are <strong>yours.</strong> Your ad accounts, your content, your brand files. All of it lives in your hands from day one. And if we ever part ways, we do it like adults."
+    </div>
+    <div class="cleanbreak-points">
+      <div class="cleanbreak-point">
+        <div class="cb-icon">✓</div>
+        <div>Every file we create, brand assets, ad creatives, content, is exported and handed to you at the end of each month. Nothing is held, nothing is withheld.</div>
+      </div>
+      <div class="cleanbreak-point">
+        <div class="cb-icon">✓</div>
+        <div>Ad accounts are set up under your own Business Manager. We get access, you keep ownership. The moment we stop working together, you retain everything.</div>
+      </div>
+      <div class="cleanbreak-point">
+        <div class="cb-icon">✓</div>
+        <div>No lock-in contracts. We ask for a 3-month minimum to see real results. After that, a simple monthly arrangement. If you're not happy, you tell us and we part ways cleanly. No invoices held hostage, no awkward conversations.</div>
+      </div>
+      <div class="cleanbreak-point">
+        <div class="cb-icon">✓</div>
+        <div>We know the previous agency situation was frustrating. While we can't promise to recover everything, we will do our best to resupply what we can, logos, templates, brand files, and rebuild anything that's missing from scratch so you're not starting from zero.</div>
+      </div>
+    </div>
+    <hr class="cleanbreak-divider">
+    <div class="cleanbreak-commitments">
+      <div class="commitment">
+        <div class="commitment-title">Your assets, always</div>
+        <div class="commitment-desc">Files, accounts, content — all delivered to you monthly. We hold nothing.</div>
+      </div>
+      <div class="commitment">
+        <div class="commitment-title">Clean exit, any time</div>
+        <div class="commitment-desc">After month 3, just tell us. We hand over everything and wish you well.</div>
+      </div>
+      <div class="commitment">
+        <div class="commitment-title">Written, not verbal</div>
+        <div class="commitment-desc">A simple one-page agreement — plain English, no fine print surprises.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-label"><span class="num">03</span> What we do</div>
+  <h2 class="section-heading">Everything you need.<br><em>Nothing you don't.</em></h2>
+  <p class="section-intro">A full-service partnership built around your business, from the website through to ads, content, and reviews.</p>
+
+  <div class="services-list">
+    <div class="service-item">
+      <div class="service-num">01</div>
+      <div class="service-body">
+        <div class="service-title">Ecommerce management and ongoing site improvements</div>
+        <div class="service-desc">Custom development to move the site beyond its template roots. Feature collection cards, better iconography on the homepage, a founder page (even just a single photo of David and a few honest lines, no spotlight required), and the allergen quiz built natively into your shop. Monthly improvements, not a one-and-done job.</div>
+        <div class="service-tags"><span class="service-tag">Shopify</span><span class="service-tag">CRO</span><span class="service-tag">Custom Dev</span></div>
+      </div>
+    </div>
+    <div class="service-item">
+      <div class="service-num">02</div>
+      <div class="service-body">
+        <div class="service-title">Allergen quiz — interactive product finder</div>
+        <div class="service-desc">A branded, on-site quiz where customers select their allergens, nuts, gluten, soy and more, and are instantly shown the products that are safe for them. Reduces friction, increases confidence, and converts the cautious browser into a buyer. Demo below.</div>
+        <div class="service-tags"><span class="service-tag">UX</span><span class="service-tag">Accessibility</span><span class="service-tag terra">High Impact</span></div>
+      </div>
+    </div>
+    <div class="service-item">
+      <div class="service-num">03</div>
+      <div class="service-body">
+        <div class="service-title">Performance marketing — Google and Meta ads</div>
+        <div class="service-desc">Google Shopping for high-intent buyers searching "vegan cake Sydney." Meta retargeting for website visitors who browsed but didn't buy. Both campaigns built around the La Liste accolade as the core trust signal. Monthly reporting in plain English, no jargon, no dashboard-dumping.</div>
+        <div class="service-tags"><span class="service-tag">Google Shopping</span><span class="service-tag">Meta Ads</span><span class="service-tag">Retargeting</span></div>
+      </div>
+    </div>
+    <div class="service-item">
+      <div class="service-num">04</div>
+      <div class="service-body">
+        <div class="service-title">TikTok — testing and organic growth</div>
+        <div class="service-desc">Start with organic — "I made a meat-eater try our croissant" style content consistently outperforms polished branded posts. Test what lands, then layer in TikTok ads once we know what resonates. Low risk, high ceiling for a product this visual.</div>
+        <div class="service-tags"><span class="service-tag terra">TikTok</span><span class="service-tag">Organic First</span><span class="service-tag">Paid When Ready</span></div>
+      </div>
+    </div>
+    <div class="service-item">
+      <div class="service-num">05</div>
+      <div class="service-body">
+        <div class="service-title">Social media management, 2 to 3 posts per week</div>
+        <div class="service-desc">Instagram content planned around a monthly content calendar. Roughly 2 to 3 posts per week to start, product hero shots, behind-the-scenes baking, and customer story reposts. Consistent and on-brand, with room to adjust the cadence as we find our rhythm together.</div>
+        <div class="service-tags"><span class="service-tag">Instagram</span><span class="service-tag">Content Calendar</span></div>
+      </div>
+    </div>
+    <div class="service-item">
+      <div class="service-num">06</div>
+      <div class="service-body">
+        <div class="service-title">Content — one shoot day per month</div>
+        <div class="service-desc">One dedicated day per month at Glebe or Petersham. We capture hero product shots, short-form video, behind-the-scenes content, and team moments. Everything edited and delivered within the week, enough content to fuel all channels for 30 days.</div>
+        <div class="service-tags"><span class="service-tag terra">Photography</span><span class="service-tag terra">Video</span><span class="service-tag">Reels</span></div>
+      </div>
+    </div>
+    <div class="service-item">
+      <div class="service-num">07</div>
+      <div class="service-body">
+        <div class="service-title">Review strategy — collection and responses</div>
+        <div class="service-desc">A post-purchase email asking for a Google review, the highest-value platform for local SEO. In-store QR cards on the counter. And every single review, good or not-so-good, responded to within 48 hours. This alone lifts your Google ranking and converts sceptical browsers into customers.</div>
+        <div class="service-tags"><span class="service-tag">Google Reviews</span><span class="service-tag">Local SEO</span><span class="service-tag">Reputation</span></div>
+      </div>
+    </div>
+    <div class="service-item">
+      <div class="service-num">08</div>
+      <div class="service-body">
+        <div class="service-title">Email and SMS flows — set and forget revenue</div>
+        <div class="service-desc">Abandoned cart recovery, post-purchase follow-up, weekly specials announcement, and a birthday treat sequence. Built once, running forever. For a bakery with repeat customers, email is the highest-ROI channel available.</div>
+        <div class="service-tags"><span class="service-tag">Klaviyo</span><span class="service-tag">Automation</span><span class="service-tag">Retention</span></div>
+      </div>
+    </div>
+    <div class="service-item">
+      <div class="service-num">09</div>
+      <div class="service-body">
+        <div class="service-title">Ideas and business brainstorming</div>
+        <div class="service-desc">We don't just execute a brief. We think about your business and bring new ideas to the table regularly, whether that's a new revenue stream, a seasonal campaign, a collaboration angle, or a product concept. As an example, a weekly pastry box subscription could create predictable recurring revenue, simplify baking volume planning, and open up a gifting category that practically sells itself. That's the kind of thinking we bring beyond the standard agency scope.</div>
+        <div class="service-tags"><span class="service-tag terra">Strategy</span><span class="service-tag">New Ideas</span><span class="service-tag">Growth</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE / DEMOS -->
+<section id="experience">
+  <div class="section-label"><span class="num">04</span> Live demos</div>
+  <h2 class="section-heading">See it, don't<br>just <em>hear about it.</em></h2>
+  <p class="section-intro">Two of the features we'd build into your site, live and interactive, right here.</p>
+
+  <!-- ALLERGEN QUIZ DEMO -->
+  <div class="quiz-wrapper" style="margin-bottom: 24px;" id="allergenQuiz">
+    <div class="quiz-header">
+      <div class="quiz-header-left">
+        <div class="quiz-eyebrow">Live demo</div>
+        <div class="quiz-title">Find your perfect Oh My Days treat</div>
+      </div>
+      <div class="quiz-progress-wrap">
+        <div class="quiz-step-label" id="stepLabel">Step 1 of 3</div>
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="progressFill" style="width:33%"></div></div>
+      </div>
+    </div>
+    <div class="quiz-body" id="quizBody"></div>
+    <div class="quiz-footer" id="quizFooter">
+      <div class="quiz-hint" id="quizHint">Select all that apply, or skip if none</div>
+      <div class="quiz-nav">
+        <button class="qbtn sec" id="backBtn" onclick="qPrev()" style="display:none">Back</button>
+        <button class="qbtn pri" id="nextBtn" onclick="qNext()">Next</button>
+      </div>
+    </div>
+    <div class="quiz-result-panel" id="quizResult">
+      <div class="quiz-result-title" id="resultTitle">Here's what's perfect for you.</div>
+      <div class="quiz-result-sub" id="resultSub">Based on your preferences, these Oh My Days treats are made for you.</div>
+      <div class="product-grid" id="productGrid" style="margin: 24px 0; text-align:left;"></div>
+      <div class="no-results" id="noResults">We'll find something for everyone — pop into the shop and chat with the team.</div>
+      <button class="qbtn-restart" onclick="qReset()">Start again</button>
+    </div>
+  </div>
+
+  <!-- COLLECTION CARD DEMO -->
+  <div class="collection-demo">
+    <div class="collection-demo-header">
+      <div class="demo-eyebrow">Live demo</div>
+      <div class="demo-title">Collection feature cards — educational and branded</div>
+    </div>
+    <div class="collection-grid">
+      <div class="coll-card">
+        <div class="coll-img croissants">🥐</div>
+        <div class="coll-body">
+          <div class="coll-name">Artisan Croissants</div>
+          <div class="coll-desc">Laminated overnight with organic shea butter from Denmark. Indistinguishable from the real thing.</div>
+          <div class="coll-tags">
+            <span class="coll-tag">Vegan</span>
+            <span class="coll-tag free">Dairy-free</span>
+            <span class="coll-tag free">Egg-free</span>
+          </div>
+        </div>
+      </div>
+      <div class="coll-card">
+        <div class="coll-img cakes">🎂</div>
+        <div class="coll-body">
+          <div class="coll-name">Celebration Cakes</div>
+          <div class="coll-desc">Custom-made for any occasion. Order 5 days ahead. Each cake is built to order, not off a shelf.</div>
+          <div class="coll-tags">
+            <span class="coll-tag">Custom</span>
+            <span class="coll-tag free">Dairy-free</span>
+            <span class="coll-tag">Gluten options</span>
+          </div>
+        </div>
+      </div>
+      <div class="coll-card">
+        <div class="coll-img pastries">🍃</div>
+        <div class="coll-body">
+          <div class="coll-name">Seasonal Pastries</div>
+          <div class="coll-desc">Rotating weekly specials baked in small batches. Follow Instagram to never miss a drop.</div>
+          <div class="coll-tags">
+            <span class="coll-tag">Seasonal</span>
+            <span class="coll-tag free">Nut-free options</span>
+            <span class="coll-tag">Limited</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEW STRATEGY -->
+<section>
+  <div class="section-label"><span class="num">05</span> Review strategy</div>
+  <h2 class="section-heading">Reviews are<br><em>free advertising.</em></h2>
+  <p class="section-intro">Right now there's no system collecting them and no one responding to them. That changes on day one.</p>
+
+  <div class="review-box">
+    <div class="review-top">
+      <div class="review-icon">⭐</div>
+      <div class="review-top-text">
+        <div class="review-top-title">What we put in place immediately</div>
+        <div class="review-top-desc">A post-purchase email asking for a Google review, triggered automatically 48 hours after order pickup or delivery. In-store QR cards on the counter at both Glebe and Petersham. And every review responded to within 48 hours. Google rewards businesses that engage, and customers notice. A warm, human response to a negative review converts more people than five generic five-stars.</div>
+      </div>
+    </div>
+    <div class="review-stats">
+      <div class="review-stat">
+        <div class="review-stat-num">48h</div>
+        <div class="review-stat-label">Response time guarantee</div>
+      </div>
+      <div class="review-stat">
+        <div class="review-stat-num">2x</div>
+        <div class="review-stat-label">Projected review volume in 60 days</div>
+      </div>
+      <div class="review-stat">
+        <div class="review-stat-num">+SEO</div>
+        <div class="review-stat-label">Google ranking lift from engagement</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTMENT -->
+<section id="investment">
+  <div class="section-label"><span class="num">06</span> Investment</div>
+  <h2 class="section-heading">Transparent pricing.<br><em>No surprises.</em></h2>
+  <p class="section-intro">A monthly retainer covering everything, adjusted as we scale. No hidden fees, no per-asset charges, no awkward scope conversations.</p>
+
+  <div class="investment-box" style="margin-bottom: 16px;">
+    <div class="investment-top">
+      <div class="investment-top-row">
+        <div>
+          <div class="investment-title">Full-service retainer</div>
+          <div class="investment-subtitle">Ad spend separate and client-funded. 3-month minimum, then monthly rolling.</div>
+        </div>
+        <div>
+          <div class="investment-price">$3,000</div>
+          <div class="investment-price-label">+ GST per month</div>
+        </div>
+      </div>
+    </div>
+    <div class="inv-rows">
+      <div class="inv-row"><div class="inv-label">Ecommerce management and custom dev</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Allergen quiz (custom built)</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Collection feature cards</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Meta ads (strategy, creative, management)</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Google Shopping setup and management</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">TikTok organic strategy and posting</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Social media (2 to 3 posts per week, Instagram)</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Monthly content shoot day</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Review strategy and response management</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Email and SMS flows (Klaviyo)</div><div class="inv-val terra">Included</div></div>
+      <div class="inv-row"><div class="inv-label">Ad spend budget (client-funded)</div><div class="inv-val">Separate, full transparency</div></div>
+      <div class="inv-row"><div class="inv-label">Minimum commitment</div><div class="inv-val">3 months</div></div>
+      <div class="inv-row"><div class="inv-label">Exit clause</div><div class="inv-val terra">Any time after month 3</div></div>
+    </div>
+  </div>
+
+  <div class="handshake-box">
+    <div class="hs-icon">🤝</div>
+    <div>
+      <div class="hs-title">The handshake deal</div>
+      <div class="hs-desc">After the initial 3 months, this is a handshake arrangement. You stay because the work is delivering, not because a contract forces you to. If at any point you're not happy with how things are going, tell us and we part ways without drama. Everything we've built stays with you. That's the only way we want to work.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-texture"></div>
+  <div class="cta-content">
+    <h2 class="cta-heading">Ready to grow<br>as good as you <em>bake?</em></h2>
+    <p class="cta-sub">A 20-minute conversation. No pressure, no pitch deck theatre. Just a genuine chat about what's possible.</p>
+    <div class="cta-buttons">
+      <a href="mailto:hello@kliks.com.au?subject=Oh My Days, let's talk" class="btn-pri">Book a call</a>
+      <a href="https://kliks.com.au" class="btn-sec">See our work</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-text">Prepared exclusively for Oh My Days. Confidential. 2026</div>
+  <div class="footer-text">by <span class="footer-logo">Kliks</span></div>
+</footer>
+
+<script>
+// ALLERGEN QUIZ
+const products = [
+  { name: "Plain Croissant", emoji: "🥐", allergens: ["dairy","egg"], tags: ["Bestseller","Flaky"] },
+  { name: "Almond Croissant", emoji: "🥐", allergens: ["dairy","egg","nuts"], tags: ["Nutty","Popular"] },
+  { name: "Chocolate Eclair", emoji: "🍫", allergens: ["dairy","egg","gluten"], tags: ["Indulgent","Chocolate"] },
+  { name: "Gluten-Free Brownie", emoji: "🍫", allergens: ["dairy","egg","nuts"], tags: ["GF","Fudgy"] },
+  { name: "Seasonal Danish", emoji: "🌸", allergens: ["dairy","egg","gluten"], tags: ["Seasonal","Limited"] },
+  { name: "Nut-Free Tart", emoji: "🥧", allergens: ["dairy","egg","gluten"], tags: ["Nut-free","Classic"] },
+  { name: "Celebration Cake", emoji: "🎂", allergens: ["dairy","egg","gluten","soy"], tags: ["Custom","Order ahead"] },
+  { name: "Coconut Slice", emoji: "🍰", allergens: ["dairy","egg"], tags: ["GF","Tropical"] },
+];
+
+const allergenSteps = [
+  {
+    title: "Any allergies or intolerances to flag?",
+    sub: "Select everything that applies. We'll filter out anything with those ingredients.",
+    type: "allergens",
+    items: [
+      { key: "gluten", label: "Gluten / Wheat", icon: "🌾" },
+      { key: "nuts",   label: "Tree Nuts",       icon: "🥜" },
+      { key: "soy",    label: "Soy",              icon: "🫘" },
+      { key: "sesame", label: "Sesame",           icon: "🌿" },
+    ]
+  },
+  {
+    title: "What are you in the mood for?",
+    type: "options",
+    items: ["Something indulgent and chocolatey", "Light and flaky pastry", "A cake for a special occasion", "Surprise me with something seasonal"]
+  },
+  {
+    title: "Picking up in store or ordering online?",
+    type: "options",
+    items: ["Picking up at Glebe or Petersham", "Ordering online for delivery", "It's a gift for someone else", "Just browsing for now"]
+  }
+];
+
+let currentStep = 0;
+let selectedAllergens = new Set();
+let stepAnswers = {};
+
+function renderStep() {
+  const step = allergenSteps[currentStep];
+  const total = allergenSteps.length;
+  const pct = ((currentStep + 1) / total) * 100;
+
+  document.getElementById('stepLabel').textContent = `Step ${currentStep + 1} of ${total}`;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('backBtn').style.display = currentStep > 0 ? 'inline-block' : 'none';
+  document.getElementById('nextBtn').textContent = currentStep === total - 1 ? 'Show me my treats' : 'Next';
+
+  let html = `<div class="quiz-q">${step.title}</div>`;
+  if (step.sub) html += `<div class="quiz-sub">${step.sub}</div>`;
+
+  if (step.type === 'allergens') {
+    html += `<div class="allergen-grid">`;
+    step.items.forEach(item => {
+      const checked = selectedAllergens.has(item.key);
+      html += `<div class="allergen-chip ${checked ? 'checked' : ''}" onclick="toggleAllergen('${item.key}', this)">
+        <div class="allergen-cb">${checked ? '✓' : ''}</div>
+        <span class="allergen-icon">${item.icon}</span>
+        ${item.label}
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div class="quiz-options">`;
+    const letters = ['A','B','C','D'];
+    step.items.forEach((opt, i) => {
+      const sel = stepAnswers[currentStep] === opt;
+      html += `<div class="quiz-option ${sel ? 'selected' : ''}" onclick="selectOpt(${currentStep}, '${opt.replace(/'/g,"\\'")}', this)">
+        <div class="quiz-option-letter">${letters[i]}</div>${opt}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('quizBody').innerHTML = html;
+}
+
+function toggleAllergen(key, el) {
+  if (selectedAllergens.has(key)) {
+    selectedAllergens.delete(key);
+    el.classList.remove('checked');
+    el.querySelector('.allergen-cb').textContent = '';
+  } else {
+    selectedAllergens.add(key);
+    el.classList.add('checked');
+    el.querySelector('.allergen-cb').textContent = '✓';
+  }
+}
+
+function selectOpt(stepIdx, val, el) {
+  stepAnswers[stepIdx] = val;
+  document.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function qNext() {
+  const step = allergenSteps[currentStep];
+  if (step.type !== 'allergens' && !stepAnswers[currentStep]) {
+    const hint = document.getElementById('quizHint');
+    hint.textContent = 'Please make a selection to continue';
+    hint.style.color = 'var(--terra)';
+    setTimeout(() => { hint.textContent = 'Select all that apply, or skip if none'; hint.style.color = ''; }, 2000);
+    return;
+  }
+  if (currentStep < allergenSteps.length - 1) {
+    currentStep++;
+    renderStep();
+  } else {
+    showResults();
+  }
+}
+
+function qPrev() {
+  if (currentStep > 0) { currentStep--; renderStep(); }
+}
+
+function showResults() {
+  document.getElementById('quizBody').style.display = 'none';
+  document.getElementById('quizFooter').style.display = 'none';
+  document.getElementById('quizResult').classList.add('show');
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('stepLabel').textContent = 'Complete';
+
+  const safe = products.filter(p => !p.allergens.some(a => selectedAllergens.has(a)));
+
+  if (safe.length === 0) {
+    document.getElementById('noResults').style.display = 'block';
+    document.getElementById('resultTitle').textContent = "Let's find something for you.";
+    document.getElementById('resultSub').textContent = "Based on your selections, pop into the shop and chat with the team. They'll find something perfect.";
+  } else {
+    const show = safe.slice(0, 4);
+    let html = '';
+    show.forEach(p => {
+      html += `<div class="product-card">
+        <div class="product-emoji">${p.emoji}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-tags">
+          <span class="product-tag free">Safe for you</span>
+          ${p.tags.map(t => `<span class="product-tag">${t}</span>`).join('')}
+        </div>
+      </div>`;
+    });
+    document.getElementById('productGrid').innerHTML = html;
+    document.getElementById('resultSub').textContent = `${safe.length} products match your preferences. Here are a few to start with.`;
+  }
+}
+
+function qReset() {
+  currentStep = 0;
+  selectedAllergens = new Set();
+  stepAnswers = {};
+  document.getElementById('quizBody').style.display = 'block';
+  document.getElementById('quizFooter').style.display = 'flex';
+  document.getElementById('quizResult').classList.remove('show');
+  renderStep();
+}
+
+renderStep();
+</script>
+</body>
+</html>
