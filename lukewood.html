@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luke Wood — A Proposal from Kliks</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --lime: #c8f040;
+    --lime-dim: #9bbf2e;
+    --bg: #080808;
+    --bg1: #0f0f0f;
+    --bg2: #141414;
+    --bg3: #1a1a1a;
+    --border: #222;
+    --border2: #2a2a2a;
+    --text: #f0ede6;
+    --muted: #555;
+    --muted2: #888;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 48px;
+    background: rgba(8,8,8,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+    color: var(--lime);
+  }
+  .nav-links {
+    display: flex; gap: 28px; list-style: none;
+  }
+  .nav-links a {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 120px 48px 72px;
+    position: relative; overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-grain {
+    position: absolute; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4; pointer-events: none;
+  }
+  .hero-glow {
+    position: absolute; top: -200px; right: -200px; z-index: 0;
+    width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,240,64,0.08) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .hero-glow2 {
+    position: absolute; bottom: -100px; left: -100px; z-index: 0;
+    width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,240,64,0.04) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 900px; }
+  .hero-eyebrow {
+    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--lime); margin-bottom: 24px; font-weight: 500;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 32px; height: 1px; background: var(--lime);
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 12vw, 140px);
+    line-height: 0.88; letter-spacing: 0.02em;
+    margin-bottom: 32px;
+  }
+  .hero-title .accent { color: var(--lime); }
+  .hero-title .dim { color: var(--muted); }
+  .hero-sub {
+    font-size: 16px; color: var(--muted2); max-width: 520px;
+    line-height: 1.8; font-weight: 300; margin-bottom: 40px;
+  }
+  .hero-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 100px; padding: 8px 16px;
+    font-size: 11px; color: var(--muted2); letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 500;
+  }
+  .pill.active { background: rgba(200,240,64,0.08); border-color: rgba(200,240,64,0.3); color: var(--lime); }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
+
+  /* SECTIONS */
+  section { padding: 80px 48px; border-bottom: 1px solid var(--border); }
+  .section-label {
+    font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted); font-weight: 500; margin-bottom: 40px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .section-label span { color: var(--lime); margin-right: 4px; }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border); max-width: 100px;
+  }
+  .section-heading {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 6vw, 64px);
+    line-height: 0.95; margin-bottom: 16px;
+  }
+  .section-heading .accent { color: var(--lime); }
+  .section-intro {
+    font-size: 14px; color: var(--muted2); max-width: 500px;
+    line-height: 1.85; font-weight: 300; margin-bottom: 44px;
+  }
+
+  /* GAP GRID */
+  .gap-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+    border-radius: 16px; overflow: hidden;
+  }
+  .gap-item {
+    background: var(--bg1); padding: 28px;
+    transition: background 0.2s;
+  }
+  .gap-item:hover { background: var(--bg2); }
+  .gap-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px; color: var(--border2); line-height: 1;
+    margin-bottom: 12px;
+  }
+  .gap-title {
+    font-size: 13px; font-weight: 500; color: var(--lime);
+    margin-bottom: 8px; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .gap-desc { font-size: 13px; color: var(--muted); line-height: 1.75; }
+
+  /* CASE STUDY PITCH */
+  .pitch-box {
+    background: var(--bg1); border: 1px solid var(--border2);
+    border-radius: 20px; padding: 48px;
+    position: relative; overflow: hidden;
+  }
+  .pitch-box::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--lime), transparent);
+  }
+  .pitch-quote {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 4vw, 48px);
+    line-height: 1.1; color: var(--text); margin-bottom: 32px;
+  }
+  .pitch-quote .accent { color: var(--lime); }
+  .pitch-points { display: flex; flex-direction: column; gap: 16px; margin-bottom: 36px; }
+  .pitch-point {
+    display: flex; align-items: flex-start; gap: 16px;
+    font-size: 13px; color: var(--muted2); line-height: 1.7;
+  }
+  .pitch-point-icon {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(200,240,64,0.1); border: 1px solid rgba(200,240,64,0.3);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+    font-size: 10px; color: var(--lime);
+  }
+  .pitch-fine {
+    padding-top: 24px; border-top: 1px solid var(--border);
+  }
+  .pitch-fine-title {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 14px; font-weight: 500;
+  }
+  .pitch-fine-items { display: flex; flex-direction: column; gap: 10px; }
+  .pitch-fine-item {
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .pitch-fine-item::before { content: '—'; color: var(--border2); flex-shrink: 0; }
+
+  /* DELIVERABLES */
+  .deliverable-list { display: flex; flex-direction: column; gap: 2px; }
+  .deliverable {
+    display: flex; align-items: flex-start; gap: 24px;
+    background: var(--bg1); padding: 24px 28px;
+    transition: background 0.2s;
+  }
+  .deliverable:first-child { border-radius: 16px 16px 4px 4px; }
+  .deliverable:last-child { border-radius: 4px 4px 16px 16px; }
+  .deliverable:hover { background: var(--bg2); }
+  .del-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px; color: var(--border2);
+    line-height: 1; min-width: 40px; padding-top: 2px;
+  }
+  .del-body { flex: 1; }
+  .del-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+  .del-desc { font-size: 12px; color: var(--muted); line-height: 1.75; }
+  .del-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .del-tag {
+    display: inline-block;
+    background: rgba(200,240,64,0.07); border: 1px solid rgba(200,240,64,0.2);
+    border-radius: 100px; padding: 3px 10px;
+    font-size: 10px; color: var(--lime); letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 500;
+  }
+
+  /* FEATURES SHOWCASE */
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+    border-radius: 16px; overflow: hidden; margin-bottom: 2px;
+  }
+  .feature-card {
+    background: var(--bg1); padding: 28px;
+    transition: background 0.2s;
+  }
+  .feature-card:hover { background: var(--bg2); }
+  .feature-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(200,240,64,0.08); border: 1px solid rgba(200,240,64,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; margin-bottom: 14px;
+  }
+  .feature-title {
+    font-size: 13px; font-weight: 500; color: var(--text);
+    margin-bottom: 6px; letter-spacing: 0.02em;
+  }
+  .feature-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+  /* BEFORE/AFTER SLIDER */
+  .ba-section { background: var(--bg1); border-radius: 16px; overflow: hidden; margin-bottom: 2px; }
+  .ba-header { padding: 24px 28px 0; }
+  .ba-label {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--lime); font-weight: 500; margin-bottom: 8px;
+  }
+  .ba-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .ba-sub { font-size: 12px; color: var(--muted); }
+  .ba-wrapper {
+    position: relative; width: 100%; height: 220px;
+    overflow: hidden; cursor: col-resize; margin-top: 20px;
+    user-select: none;
+  }
+  .ba-before, .ba-after {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px;
+  }
+  .ba-before {
+    background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
+  }
+  .ba-after {
+    background: linear-gradient(135deg, rgba(200,240,64,0.12) 0%, rgba(200,240,64,0.04) 100%);
+  }
+  .ba-stat {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px; line-height: 1;
+  }
+  .ba-before .ba-stat { color: var(--muted); }
+  .ba-after .ba-stat { color: var(--lime); }
+  .ba-stat-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+  .ba-overlay {
+    position: absolute; inset: 0;
+    clip-path: inset(0 50% 0 0);
+  }
+  .ba-divider {
+    position: absolute; top: 0; bottom: 0;
+    width: 2px; background: var(--lime); left: 50%;
+    transform: translateX(-50%); z-index: 10;
+    pointer-events: none;
+  }
+  .ba-handle {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--lime); z-index: 11;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .ba-handle-arrows {
+    display: flex; gap: 2px; color: #000; font-size: 12px; font-weight: 700;
+  }
+  .ba-tag {
+    position: absolute; top: 12px; padding: 4px 10px;
+    border-radius: 100px; font-size: 10px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .ba-tag.before { left: 12px; background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+  .ba-tag.after { right: 12px; background: rgba(200,240,64,0.15); color: var(--lime); border: 1px solid rgba(200,240,64,0.3); }
+
+  /* QUESTIONNAIRE */
+  .quiz-wrapper {
+    background: var(--bg1); border-radius: 16px; overflow: hidden;
+  }
+  .quiz-header {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .quiz-header-left {}
+  .quiz-label {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--lime); font-weight: 500; margin-bottom: 4px;
+  }
+  .quiz-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .quiz-progress-wrap {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .quiz-progress-label { font-size: 11px; color: var(--muted); }
+  .quiz-progress-bar {
+    width: 80px; height: 3px; background: var(--border2); border-radius: 100px; overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%; background: var(--lime); border-radius: 100px;
+    transition: width 0.4s ease;
+  }
+  .quiz-body { padding: 36px 28px; min-height: 240px; }
+  .quiz-question {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px; line-height: 1.1; color: var(--text);
+    margin-bottom: 28px;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-option {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 14px 18px;
+    cursor: pointer; transition: all 0.15s; font-size: 13px; color: var(--muted2);
+  }
+  .quiz-option:hover {
+    border-color: rgba(200,240,64,0.4); color: var(--text);
+    background: rgba(200,240,64,0.04);
+  }
+  .quiz-option.selected {
+    border-color: var(--lime); background: rgba(200,240,64,0.08);
+    color: var(--lime);
+  }
+  .quiz-option-letter {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 500; flex-shrink: 0;
+    transition: all 0.15s; color: var(--muted);
+  }
+  .quiz-option.selected .quiz-option-letter {
+    background: var(--lime); border-color: var(--lime); color: #000;
+  }
+  .quiz-input-wrap { position: relative; }
+  .quiz-input {
+    width: 100%; background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 14px 18px;
+    font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.15s;
+  }
+  .quiz-input:focus { border-color: rgba(200,240,64,0.5); }
+  .quiz-input::placeholder { color: var(--muted); }
+  .quiz-footer {
+    padding: 20px 28px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .quiz-nav { display: flex; gap: 10px; }
+  .quiz-btn {
+    padding: 10px 24px; border-radius: 100px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.06em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif; border: none;
+  }
+  .quiz-btn.secondary {
+    background: transparent; border: 1px solid var(--border2); color: var(--muted);
+  }
+  .quiz-btn.secondary:hover { border-color: var(--border); color: var(--text); }
+  .quiz-btn.primary {
+    background: var(--lime); color: #000;
+  }
+  .quiz-btn.primary:hover { opacity: 0.88; transform: scale(0.98); }
+  .quiz-hint { font-size: 11px; color: var(--muted); }
+
+  /* RESULTS CARD */
+  .quiz-result { display: none; text-align: center; padding: 48px 28px; }
+  .quiz-result.show { display: block; }
+  .quiz-result-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(200,240,64,0.1); border: 1px solid rgba(200,240,64,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; font-size: 28px;
+  }
+  .quiz-result-heading {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px; color: var(--text); margin-bottom: 10px;
+  }
+  .quiz-result-sub { font-size: 13px; color: var(--muted); max-width: 320px; margin: 0 auto 24px; line-height: 1.7; }
+  .quiz-result-cta {
+    display: inline-block;
+    background: var(--lime); color: #000;
+    padding: 12px 28px; border-radius: 100px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
+    transition: opacity 0.15s;
+  }
+  .quiz-result-cta:hover { opacity: 0.85; }
+
+  /* STATS */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 2px; border-radius: 16px; overflow: hidden;
+  }
+  .stat-item {
+    background: var(--bg1); padding: 32px 28px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px; color: var(--lime); line-height: 1; margin-bottom: 6px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+
+  /* INVESTMENT */
+  .investment-box {
+    background: var(--bg1); border: 1px solid var(--border2);
+    border-radius: 20px; overflow: hidden;
+  }
+  .investment-top {
+    padding: 40px 40px 32px;
+    border-bottom: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  .investment-top::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--lime), transparent 60%);
+  }
+  .investment-top-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 20px; margin-bottom: 28px;
+  }
+  .investment-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px; color: var(--text); line-height: 1; margin-bottom: 6px;
+  }
+  .investment-subtitle { font-size: 13px; color: var(--muted); }
+  .investment-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px; color: var(--lime); line-height: 1;
+    text-align: right;
+  }
+  .investment-price-label {
+    font-size: 11px; color: var(--muted); text-align: right;
+    letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px;
+  }
+  .investment-rows { display: flex; flex-direction: column; }
+  .inv-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 40px; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .inv-row:last-child { border-bottom: none; }
+  .inv-row-label { color: var(--muted); }
+  .inv-row-val { color: var(--text); font-weight: 500; }
+  .inv-row-val.lime { color: var(--lime); }
+  .inv-row-val.dim { color: var(--muted); }
+
+  .guarantee-box {
+    margin-top: 20px;
+    background: rgba(200,240,64,0.05); border: 1px solid rgba(200,240,64,0.2);
+    border-radius: 14px; padding: 28px 32px;
+    display: flex; align-items: flex-start; gap: 20px;
+  }
+  .guarantee-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(200,240,64,0.1); border: 1px solid rgba(200,240,64,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .guarantee-text {}
+  .guarantee-title { font-size: 14px; font-weight: 500; color: var(--lime); margin-bottom: 6px; }
+  .guarantee-desc { font-size: 12px; color: var(--muted); line-height: 1.75; }
+
+  /* CTA */
+  .cta-section {
+    padding: 96px 48px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .cta-glow {
+    position: absolute; top: 50%; left: 50%; z-index: 0;
+    width: 600px; height: 400px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse, rgba(200,240,64,0.06) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .cta-content { position: relative; z-index: 1; }
+  .cta-heading {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 8vw, 96px);
+    line-height: 0.9; margin-bottom: 24px;
+  }
+  .cta-heading .accent { color: var(--lime); }
+  .cta-sub {
+    font-size: 15px; color: var(--muted2);
+    max-width: 420px; margin: 0 auto 40px; line-height: 1.8; font-weight: 300;
+  }
+  .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    display: inline-block;
+    background: var(--lime); color: #000;
+    padding: 16px 36px; border-radius: 100px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; border: none;
+    font-family: 'DM Sans', sans-serif; text-decoration: none;
+    transition: all 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.88; transform: scale(0.98); }
+  .btn-secondary {
+    display: inline-block;
+    background: transparent; color: var(--muted2);
+    padding: 16px 36px; border-radius: 100px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer;
+    border: 1px solid var(--border2); font-family: 'DM Sans', sans-serif;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--border); color: var(--text); }
+
+  /* FOOTER */
+  footer {
+    padding: 24px 48px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .footer-left { font-size: 11px; color: var(--muted); }
+  .footer-right { font-size: 11px; color: var(--muted); }
+  .footer-logo { color: var(--lime); font-weight: 500; }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-content > * {
+    animation: fadeUp 0.7s ease both;
+  }
+  .hero-eyebrow { animation-delay: 0.1s; }
+  .hero-title { animation-delay: 0.2s; }
+  .hero-sub { animation-delay: 0.35s; }
+  .hero-pills { animation-delay: 0.5s; }
+
+  /* RESPONSIVE */
+  @media (max-width: 700px) {
+    nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+    .hero, section { padding: 80px 20px 48px; }
+    .gap-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr; }
+    .cta-section { padding: 64px 20px; }
+    footer { padding: 20px; }
+    .hero { padding: 100px 20px 56px; }
+    .investment-top { padding: 28px 20px; }
+    .inv-row { padding: 12px 20px; }
+    .pitch-box { padding: 28px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">KLIKS</div>
+  <ul class="nav-links">
+    <li><a href="#gap">The gap</a></li>
+    <li><a href="#strategy">Strategy</a></li>
+    <li><a href="#deliverables">What we build</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#investment">Investment</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-grain"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">A proposal prepared for</div>
+    <h1 class="hero-title">
+      Luke<br>
+      <span class="accent">Wood</span><br>
+      <span class="dim">PT</span>
+    </h1>
+    <p class="hero-sub">You're already changing people's bodies. This is how we build a digital presence that changes how many people find you.</p>
+    <div class="hero-pills">
+      <div class="pill active"><div class="pill-dot"></div>Case Study Offer</div>
+      <div class="pill">Brand Identity</div>
+      <div class="pill">Website</div>
+      <div class="pill">Paid Ads</div>
+      <div class="pill">Lead Generation</div>
+    </div>
+  </div>
+</div>
+
+<!-- GAP -->
+<section id="gap">
+  <div class="section-label"><span>01</span> The gap</div>
+  <h2 class="section-heading">You're good at what you do.<br><span class="accent">The internet can't prove it.</span></h2>
+  <p class="section-intro">A Typeform link in an Instagram bio is a starting point, not a business. Here's what's missing and what it's costing you.</p>
+
+  <div class="gap-grid">
+    <div class="gap-item">
+      <div class="gap-num">01</div>
+      <div class="gap-title">No website</div>
+      <div class="gap-desc">When someone Googles your name after seeing you on Instagram, there's nothing. That's a trust deficit before you've even spoken.</div>
+    </div>
+    <div class="gap-item">
+      <div class="gap-num">02</div>
+      <div class="gap-title">No brand identity</div>
+      <div class="gap-desc">No logo, no colours, no visual system. Your brand lives only in your head, not in the minds of potential clients scrolling past.</div>
+    </div>
+    <div class="gap-item">
+      <div class="gap-num">03</div>
+      <div class="gap-title">A form, not a funnel</div>
+      <div class="gap-desc">Your Typeform collects leads but doesn't warm them up first. People need to buy into you before they'll fill anything out.</div>
+    </div>
+    <div class="gap-item">
+      <div class="gap-num">04</div>
+      <div class="gap-title">Social-only risk</div>
+      <div class="gap-desc">If Instagram limits your reach tomorrow, your entire pipeline disappears. You need owned digital real estate that you control.</div>
+    </div>
+  </div>
+</section>
+
+<!-- STRATEGY -->
+<section id="strategy">
+  <div class="section-label"><span>02</span> The strategy</div>
+  <h2 class="section-heading">Not a pitch.<br><span class="accent">A partnership.</span></h2>
+  <p class="section-intro">Here's the offer on the table. No upfront cost, no risk, just results.</p>
+
+  <div class="pitch-box">
+    <div class="pitch-quote">
+      "I'll build everything out as a <span class="accent">case study.</span> 3-month commitment, but if I haven't generated you leads within the first <span class="accent">60 days</span> — you walk away and pay nothing."
+    </div>
+    <div class="pitch-points">
+      <div class="pitch-point">
+        <div class="pitch-point-icon">✓</div>
+        <div>The 3-month commitment gives us enough runway to see real results from paid ads — not just vanity metrics.</div>
+      </div>
+      <div class="pitch-point">
+        <div class="pitch-point-icon">✓</div>
+        <div>The 60-day guarantee removes your risk completely. If leads aren't coming in, you owe nothing.</div>
+      </div>
+      <div class="pitch-point">
+        <div class="pitch-point-icon">✓</div>
+        <div>You're not a random client — you're a case study. That means I'm invested in making this work as much as you are.</div>
+      </div>
+      <div class="pitch-point">
+        <div class="pitch-point-icon">✓</div>
+        <div>A PT with a live Instagram following and a proper site behind the ads will generate leads. This is a low-risk bet.</div>
+      </div>
+    </div>
+    <div class="pitch-fine">
+      <div class="pitch-fine-title">Three things we'll define upfront</div>
+      <div class="pitch-fine-items">
+        <div class="pitch-fine-item">What counts as a lead — enquiry, filled form, or booked call. Written down, no grey area.</div>
+        <div class="pitch-fine-item">Ad spend budget managed transparently — you fund it, I control the targeting and creative.</div>
+        <div class="pitch-fine-item">A simple agreement document (Google Doc is fine) so both sides are protected.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DELIVERABLES -->
+<section id="deliverables">
+  <div class="section-label"><span>03</span> What we build</div>
+  <h2 class="section-heading">Everything.<br><span class="accent">Done properly.</span></h2>
+  <p class="section-intro">Not a template, not a rushed job. A complete digital foundation built to convert.</p>
+
+  <div class="deliverable-list">
+    <div class="deliverable">
+      <div class="del-num">01</div>
+      <div class="del-body">
+        <div class="del-title">Brand identity — logo, colours, typography</div>
+        <div class="del-desc">A visual identity built for fitness. Strong, credible, memorable. Designed to work across your website, socials, and any future print or merch.</div>
+        <div class="del-tags"><span class="del-tag">Design</span></div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="del-num">02</div>
+      <div class="del-body">
+        <div class="del-title">Website — 1 to 3 pages, fast and mobile-first</div>
+        <div class="del-desc">Introduces you, builds trust with results and testimonials, explains your process, and drives visitors to enquire. Your Typeform embedded and styled to match your brand.</div>
+        <div class="del-tags"><span class="del-tag">Web</span><span class="del-tag">Mobile</span></div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="del-num">03</div>
+      <div class="del-body">
+        <div class="del-title">Copywriting — words that sell for you</div>
+        <div class="del-desc">Headlines, bio, service descriptions, and a value proposition. Written in your voice, built around what your ideal client actually needs to hear.</div>
+        <div class="del-tags"><span class="del-tag">Copy</span></div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="del-num">04</div>
+      <div class="del-body">
+        <div class="del-title">Social bio and link-in-bio optimisation</div>
+        <div class="del-desc">Your Instagram profile updated to point to the new site. A clean, branded link-in-bio page that looks intentional — not improvised.</div>
+        <div class="del-tags"><span class="del-tag">Social</span></div>
+      </div>
+    </div>
+    <div class="deliverable">
+      <div class="del-num">05</div>
+      <div class="del-body">
+        <div class="del-title">Meta ads — strategy, creative and campaign setup</div>
+        <div class="del-desc">Direct-response campaigns built to drive qualified leads to your site. Ongoing management, reporting, and optimisation throughout the retainer period.</div>
+        <div class="del-tags"><span class="del-tag">Ads</span><span class="del-tag">Meta</span><span class="del-tag">Retainer</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE SHOWCASE -->
+<section id="experience">
+  <div class="section-label"><span>04</span> The experience</div>
+  <h2 class="section-heading">What your<br><span class="accent">website could feel like.</span></h2>
+  <p class="section-intro">A taste of the features we'd build into your site — interactive, elevated, and built to convert.</p>
+
+  <!-- FEATURES GRID -->
+  <div class="features-grid" style="margin-bottom: 2px;">
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Results counter</div>
+      <div class="feature-desc">Live stats — clients transformed, kg lost, weeks to goal. Social proof that hits immediately.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💬</div>
+      <div class="feature-title">Transformation stories</div>
+      <div class="feature-desc">Client cards with photo, goal, timeframe, and result. Scrollable, filterable, human.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <div class="feature-title">Direct booking</div>
+      <div class="feature-desc">Calendly-style booking embedded into the site. A lead books a call without a back-and-forth DM.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📸</div>
+      <div class="feature-title">Instagram feed</div>
+      <div class="feature-desc">Live feed pulled from your Instagram. Keeps the site fresh with zero maintenance from you.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💚</div>
+      <div class="feature-title">WhatsApp button</div>
+      <div class="feature-desc">One tap to start a conversation. The lowest-friction lead capture you can have.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⭐</div>
+      <div class="feature-title">Testimonial carousel</div>
+      <div class="feature-desc">Google reviews or hand-picked quotes rotating automatically. Trust built on autopilot.</div>
+    </div>
+  </div>
+
+  <!-- BEFORE AFTER DEMO -->
+  <div class="ba-section" style="margin-bottom: 2px;">
+    <div class="ba-header">
+      <div class="ba-label">Live demo</div>
+      <div class="ba-title">Before and after slider</div>
+      <div class="ba-sub">Drag to reveal — exactly how it would work on your site</div>
+    </div>
+    <div class="ba-wrapper" id="baWrapper">
+      <div class="ba-before">
+        <div class="ba-stat">Week 1</div>
+        <div class="ba-stat-label">Starting point</div>
+      </div>
+      <div class="ba-after" style="background: linear-gradient(135deg, rgba(200,240,64,0.15) 0%, rgba(200,240,64,0.05) 100%);">
+        <div class="ba-stat" style="color: var(--lime);">Week 12</div>
+        <div class="ba-stat-label" style="color: var(--lime-dim);">Transformation</div>
+      </div>
+      <div class="ba-overlay" id="baOverlay">
+        <div class="ba-after" style="background: linear-gradient(135deg, rgba(200,240,64,0.15) 0%, rgba(200,240,64,0.05) 100%);">
+          <div class="ba-stat" style="color: var(--lime);">Week 12</div>
+          <div class="ba-stat-label" style="color: var(--lime-dim);">Transformation</div>
+        </div>
+      </div>
+      <div class="ba-divider" id="baDivider"></div>
+      <div class="ba-handle" id="baHandle">
+        <div class="ba-handle-arrows">&#8249;&#8250;</div>
+      </div>
+      <div class="ba-tag before">Before</div>
+      <div class="ba-tag after">After</div>
+    </div>
+  </div>
+
+  <!-- QUESTIONNAIRE DEMO -->
+  <div class="quiz-wrapper" id="quizWrapper">
+    <div class="quiz-header">
+      <div class="quiz-header-left">
+        <div class="quiz-label">Live demo</div>
+        <div class="quiz-title">Branded intake questionnaire</div>
+      </div>
+      <div class="quiz-progress-wrap">
+        <div class="quiz-progress-label" id="quizProgressLabel">1 of 5</div>
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" id="quizProgressFill" style="width: 20%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="quiz-body" id="quizBody">
+      <!-- Questions injected by JS -->
+    </div>
+    <div class="quiz-footer" id="quizFooter">
+      <div class="quiz-hint" id="quizHint">Press Enter or click Next</div>
+      <div class="quiz-nav">
+        <button class="quiz-btn secondary" id="quizBack" onclick="quizPrev()" style="display:none;">Back</button>
+        <button class="quiz-btn primary" id="quizNext" onclick="quizNext()">Next</button>
+      </div>
+    </div>
+    <div class="quiz-result" id="quizResult">
+      <div class="quiz-result-icon">🎯</div>
+      <div class="quiz-result-heading">You're a great fit.</div>
+      <div class="quiz-result-sub">Luke reviews every application personally and will be in touch within 24 hours to book your free strategy call.</div>
+      <button class="quiz-result-cta" onclick="quizReset()">Start over</button>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section>
+  <div class="section-label"><span>05</span> Why Kliks</div>
+  <h2 class="section-heading">Performance background.<br><span class="accent">Commercial results.</span></h2>
+  <p class="section-intro" style="margin-bottom: 44px;">Not a generic web agency. A team with a direct-response ads background and e-commerce track record — everything built to convert, not just look good.</p>
+
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="stat-num">Ads</div>
+      <div class="stat-label">Paid media background</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">DTC</div>
+      <div class="stat-label">Shopify and e-com experience</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">Fast</div>
+      <div class="stat-label">Live in 2 to 3 weeks</div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTMENT -->
+<section id="investment">
+  <div class="section-label"><span>06</span> Investment</div>
+  <h2 class="section-heading">Zero upfront.<br><span class="accent">Results or nothing.</span></h2>
+  <p class="section-intro">The setup is free. You fund the ad spend. We work together for 3 months — if leads aren't flowing in 60 days, you walk away and owe nothing.</p>
+
+  <div class="investment-box">
+    <div class="investment-top">
+      <div class="investment-top-row">
+        <div>
+          <div class="investment-title">Case Study Package</div>
+          <div class="investment-subtitle">3-month retainer, 60-day lead guarantee</div>
+        </div>
+        <div>
+          <div class="investment-price">$0</div>
+          <div class="investment-price-label">Setup fee</div>
+        </div>
+      </div>
+    </div>
+    <div class="investment-rows">
+      <div class="inv-row">
+        <div class="inv-row-label">Brand identity (logo + visual guidelines)</div>
+        <div class="inv-row-val lime">Included</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">Website design and development</div>
+        <div class="inv-row-val lime">Included</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">Typeform embedded and styled to brand</div>
+        <div class="inv-row-val lime">Included</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">Copywriting and messaging</div>
+        <div class="inv-row-val lime">Included</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">Social bio and link-in-bio update</div>
+        <div class="inv-row-val lime">Included</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">Meta ads — strategy, creative, management</div>
+        <div class="inv-row-val">$500–$1,000 AUD/month</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">Ad spend budget (client-funded)</div>
+        <div class="inv-row-val">$300–$500 AUD/month</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">Minimum commitment</div>
+        <div class="inv-row-val">3 months</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">60-day lead guarantee</div>
+        <div class="inv-row-val lime">No leads = no charge</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-row-label">Delivery of website and brand</div>
+        <div class="inv-row-val">2–3 weeks</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="guarantee-box" style="margin-top: 16px;">
+    <div class="guarantee-icon">🛡</div>
+    <div class="guarantee-text">
+      <div class="guarantee-title">The 60-day guarantee</div>
+      <div class="guarantee-desc">If we haven't generated you measurable leads — defined upfront as filled enquiry forms or booked strategy calls — within the first 60 days, you walk away with zero obligation. No invoice, no awkward conversation. We define "lead" in writing before day one so there's no grey area.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="cta-content">
+    <h2 class="cta-heading">Ready to look as<br>good as your <span class="accent">results?</span></h2>
+    <p class="cta-sub">No pressure. A 20-minute call to see if it makes sense. Worst case, you've lost 20 minutes.</p>
+    <div class="cta-buttons">
+      <a href="mailto:hello@kliks.com.au?subject=Hey, I'm interested in the proposal" class="btn-primary">Book a call</a>
+      <a href="https://kliks.com.au" class="btn-secondary">See our work</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-left">Prepared exclusively for Luke Wood &mdash; Confidential &mdash; 2026</div>
+  <div class="footer-right">by <span class="footer-logo">Kliks</span></div>
+</footer>
+
+<script>
+  // BEFORE/AFTER SLIDER
+  const baWrapper = document.getElementById('baWrapper');
+  const baOverlay = document.getElementById('baOverlay');
+  const baDivider = document.getElementById('baDivider');
+  const baHandle = document.getElementById('baHandle');
+  let isDragging = false;
+
+  function setSlider(x) {
+    const rect = baWrapper.getBoundingClientRect();
+    let pct = Math.max(5, Math.min(95, ((x - rect.left) / rect.width) * 100));
+    baOverlay.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+    baDivider.style.left = pct + '%';
+    baHandle.style.left = pct + '%';
+  }
+
+  baWrapper.addEventListener('mousedown', e => { isDragging = true; setSlider(e.clientX); });
+  baWrapper.addEventListener('touchstart', e => { isDragging = true; setSlider(e.touches[0].clientX); }, { passive: true });
+  window.addEventListener('mousemove', e => { if (isDragging) setSlider(e.clientX); });
+  window.addEventListener('touchmove', e => { if (isDragging) setSlider(e.touches[0].clientX); }, { passive: true });
+  window.addEventListener('mouseup', () => isDragging = false);
+  window.addEventListener('touchend', () => isDragging = false);
+
+  // QUESTIONNAIRE
+  const questions = [
+    {
+      q: "What's your main goal right now?",
+      type: 'options',
+      options: ['Lose body fat', 'Build muscle and strength', 'Improve fitness and energy', 'Body recomposition']
+    },
+    {
+      q: "How long have you been training?",
+      type: 'options',
+      options: ['Complete beginner', 'Under 1 year', '1 to 3 years', '3+ years']
+    },
+    {
+      q: "How many days per week can you commit to training?",
+      type: 'options',
+      options: ['2 to 3 days', '3 to 4 days', '5+ days', 'It varies week to week']
+    },
+    {
+      q: "What's held you back from reaching your goal before?",
+      type: 'options',
+      options: ['No consistent plan', 'Lack of accountability', 'Not sure what to eat', 'Injury or health issues']
+    },
+    {
+      q: "What's your first name?",
+      type: 'input',
+      placeholder: 'Type your first name...'
+    }
+  ];
+
+  let currentQ = 0;
+  let answers = {};
+
+  function renderQuestion() {
+    const q = questions[currentQ];
+    const total = questions.length;
+    const pct = ((currentQ + 1) / total) * 100;
+
+    document.getElementById('quizProgressLabel').textContent = `${currentQ + 1} of ${total}`;
+    document.getElementById('quizProgressFill').style.width = pct + '%';
+    document.getElementById('quizBack').style.display = currentQ > 0 ? 'inline-block' : 'none';
+    document.getElementById('quizNext').textContent = currentQ === total - 1 ? 'Submit' : 'Next';
+
+    let html = `<div class="quiz-question">${q.q}</div>`;
+
+    if (q.type === 'options') {
+      html += `<div class="quiz-options">`;
+      const letters = ['A', 'B', 'C', 'D'];
+      q.options.forEach((opt, i) => {
+        const isSelected = answers[currentQ] === opt;
+        html += `<div class="quiz-option${isSelected ? ' selected' : ''}" onclick="selectOption(${currentQ}, '${opt.replace(/'/g, "\\'")}', this)">
+          <div class="quiz-option-letter">${letters[i]}</div>
+          ${opt}
+        </div>`;
+      });
+      html += `</div>`;
+    } else {
+      const val = answers[currentQ] || '';
+      html += `<div class="quiz-input-wrap">
+        <input class="quiz-input" id="quizTextInput" type="text" placeholder="${q.placeholder}" value="${val}" oninput="answers[${currentQ}] = this.value" onkeydown="if(event.key==='Enter') quizNext()">
+      </div>`;
+    }
+
+    document.getElementById('quizBody').innerHTML = html;
+    if (q.type === 'input') {
+      setTimeout(() => {
+        const inp = document.getElementById('quizTextInput');
+        if (inp) inp.focus();
+      }, 50);
+    }
+  }
+
+  function selectOption(qIdx, val, el) {
+    answers[qIdx] = val;
+    document.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    el.querySelector('.quiz-option-letter').style.background = 'var(--lime)';
+    el.querySelector('.quiz-option-letter').style.color = '#000';
+    el.querySelector('.quiz-option-letter').style.borderColor = 'var(--lime)';
+  }
+
+  function quizNext() {
+    const q = questions[currentQ];
+    if (q.type === 'input') {
+      const inp = document.getElementById('quizTextInput');
+      if (inp) answers[currentQ] = inp.value;
+    }
+    if (!answers[currentQ]) {
+      document.getElementById('quizHint').textContent = 'Please make a selection to continue';
+      document.getElementById('quizHint').style.color = '#c8f040';
+      setTimeout(() => {
+        document.getElementById('quizHint').textContent = 'Press Enter or click Next';
+        document.getElementById('quizHint').style.color = '';
+      }, 2000);
+      return;
+    }
+    if (currentQ < questions.length - 1) {
+      currentQ++;
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function quizPrev() {
+    if (currentQ > 0) { currentQ--; renderQuestion(); }
+  }
+
+  function showResult() {
+    document.getElementById('quizBody').style.display = 'none';
+    document.getElementById('quizFooter').style.display = 'none';
+    document.getElementById('quizResult').classList.add('show');
+    document.getElementById('quizProgressFill').style.width = '100%';
+    document.getElementById('quizProgressLabel').textContent = 'Complete';
+  }
+
+  function quizReset() {
+    currentQ = 0;
+    answers = {};
+    document.getElementById('quizBody').style.display = 'block';
+    document.getElementById('quizFooter').style.display = 'flex';
+    document.getElementById('quizResult').classList.remove('show');
+    renderQuestion();
+  }
+
+  renderQuestion();
+</script>
+</body>
+</html>
