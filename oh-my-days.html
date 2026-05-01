@@ -58,6 +58,30 @@ nav {
 }
 .nav-links a:hover { color: var(--green); }
 
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  cursor: pointer; background: none; border: none; padding: 8px; z-index: 101;
+}
+.hamburger span {
+  display: block; width: 22px; height: 2px; background: var(--green);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.nav-overlay {
+  display: none; position: fixed; inset: 0; z-index: 99;
+  background: var(--cream); flex-direction: column;
+  align-items: center; justify-content: center; gap: 36px;
+}
+.nav-overlay a {
+  font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--green); text-decoration: none; font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-overlay a:hover { color: var(--terra); }
+body.nav-open .nav-overlay { display: flex; }
+body.nav-open .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+body.nav-open .hamburger span:nth-child(2) { opacity: 0; }
+body.nav-open .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
 /* HERO */
 .hero {
   min-height: 100vh;
@@ -418,6 +442,7 @@ footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex;
 @media (max-width: 700px) {
   nav { padding: 14px 20px; }
   .nav-links { display: none; }
+  .hamburger { display: flex; }
   .hero { min-height: 75vh; padding: 80px 20px 48px; }
   section { padding: 60px 20px 40px; }
   .opp-grid, .allergen-grid, .collection-grid, .cleanbreak-commitments { grid-template-columns: 1fr; }
@@ -441,7 +466,18 @@ footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex;
     <li><a href="#experience">Experience</a></li>
     <li><a href="#investment">Investment</a></li>
   </ul>
+  <button class="hamburger" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<div class="nav-overlay">
+  <a href="#opportunity" onclick="document.body.classList.remove('nav-open')">Opportunity</a>
+  <a href="#trust" onclick="document.body.classList.remove('nav-open')">Our promise</a>
+  <a href="#services" onclick="document.body.classList.remove('nav-open')">Services</a>
+  <a href="#experience" onclick="document.body.classList.remove('nav-open')">Experience</a>
+  <a href="#investment" onclick="document.body.classList.remove('nav-open')">Investment</a>
+</div>
 
 <!-- HERO -->
 <div class="hero">
@@ -981,6 +1017,11 @@ function qReset() {
 }
 
 renderStep();
+
+// Mobile nav
+document.querySelector('.hamburger').addEventListener('click', () => {
+  document.body.classList.toggle('nav-open');
+});
 </script>
 </body>
 </html>
