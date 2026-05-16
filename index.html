@@ -925,8 +925,28 @@
       gap: 24px;
       margin-bottom: 40px;
     }
-    .cta-check { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); }
-    .cta-check::before { content: '✓'; color: var(--orange); font-weight: 700; }
+    .cta-check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(255,255,255,0.55); }
+    .cta-check::before { content: '✓'; color: #ff4315; font-weight: 700; }
+    .cta-section-btn {
+      position: relative;
+      overflow: visible;
+      z-index: 1;
+    }
+    .cta-section-btn::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: inherit;
+      background: #ff4315;
+      filter: blur(20px);
+      opacity: 0.45;
+      z-index: -1;
+      animation: ctapulse 3.2s ease-in-out infinite;
+    }
+    @keyframes ctapulse {
+      0%, 100% { opacity: 0.45; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.08); }
+    }
 
     /* ─── CONTACT ─── */
     .contact-grid {
@@ -1368,14 +1388,14 @@
   <div class="container" style="position:relative;z-index:1;text-align:center;">
     <p class="cta-label">If you've read this far, you already know something needs fixing.</p>
     <h2 class="section-title fade-up">What's the next step?</h2>
-    <p class="section-sub fade-up" style="margin:0 auto 36px;">30 minutes. No pressure. We look at your store and tell you what's actually going on. After the call we put together a proper audit. We promise we won't sell you a course. 🙂</p>
+    <p class="section-sub fade-up" style="margin:0 auto 36px;max-width:600px;color:rgba(255,255,255,0.55);">30 minutes. No pressure. We look at your store and tell you what's actually going on. After the call we put together a proper audit. We promise we won't sell you a course.</p>
     <div class="cta-checks fade-up">
       <span class="cta-check">Free audit included</span>
       <span class="cta-check">No annual contract</span>
       <span class="cta-check">No juniors, no outsourcing</span>
       <span class="cta-check">We won't sell you a course</span>
     </div>
-    <a href="book.html" class="btn btn-lg fade-up">Book a free call &rarr;</a>
+    <a href="book.html" class="btn btn-lg fade-up cta-section-btn">Book a free call &rarr;</a>
   </div>
 </section>
 
