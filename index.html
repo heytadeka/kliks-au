@@ -971,15 +971,45 @@
       width: 100%;
     }
     .form-group input:focus, .form-group textarea:focus { border-color: rgba(100,75,255,0.4); }
+    .contact-form input:focus,
+    .contact-form textarea:focus,
+    .contact-form select:focus {
+      outline: none;
+      border-color: rgba(100,75,255,0.5);
+      box-shadow: 0 0 0 3px rgba(100,75,255,0.1);
+    }
     .form-group textarea { min-height: 120px; resize: vertical; }
     .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(255,255,255,0.3); }
     .contact-info h3 { font-family: 'Clash Display', sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 16px; letter-spacing: 0; }
     .contact-info > p { color: var(--muted); font-size: 16px; line-height: 1.75; margin-bottom: 32px; }
     .contact-rows { display: flex; flex-direction: column; gap: 20px; }
     .contact-row { display: flex; align-items: flex-start; gap: 16px; }
-    .contact-row-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
-    .contact-row-text strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-    .contact-row-text span { color: var(--muted); font-size: 14px; }
+    .contact-row-icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(100,75,255,0.12);
+      border: 1px solid rgba(100,75,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .contact-row-text strong { display: block; font-size: 15px; font-weight: 600; color: #ffffff; margin-bottom: 2px; }
+    .contact-row-text span { color: rgba(255,255,255,0.55); font-size: 14px; }
+    .send-btn {
+      position: relative;
+      overflow: visible;
+      z-index: 1;
+    }
+    .send-btn::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: inherit;
+      background: #ff4315;
+      filter: blur(20px);
+      opacity: 0.45;
+      z-index: -1;
+      animation: ctapulse 3.2s ease-in-out infinite;
+    }
 
     /* ─── FOOTER ─── */
     footer {
@@ -1422,7 +1452,7 @@
         </div>
         <div class="form-group">
           <label for="store">Store URL</label>
-          <input type="text" id="store" name="store" placeholder="https://yourstore.com.au">
+          <input type="text" id="store" name="store" placeholder="yourstore.com.au">
         </div>
         <div class="form-group">
           <label for="adspend">Monthly ad spend</label>
@@ -1432,7 +1462,7 @@
           <label for="message">What's the main challenge right now?</label>
           <textarea id="message" name="message" placeholder="e.g. ads running but not converting, want to migrate from WooCommerce, not sure why people aren't buying..."></textarea>
         </div>
-        <button type="submit" class="btn">Send it &rarr;</button>
+        <button type="submit" class="btn send-btn">Send it &rarr;</button>
       </form>
 
       <div class="contact-info fade-up">
@@ -1440,28 +1470,36 @@
         <p>We currently run several of our own brands where we test daily. I, Adam, personally put together an audit of where you're at and map out a clear action plan for you.</p>
         <div class="contact-rows">
           <div class="contact-row">
-            <span class="contact-row-icon">📍</span>
+            <div class="contact-row-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
             <div class="contact-row-text">
               <strong>Where we are</strong>
               <span>Sydney, but we work from anywhere</span>
             </div>
           </div>
           <div class="contact-row">
-            <span class="contact-row-icon">&#x26a1;</span>
+            <div class="contact-row-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
             <div class="contact-row-text">
               <strong>Response time</strong>
               <span>Within 24 hours, business days</span>
             </div>
           </div>
           <div class="contact-row">
-            <span class="contact-row-icon">🛍️</span>
+            <div class="contact-row-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            </div>
             <div class="contact-row-text">
               <strong>Who we help</strong>
               <span>Shopify stores running or wanting to run paid ads</span>
             </div>
           </div>
           <div class="contact-row">
-            <span class="contact-row-icon">🤝</span>
+            <div class="contact-row-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+            </div>
             <div class="contact-row-text">
               <strong>Commitment</strong>
               <span>No annual contract. If it's not working, we walk.</span>
