@@ -545,23 +545,51 @@
       gap: 24px;
       margin-bottom: 24px;
     }
-    .card-icon { font-size: 32px; margin-bottom: 20px; display: block; }
+    .card-icon-wrap {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(100,75,255,0.12);
+      border: 1px solid rgba(100,75,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #1a1828;
+      border: 1px solid rgba(100,75,255,0.12);
+      border-left: 3px solid #ff4315;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+      transition: border-color 200ms ease, transform 200ms ease;
+    }
+    .card:hover {
+      border-color: rgba(100,75,255,0.35);
+      border-left-color: #ff4315;
+      transform: translateY(-2px);
+    }
     .card h3 {
       font-family: 'Clash Display', sans-serif;
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      letter-spacing: -0.5px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 12px;
+      letter-spacing: 0;
+      text-align: left;
     }
-    .card p { color: var(--muted); font-size: 15px; line-height: 1.75; }
-    .card p + p { margin-top: 12px; }
+    .card p { color: rgba(255,255,255,0.55); font-size: 14.5px; line-height: 1.6; text-align: left; }
+    .card p + p { margin-top: 10px; }
     .card-full {
-      background: rgba(100,75,255,0.06);
-      border: 1px solid rgba(100,75,255,0.15);
-      border-radius: 20px;
-      padding: 48px;
+      background: linear-gradient(135deg, rgba(100,75,255,0.06) 0%, transparent 60%), #1a1828;
+      border: 1px solid rgba(100,75,255,0.12);
+      border-left: 3px solid #ff4315;
+      border-radius: 12px;
+      padding: 40px;
       position: relative;
       overflow: hidden;
+    }
+    .card-full-label {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #ff4315; display: block; margin-bottom: 12px;
     }
     .card-full h3 {
       font-family: 'Clash Display', sans-serif;
@@ -570,7 +598,7 @@
       margin-bottom: 20px;
       letter-spacing: 0;
     }
-    .card-full p { color: var(--muted); font-size: 15px; line-height: 1.75; max-width: 780px; }
+    .card-full p { color: rgba(255,255,255,0.55); font-size: 15px; line-height: 1.8; max-width: 780px; }
     .card-full p + p { margin-top: 12px; }
 
     /* ─── PROCESS ─── */
@@ -904,6 +932,8 @@
       .orb-1 { width: 360px; height: 360px; }
       .orb-2 { width: 310px; height: 310px; }
       .orb-3 { width: 270px; height: 270px; }
+      .services-grid { grid-template-columns: 1fr; }
+      .card-full { padding: 28px 24px; }
     }
 
     @media (max-width: 900px) {
@@ -1069,21 +1099,27 @@
 
     <div class="services-grid">
       <div class="card fade-up">
-        <span class="card-icon">📣</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
         <h3>Ads</h3>
         <p>Meta. Google. TikTok. Traffic is coming in, but it's not turning into revenue.</p>
         <p>Your campaign structure might be off. Your creatives aren't doing enough to stop the scroll. The wrong people are seeing your ads.</p>
         <p>We fix that. So visitors actually become customers.</p>
       </div>
       <div class="card fade-up">
-        <span class="card-icon">🛍️</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        </div>
         <h3>Shopify</h3>
         <p>We're a Shopify-focused agency. Full stop.</p>
         <p>Traffic alone doesn't pay the bills. If your store doesn't convert, that's money walking out the door.</p>
         <p>We optimise. We build. We migrate. Shopify only.</p>
       </div>
       <div class="card fade-up">
-        <span class="card-icon">🎯</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        </div>
         <h3>Creative Strategy</h3>
         <p>You're running ads. But the message isn't landing.</p>
         <p>Most creatives blend in. They don't stop anyone. They don't say anything worth stopping for.</p>
@@ -1092,6 +1128,7 @@
     </div>
 
     <div class="card-full fade-up">
+      <span class="card-full-label">How we work</span>
       <h3>Think of us as your outsourced ecommerce team.</h3>
       <p>Most Shopify store owners hit the same point. You're doing too much yourself.</p>
       <p>Ads, store, emails, fixes, everything. Hiring someone full-time feels expensive and risky.</p>
