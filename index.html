@@ -56,6 +56,10 @@
       --white: #ffffff;
       --muted: rgba(255,255,255,0.55);
       --border: rgba(100,75,255,0.12);
+      --cream: #fff7ef;
+      --pill: rgba(255, 247, 239, 0.04);
+      --pill-border: rgba(255, 247, 239, 0.10);
+      --line: rgba(255, 247, 239, 0.08);
     }
 
     html { scroll-behavior: smooth; }
@@ -81,6 +85,128 @@
       opacity: 0.09;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
       background-size: 128px 128px;
+    }
+
+    /* ─── HERO BACKGROUND LAYERS ─── */
+    .bg-base {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(100, 75, 255, 0.10), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 50% 100%, rgba(255, 67, 21, 0.05), transparent 60%);
+    }
+    .orbs {
+      position: absolute; inset: -20%; z-index: 0;
+      filter: blur(80px);
+      opacity: 0.85;
+      pointer-events: none;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      mix-blend-mode: screen;
+      will-change: transform;
+    }
+    .orb-1 {
+      width: 720px; height: 720px;
+      left: 8%; top: 4%;
+      background: radial-gradient(circle at 30% 30%, rgba(100, 75, 255, 0.55), rgba(100, 75, 255, 0) 65%);
+      animation: drift1 22s ease-in-out infinite alternate;
+    }
+    .orb-2 {
+      width: 620px; height: 620px;
+      right: 6%; top: 18%;
+      background: radial-gradient(circle at 60% 40%, rgba(255, 67, 21, 0.40), rgba(255, 67, 21, 0) 65%);
+      animation: drift2 28s ease-in-out infinite alternate;
+    }
+    .orb-3 {
+      width: 540px; height: 540px;
+      left: 38%; bottom: -10%;
+      background: radial-gradient(circle at 50% 50%, rgba(100, 75, 255, 0.35), rgba(100, 75, 255, 0) 65%);
+      animation: drift3 34s ease-in-out infinite alternate;
+    }
+    @keyframes drift1 {
+      0%   { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(120px, 80px, 0) scale(1.15); }
+    }
+    @keyframes drift2 {
+      0%   { transform: translate3d(0, 0, 0) scale(1.05); }
+      100% { transform: translate3d(-140px, 60px, 0) scale(0.92); }
+    }
+    @keyframes drift3 {
+      0%   { transform: translate3d(0, 0, 0) scale(0.95); }
+      100% { transform: translate3d(60px, -90px, 0) scale(1.1); }
+    }
+    .grain {
+      position: absolute; inset: 0; z-index: 1;
+      pointer-events: none;
+      opacity: 0.18;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyMjAnIGhlaWdodD0nMjIwJz48ZmlsdGVyIGlkPSduJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC45JyBudW1PY3RhdmVzPScyJyBzdGl0Y2hUaWxlcz0nc3RpdGNoJy8+PGZlQ29sb3JNYXRyaXggdmFsdWVzPScwIDAgMCAwIDEgIDAgMCAwIDAgMSAgMCAwIDAgMCAxICAwIDAgMCAwLjQ1IDAnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjbiknLz48L3N2Zz4=");
+      background-size: 220px 220px;
+    }
+    .vignette {
+      position: absolute; inset: 0; z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(14, 13, 26, 0.6) 100%);
+    }
+
+    /* ─── HERO EYEBROW ─── */
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 32px;
+      padding: 6px 14px 6px 8px;
+      border: 1px solid rgba(255, 247, 239, 0.10);
+      background: rgba(255, 247, 239, 0.04);
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.55);
+      letter-spacing: 0.02em;
+    }
+    .eyebrow .live-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(255, 67, 21, 0.15);
+      display: inline-flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .eyebrow .live-dot::after {
+      content: '';
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #ff4315;
+      box-shadow: 0 0 0 0 rgba(255, 67, 21, 0.6);
+      animation: livepulse 2.2s ease-out infinite;
+    }
+    @keyframes livepulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255, 67, 21, 0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(255, 67, 21, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 67, 21, 0); }
+    }
+
+    /* ─── HEADLINE WORD-DIFF ─── */
+    .headline .word-diff {
+      position: relative;
+      font-style: italic;
+      font-weight: 700;
+      color: #ff4315;
+      white-space: nowrap;
+    }
+    .headline .word-diff::after {
+      content: '';
+      position: absolute;
+      left: 2%; right: 2%;
+      bottom: 0.06em;
+      height: 0.06em;
+      background: #ff4315;
+      border-radius: 2px;
+      transform: scaleX(0);
+      transform-origin: left center;
+      animation: underline-in 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.6s forwards;
+    }
+    @keyframes underline-in {
+      to { transform: scaleX(1); }
     }
 
     /* Typography */
@@ -757,6 +883,13 @@
     .footer-right a:hover { color: var(--white); }
 
     /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      .orbs { inset: -10%; }
+      .orb-1 { width: 360px; height: 360px; }
+      .orb-2 { width: 310px; height: 310px; }
+      .orb-3 { width: 270px; height: 270px; }
+    }
+
     @media (max-width: 900px) {
       .container { padding: 0 24px; }
       .nav-inner { padding: 0 24px; }
@@ -789,6 +922,15 @@
   </style>
 </head>
 <body>
+
+<div class="bg-base"></div>
+<div class="orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+<div class="grain"></div>
+<div class="vignette"></div>
 
 <!-- ANNOUNCEMENT BAR -->
 <div class="announcement-bar">
@@ -826,10 +968,14 @@
 </div>
 
 <!-- HERO -->
-<section class="hero">
+<section class="hero" style="position:relative;overflow:hidden;isolation:isolate;">
   <div class="hero-blob hero-blob-purple"></div>
   <div class="hero-content">
-    <h1>We run ads for Shopify brands.<br>We own Shopify brands.<br>There's a difference.</h1>
+    <div class="eyebrow">
+      <span class="live-dot"></span>
+      <span>Booking Q3 — 2 spots open</span>
+    </div>
+    <h1 class="headline">We run ads for Shopify brands.<br>We own Shopify brands.<br>There's a <span class="word-diff">difference</span>.</h1>
     <div class="hero-pills">
       <span class="pill pill-neutral">Boutique agency</span>
       <span class="pill pill-purple">Founder driven</span>
