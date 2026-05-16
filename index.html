@@ -1553,5 +1553,32 @@
   hamburger.addEventListener('click', () => { document.body.classList.toggle('nav-open'); });
 </script>
 
+<script>
+(function() {
+  const now = new Date();
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Get next month
+  const nextMonthIndex = (now.getMonth() + 1) % 12;
+  const nextMonthYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+  const nextMonth = monthNames[nextMonthIndex];
+
+  // Randomly show 1 or 2 spots (weighted toward 1 for more urgency)
+  const spots = Math.random() > 0.5 ? '1 spot' : '2 spots';
+
+  // Update the eyebrow text
+  const eyebrow = document.querySelector('.eyebrow');
+  if (eyebrow) {
+    const textSpan = eyebrow.querySelector('span:last-child');
+    if (textSpan) {
+      textSpan.textContent = `Taking clients for ${nextMonth} — ${spots} open`;
+    }
+  }
+})();
+</script>
+
 </body>
 </html>
