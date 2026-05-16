@@ -813,22 +813,24 @@
 
     /* ─── STRAIGHT UP ─── */
     .article-card {
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 24px;
+      background: #1a1828;
+      border: 1px solid rgba(100,75,255,0.12);
+      border-left: 3px solid #ff4315;
+      border-radius: 12px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
       overflow: hidden;
     }
-    .article-card-inner { padding: 60px; }
+    .article-card-inner { padding: 48px; }
     .article-tag {
       display: inline-block;
-      background: rgba(100,75,255,0.12);
-      border: 1px solid rgba(100,75,255,0.2);
-      color: #a89cff;
-      border-radius: 100px;
-      padding: 6px 16px;
+      background: rgba(100,75,255,0.1);
+      border: 1px solid rgba(100,75,255,0.25);
+      color: #644bff;
+      border-radius: 999px;
+      padding: 4px 12px;
       font-size: 12px;
       font-weight: 600;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.05em;
       margin-bottom: 24px;
     }
     .article-title {
@@ -839,43 +841,44 @@
       margin-bottom: 24px;
     }
     .article-lead {
-      font-size: 20px;
-      color: var(--muted);
+      font-size: 15px;
+      color: rgba(255,255,255,0.55);
       margin-bottom: 28px;
-      line-height: 1.6;
+      line-height: 1.8;
     }
     .quote-lg {
       position: relative;
       padding: 24px 32px;
-      margin: 28px 0;
+      margin: 24px 0;
     }
     .quote-lg::before {
-      content: '"';
+      content: '\201C';
       position: absolute;
-      top: -12px; left: 16px;
+      top: -8px; left: 16px;
       font-family: 'Clash Display', sans-serif;
-      font-size: 80px;
-      color: var(--orange);
-      opacity: 0.4;
+      font-size: 52px;
+      color: #ff4315;
+      opacity: 1;
       line-height: 1;
     }
     .quote-lg p {
       font-family: 'Clash Display', sans-serif;
-      font-size: clamp(22px, 3vw, 32px);
+      font-size: clamp(28px, 3.5vw, 48px);
       font-weight: 700;
       letter-spacing: 0;
-      color: var(--white);
+      color: #ffffff;
+      text-shadow: 0 0 60px rgba(255,67,21,0.15);
     }
-    .article-body p { color: var(--muted); font-size: 16px; line-height: 1.8; margin-bottom: 20px; }
+    .article-body p { color: rgba(255,255,255,0.55); font-size: 15px; line-height: 1.8; margin-bottom: 20px; }
     .highlight-box {
       background: rgba(100,75,255,0.08);
       border: 1px solid rgba(100,75,255,0.15);
-      border-radius: 16px;
-      padding: 32px 36px;
+      border-radius: 10px;
+      padding: 28px;
       margin: 32px 0;
     }
-    .highlight-box strong { display: block; font-size: 16px; margin-bottom: 12px; color: var(--white); }
-    .highlight-box p { color: var(--muted); font-size: 15px; line-height: 1.75; margin: 0; }
+    .highlight-box strong { display: block; font-family: 'Clash Display', sans-serif; font-size: 16px; margin-bottom: 12px; color: #ffffff; }
+    .highlight-box p { color: rgba(255,255,255,0.55); font-size: 14.5px; line-height: 1.6; margin: 0; }
     .highlight-box p + p { margin-top: 12px; }
     .author-footer {
       display: flex;
@@ -894,8 +897,8 @@
       font-size: 18px;
       flex-shrink: 0;
     }
-    .author-info strong { display: block; font-size: 15px; }
-    .author-info span { color: var(--muted); font-size: 13px; }
+    .author-info strong { display: block; font-size: 15px; color: #ffffff; font-weight: 600; }
+    .author-info span { color: rgba(255,255,255,0.55); font-size: 13px; }
 
     /* ─── CTA ─── */
     .cta-section {
@@ -1320,9 +1323,9 @@
 <!-- STRAIGHT UP -->
 <section id="straight-up" style="background:var(--bg2);">
   <div class="container">
-    <span class="section-label fade-up">Straight Up</span>
+    <span class="section-label fade-up" style="font-size:11px;font-weight:600;letter-spacing:0.1em;color:#ff4315;text-transform:uppercase;">Straight Up</span>
     <h2 class="section-title fade-up">What nobody tells you about marketing agencies.</h2>
-    <p class="section-sub fade-up">You didn't ask for advice. But since you're here, it's worth knowing. Look for these things when you're searching for outside help:</p>
+    <p class="section-sub fade-up" style="color:rgba(255,255,255,0.55);">You didn't ask for advice. But since you're here, it's worth knowing. Look for these things when you're searching for outside help:</p>
 
     <div class="article-card fade-up">
       <div class="article-card-inner">
@@ -1336,7 +1339,7 @@
 
         <div class="article-body">
           <p>If not, why would you listen to them?</p>
-          <p>If someone has never risked their own money on an ad, never watched a campaign fail, never had to explain why revenue fell short — what gives them the right to tell you how to grow your business?</p>
+          <p>If someone has never risked their own money on an ad, never watched a campaign fail, never had to explain why revenue fell short - what gives them the right to tell you how to grow your business?</p>
           <p>Most agencies sell theory. Borrowed frameworks, never tested with anything at stake. Then they send the invoice.</p>
         </div>
 
