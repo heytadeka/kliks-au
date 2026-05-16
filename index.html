@@ -444,51 +444,67 @@
     }
 
     /* ─── STATS STRIP ─── */
-    .stats-strip {
+    /* ─── VALUE PROPS ─── */
+    .value-props {
+      padding: 80px 40px;
       border-top: 1px solid rgba(255,255,255,0.06);
       border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 60px 48px;
     }
-    .stats-inner {
-      max-width: 1200px;
+    .value-props-inner {
+      max-width: 1240px;
       margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
     }
-    .stat-block {
-      flex: 1;
-      padding: 0 40px;
-      text-align: center;
-      border-right: 1px solid rgba(255,255,255,0.06);
+    .vp-card {
+      background: #1a1828;
+      border: 1px solid rgba(100,75,255,0.12);
+      border-left: 3px solid #ff4315;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+      transition: border-color 200ms ease, transform 200ms ease;
     }
-    .stat-block:last-child { border-right: none; }
-    .stat-block:first-child { padding-left: 0; }
-    .stat-icon { font-size: 38px; margin-bottom: 14px; display: block; }
-    .stat-num {
+    .vp-card:hover {
+      border-color: rgba(100,75,255,0.35);
+      border-left-color: #ff4315;
+      transform: translateY(-2px);
+    }
+    .vp-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(100,75,255,0.12);
+      border: 1px solid rgba(100,75,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .vp-heading {
       font-family: 'Clash Display', sans-serif;
-      font-size: 52px;
-      font-weight: 800;
-      color: var(--orange);
-      line-height: 1;
-      margin-bottom: 8px;
+      font-size: 18px; font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 10px;
     }
-    .stat-text { font-size: 16px; color: var(--muted); line-height: 1.55; max-width: 200px; margin: 0 auto; }
+    .vp-body {
+      font-family: 'Satoshi', sans-serif;
+      font-size: 14.5px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.6;
+    }
 
     /* ─── MARQUEE ─── */
     .marquee-section {
-      padding: 56px 0;
+      padding: 64px 0 56px;
       overflow: hidden;
+      border-top: 1px solid rgba(100,75,255,0.12);
     }
     .marquee-label {
       text-align: center;
       font-size: 12px;
       font-weight: 600;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 32px;
+      margin-bottom: 40px;
     }
     .marquee-track {
       position: relative;
@@ -902,9 +918,8 @@
       .about-grid { grid-template-columns: 1fr; }
       .who-grid { grid-template-columns: 1fr; }
       .contact-grid { grid-template-columns: 1fr; }
-      .stats-inner { flex-direction: column; gap: 40px; }
-      .stat-block { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); padding: 0 0 40px; }
-      .stat-block:last-child { border-bottom: none; padding-bottom: 0; }
+      .value-props { padding: 60px 24px; }
+      .value-props-inner { grid-template-columns: 1fr; }
       .advantage-card { flex-direction: column; }
       .advantage-flags { font-size: 36px; }
       .article-card-inner { padding: 32px 24px; }
@@ -912,7 +927,6 @@
       .footer-center { justify-content: center; }
       .footer-right { justify-content: center; }
       .hero { min-height: 80vh; padding: 130px 24px 64px; }
-      .stats-strip { padding: 60px 24px; }
       .card-full { padding: 32px 24px; }
     }
 
@@ -986,19 +1000,37 @@
 </section>
 
 <!-- STATS STRIP -->
-<div class="stats-strip">
-  <div class="stats-inner">
-    <div class="stat-block fade-up">
-      <span class="stat-icon">🧪</span>
-      <p class="stat-text"><strong style="color:#fff;display:block;margin-bottom:8px;font-size:17px;">We run our own brands too</strong>So we know what it takes when it's your own money on the line.</p>
+<!-- VALUE PROPS -->
+<div class="value-props">
+  <div class="value-props-inner">
+    <div class="vp-card fade-up">
+      <div class="vp-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 7.5L10 3L17 7.5V17H13V12H7V17H3V7.5Z" stroke="#644bff" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="7" y="12" width="6" height="5" stroke="#644bff" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="vp-heading">We run our own brands too</div>
+      <div class="vp-body">So we know what it takes when it's your own money on the line.</div>
     </div>
-    <div class="stat-block fade-up">
-      <span class="stat-icon">🎯</span>
-      <p class="stat-text"><strong style="color:#fff;display:block;margin-bottom:8px;font-size:17px;">We know what stops the scroll</strong>We create ads that people actually stop, click and buy from.</p>
+    <div class="vp-card fade-up">
+      <div class="vp-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 4L16 10L6 16V4Z" stroke="#644bff" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="vp-heading">We know what stops the scroll</div>
+      <div class="vp-body">We create ads that people actually stop, click and buy from.</div>
     </div>
-    <div class="stat-block fade-up">
-      <span class="stat-icon">👥</span>
-      <p class="stat-text"><strong style="color:#fff;display:block;margin-bottom:8px;font-size:17px;">We think like owners</strong>We optimise for profit and growth, not clicks or vanity metrics.</p>
+    <div class="vp-card fade-up">
+      <div class="vp-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="3,14 7,9 11,11 17,5" stroke="#644bff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="14,5 17,5 17,8" stroke="#644bff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="vp-heading">We think like owners</div>
+      <div class="vp-body">We optimise for profit and growth, not clicks or vanity metrics.</div>
     </div>
   </div>
 </div>
