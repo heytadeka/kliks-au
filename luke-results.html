@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Results — Luke Wood Coaching</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --black: #060608; --bg1: #0d0d10; --bg2: #141418; --bg3: #1c1c22;
+  --border: #222228; --border2: #2a2a32;
+  --lime: #c8f040; --text: #f0ede6; --muted: #52525e; --muted2: #7a7a8a;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--black); color: var(--text); overflow-x: hidden; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px; height: 64px;
+  background: rgba(6,6,8,0.9); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.1em; color: var(--text); text-decoration: none; display: block; }
+.nav-logo span { color: var(--lime); }
+.nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
+.nav-links a { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted2); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover { color: var(--text); }
+.nav-cta { background: var(--lime); color: var(--black) !important; padding: 10px 22px; border-radius: 100px; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; }
+
+.page-hero {
+  padding: 140px 48px 80px;
+  border-bottom: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.hero-glow {
+  position: absolute; top: 0; right: -100px;
+  width: 400px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(200,240,64,0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+.page-eyebrow {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--lime); margin-bottom: 20px; font-weight: 500;
+}
+.page-eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--lime); }
+.page-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(52px, 8vw, 96px); line-height: 0.9;
+  color: var(--text); margin-bottom: 20px;
+}
+.page-title .lime { color: var(--lime); }
+.page-title .outline { -webkit-text-stroke: 1px var(--muted); color: transparent; }
+.page-sub { font-size: 14px; color: var(--muted2); max-width: 480px; line-height: 1.85; font-weight: 300; }
+
+/* STATS BAR */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+.stats-bar-item {
+  padding: 32px 48px; border-right: 1px solid var(--border); text-align: center;
+}
+.stats-bar-item:last-child { border-right: none; }
+.stats-bar-num { font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: var(--lime); line-height: 1; margin-bottom: 6px; }
+.stats-bar-label { font-size: 11px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* FILTERS */
+.filters-bar {
+  padding: 24px 48px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 8px 20px; border-radius: 100px; border: 1px solid var(--border2);
+  background: transparent; color: var(--muted2); font-size: 12px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--muted); color: var(--text); }
+.filter-btn.active { background: var(--lime); border-color: var(--lime); color: var(--black); }
+
+/* RESULTS GRID */
+.results-section { padding: 48px; }
+.results-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+
+.result-full-card {
+  background: var(--bg1); border: 1px solid var(--border2);
+  border-radius: 20px; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.result-full-card:hover { border-color: rgba(200,240,64,0.25); }
+.result-full-card.hidden { display: none; }
+
+/* SLIDER */
+.ba-slider-wrap {
+  position: relative; height: 280px; cursor: col-resize;
+  user-select: none; overflow: hidden;
+}
+.ba-before-panel, .ba-after-panel {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px;
+}
+.ba-before-panel { background: linear-gradient(135deg, #1a1a20, #111118); }
+.ba-after-panel { background: linear-gradient(135deg, rgba(200,240,64,0.12), rgba(200,240,64,0.04)); }
+.ba-clip { position: absolute; inset: 0; clip-path: inset(0 50% 0 0); }
+.ba-line { position: absolute; top: 0; bottom: 0; width: 2px; left: 50%; transform: translateX(-50%); background: var(--lime); z-index: 10; pointer-events: none; }
+.ba-handle-btn {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 40px; height: 40px; border-radius: 50%; background: var(--lime); z-index: 11;
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
+  font-size: 14px; font-weight: 700; color: var(--black);
+}
+.ba-label {
+  position: absolute; top: 12px; padding: 5px 12px; border-radius: 100px;
+  font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; z-index: 5;
+}
+.ba-label.before { left: 12px; background: var(--bg3); color: var(--muted2); border: 1px solid var(--border); }
+.ba-label.after { right: 12px; background: rgba(200,240,64,0.15); color: var(--lime); border: 1px solid rgba(200,240,64,0.3); }
+.panel-placeholder {
+  font-size: 48px; opacity: 0.1; margin-bottom: 6px;
+}
+.panel-text { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+
+.result-full-body { padding: 24px 28px; }
+.result-full-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+.result-full-name { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.result-full-type {
+  display: inline-block; background: rgba(200,240,64,0.08); border: 1px solid rgba(200,240,64,0.2);
+  border-radius: 100px; padding: 3px 12px; font-size: 10px; color: var(--lime);
+  letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+}
+.result-full-stats { display: flex; gap: 20px; flex-wrap: wrap; }
+.result-full-stat { text-align: center; }
+.result-full-stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--lime); line-height: 1; }
+.result-full-stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+.result-full-quote { font-size: 13px; color: var(--muted2); line-height: 1.75; font-style: italic; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+
+/* TIMELINE */
+.timeline-card {
+  background: var(--bg1); border: 1px solid var(--border2); border-radius: 20px;
+  overflow: hidden; margin-top: 24px; grid-column: 1 / -1;
+}
+.timeline-header { padding: 24px 28px; border-bottom: 1px solid var(--border); }
+.timeline-eyebrow { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--lime); font-weight: 500; margin-bottom: 4px; }
+.timeline-title { font-size: 15px; font-weight: 500; color: var(--text); }
+.timeline-body { padding: 28px; }
+.timeline-track { display: flex; gap: 0; position: relative; }
+.timeline-track::before {
+  content: ''; position: absolute; top: 20px; left: 20px; right: 20px; height: 2px;
+  background: var(--border2); z-index: 0;
+}
+.timeline-node { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; z-index: 1; }
+.timeline-dot {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2px solid var(--border2); background: var(--bg2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; color: var(--muted2);
+  transition: all 0.2s; cursor: pointer;
+}
+.timeline-node.active .timeline-dot { background: var(--lime); border-color: var(--lime); color: var(--black); }
+.timeline-node-label { font-size: 11px; color: var(--muted); text-align: center; letter-spacing: 0.06em; }
+.timeline-node.active .timeline-node-label { color: var(--lime); }
+.timeline-content { padding: 24px 0 0; display: flex; gap: 16px; }
+.timeline-placeholder {
+  flex: 1; height: 160px; border-radius: 12px;
+  background: var(--bg2); border: 1px dashed var(--border2);
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px;
+}
+.timeline-placeholder-icon { font-size: 32px; opacity: 0.2; }
+.timeline-placeholder-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* CTA STRIP */
+.cta-strip {
+  padding: 64px 48px; text-align: center;
+  border-top: 1px solid var(--border); background: var(--bg1);
+}
+.cta-strip-heading { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 5vw, 64px); line-height: 0.95; margin-bottom: 20px; }
+.cta-strip-heading .lime { color: var(--lime); }
+.cta-strip-sub { font-size: 14px; color: var(--muted2); max-width: 380px; margin: 0 auto 32px; line-height: 1.8; font-weight: 300; }
+
+.btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--lime); color: var(--black); padding: 14px 28px; border-radius: 100px; font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: all 0.15s; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-primary:hover { opacity: 0.88; transform: scale(0.98); }
+.btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--muted2); padding: 14px 28px; border-radius: 100px; font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: all 0.15s; border: 1px solid var(--border2); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-secondary:hover { color: var(--text); border-color: var(--muted); }
+
+footer { padding: 24px 48px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.footer-left { font-size: 12px; color: var(--muted); }
+.footer-nav { display: flex; gap: 24px; list-style: none; }
+.footer-nav a { font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.footer-nav a:hover { color: var(--text); }
+
+/* MOBILE NAV DRAWER */
+.nav-hamburger {
+  display: none; flex-direction: column; gap: 5px; cursor: pointer;
+  padding: 8px; border: none; background: transparent;
+}
+.nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.25s; }
+.nav-drawer {
+  display: none; position: fixed; top: 64px; left: 0; right: 0; bottom: 0;
+  background: rgba(6,6,8,0.98); z-index: 190;
+  flex-direction: column; align-items: center; justify-content: center; gap: 32px;
+  backdrop-filter: blur(20px);
+}
+.nav-drawer.open { display: flex; }
+.nav-drawer a { font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 0.06em; color: var(--text); text-decoration: none; transition: color 0.2s; }
+.nav-drawer a:hover { color: var(--lime); }
+.nav-drawer .nav-drawer-cta { background: var(--lime); color: var(--black); padding: 14px 36px; border-radius: 100px; font-size: 16px; font-weight: 500; }
+
+@media (max-width: 768px) {
+  /* NAV */
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+
+  /* PAGE HERO */
+  .page-hero { padding: 96px 20px 48px; }
+  .page-title { font-size: clamp(48px, 13vw, 72px); }
+  .page-sub { font-size: 13px; }
+
+  /* STATS BAR */
+  .stats-bar { grid-template-columns: 1fr 1fr; }
+  .stats-bar-item { padding: 20px 16px; border-right: none; border-bottom: 1px solid var(--border); }
+  .stats-bar-item:nth-child(odd) { border-right: 1px solid var(--border); }
+  .stats-bar-item:nth-child(3), .stats-bar-item:nth-child(4) { border-bottom: none; }
+  .stats-bar-num { font-size: 36px; }
+
+  /* FILTERS */
+  .filters-bar { padding: 16px 20px; gap: 8px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .filter-btn { flex-shrink: 0; padding: 8px 16px; font-size: 11px; }
+
+  /* RESULTS */
+  .results-section { padding: 24px 20px; }
+  .results-grid { grid-template-columns: 1fr; gap: 16px; }
+
+  /* SLIDERS */
+  .ba-slider-wrap { height: 240px; }
+  .ba-handle-btn { width: 48px; height: 48px; font-size: 16px; }
+
+  /* RESULT CARD */
+  .result-full-body { padding: 18px 20px; }
+  .result-full-name { font-size: 14px; }
+  .result-full-stats { gap: 14px; }
+  .result-full-stat-num { font-size: 22px; }
+
+  /* TIMELINE */
+  .timeline-card { grid-column: 1; }
+  .timeline-header { padding: 18px 20px; }
+  .timeline-body { padding: 20px; }
+  .timeline-dot { width: 36px; height: 36px; font-size: 10px; }
+  .timeline-content { flex-direction: column; }
+  .timeline-placeholder { height: 120px; }
+
+  /* CTA STRIP */
+  .cta-strip { padding: 48px 20px; }
+  .cta-strip-heading { font-size: clamp(36px, 10vw, 56px); }
+  .cta-strip a { width: 100%; justify-content: center; }
+
+  /* FOOTER */
+  footer { padding: 20px; flex-direction: column; align-items: flex-start; gap: 16px; }
+
+  body { padding-bottom: 0; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="luke-index.html" class="nav-logo">LUKE <span>WOOD</span></a>
+  <ul class="nav-links">
+    <li><a href="luke-index.html#process">How it works</a></li>
+    <li><a href="luke-index.html#packages">Packages</a></li>
+    <li><a href="luke-results.html">Results</a></li>
+    <li><a href="luke-index.html#faq">FAQ</a></li>
+    <li><a href="luke-apply.html" class="nav-cta">Apply now</a></li>
+  </ul>
+  <button class="nav-hamburger" onclick="toggleNav()" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="nav-drawer" id="navDrawer">
+  <a href="luke-index.html#process" onclick="closeNav()">How it works</a>
+  <a href="luke-index.html#packages" onclick="closeNav()">Packages</a>
+  <a href="luke-results.html" onclick="closeNav()">Results</a>
+  <a href="luke-index.html#faq" onclick="closeNav()">FAQ</a>
+  <a href="luke-apply.html" class="nav-drawer-cta" onclick="closeNav()">Apply now</a>
+</div>
+
+<div class="page-hero">
+  <div class="hero-glow"></div>
+  <div class="page-eyebrow">Client transformations</div>
+  <h1 class="page-title">REAL PEOPLE.<br><span class="lime">REAL</span><br><span class="outline">RESULTS.</span></h1>
+  <p class="page-sub">Every transformation on this page started with someone exactly where you are now. Different goals, different timelines, same commitment to showing up.</p>
+</div>
+
+<div class="stats-bar">
+  <div class="stats-bar-item">
+    <div class="stats-bar-num">50+</div>
+    <div class="stats-bar-label">Clients coached</div>
+  </div>
+  <div class="stats-bar-item">
+    <div class="stats-bar-num">380kg</div>
+    <div class="stats-bar-label">Total weight lost</div>
+  </div>
+  <div class="stats-bar-item">
+    <div class="stats-bar-num">94%</div>
+    <div class="stats-bar-label">Retention rate</div>
+  </div>
+  <div class="stats-bar-item">
+    <div class="stats-bar-num">12wk</div>
+    <div class="stats-bar-label">Average transformation</div>
+  </div>
+</div>
+
+<div class="filters-bar">
+  <button class="filter-btn active" onclick="filterResults('all', this)">All results</button>
+  <button class="filter-btn" onclick="filterResults('fat-loss', this)">Fat loss</button>
+  <button class="filter-btn" onclick="filterResults('muscle', this)">Muscle gain</button>
+  <button class="filter-btn" onclick="filterResults('recomp', this)">Body recomp</button>
+</div>
+
+<div class="results-section">
+  <div class="results-grid" id="resultsGrid">
+
+    <!-- RESULT 1 -->
+    <div class="result-full-card" data-category="fat-loss">
+      <div class="ba-slider-wrap" data-slider="1">
+        <div class="ba-before-panel">
+          <div class="panel-placeholder">📸</div>
+          <div class="panel-text">Before photo</div>
+        </div>
+        <div class="ba-after-panel">
+          <div class="panel-placeholder">📸</div>
+          <div class="panel-text">After photo</div>
+        </div>
+        <div class="ba-clip" data-clip="1">
+          <div class="ba-after-panel">
+            <div class="panel-placeholder">📸</div>
+            <div class="panel-text">After photo</div>
+          </div>
+        </div>
+        <div class="ba-line" data-line="1"></div>
+        <div class="ba-handle-btn" data-handle="1">⟷</div>
+        <div class="ba-label before">Before</div>
+        <div class="ba-label after">After</div>
+      </div>
+      <div class="result-full-body">
+        <div class="result-full-header">
+          <div>
+            <div class="result-full-name">Client name — placeholder</div>
+            <div class="result-full-type">Fat loss</div>
+          </div>
+          <div class="result-full-stats">
+            <div class="result-full-stat">
+              <div class="result-full-stat-num">-12kg</div>
+              <div class="result-full-stat-label">Lost</div>
+            </div>
+            <div class="result-full-stat">
+              <div class="result-full-stat-num">16wk</div>
+              <div class="result-full-stat-label">Duration</div>
+            </div>
+          </div>
+        </div>
+        <div class="result-full-quote">"Placeholder client quote goes here. The more specific the better — what they struggled with before, what changed, and how they feel now."</div>
+      </div>
+    </div>
+
+    <!-- RESULT 2 -->
+    <div class="result-full-card" data-category="muscle">
+      <div class="ba-slider-wrap" data-slider="2">
+        <div class="ba-before-panel">
+          <div class="panel-placeholder">📸</div>
+          <div class="panel-text">Before photo</div>
+        </div>
+        <div class="ba-after-panel">
+          <div class="panel-placeholder">📸</div>
+          <div class="panel-text">After photo</div>
+        </div>
+        <div class="ba-clip" data-clip="2">
+          <div class="ba-after-panel">
+            <div class="panel-placeholder">📸</div>
+            <div class="panel-text">After photo</div>
+          </div>
+        </div>
+        <div class="ba-line" data-line="2"></div>
+        <div class="ba-handle-btn" data-handle="2">⟷</div>
+        <div class="ba-label before">Before</div>
+        <div class="ba-label after">After</div>
+      </div>
+      <div class="result-full-body">
+        <div class="result-full-header">
+          <div>
+            <div class="result-full-name">Client name — placeholder</div>
+            <div class="result-full-type">Muscle gain</div>
+          </div>
+          <div class="result-full-stats">
+            <div class="result-full-stat">
+              <div class="result-full-stat-num">+8kg</div>
+              <div class="result-full-stat-label">Gained</div>
+            </div>
+            <div class="result-full-stat">
+              <div class="result-full-stat-num">20wk</div>
+              <div class="result-full-stat-label">Duration</div>
+            </div>
+          </div>
+        </div>
+        <div class="result-full-quote">"Placeholder client quote — muscle gain client perspective. What their training looked like before, what changed with a structured programme, and the results they're most proud of."</div>
+      </div>
+    </div>
+
+    <!-- RESULT 3 -->
+    <div class="result-full-card" data-category="recomp">
+      <div class="ba-slider-wrap" data-slider="3">
+        <div class="ba-before-panel">
+          <div class="panel-placeholder">📸</div>
+          <div class="panel-text">Before photo</div>
+        </div>
+        <div class="ba-after-panel">
+          <div class="panel-placeholder">📸</div>
+          <div class="panel-text">After photo</div>
+        </div>
+        <div class="ba-clip" data-clip="3">
+          <div class="ba-after-panel">
+            <div class="panel-placeholder">📸</div>
+            <div class="panel-text">After photo</div>
+          </div>
+        </div>
+        <div class="ba-line" data-line="3"></div>
+        <div class="ba-handle-btn" data-handle="3">⟷</div>
+        <div class="ba-label before">Before</div>
+        <div class="ba-label after">After</div>
+      </div>
+      <div class="result-full-body">
+        <div class="result-full-header">
+          <div>
+            <div class="result-full-name">Client name — placeholder</div>
+            <div class="result-full-type">Body recomp</div>
+          </div>
+          <div class="result-full-stats">
+            <div class="result-full-stat">
+              <div class="result-full-stat-num">12wk</div>
+              <div class="result-full-stat-label">Duration</div>
+            </div>
+            <div class="result-full-stat">
+              <div class="result-full-stat-num">-6%</div>
+              <div class="result-full-stat-label">Body fat</div>
+            </div>
+          </div>
+        </div>
+        <div class="result-full-quote">"Placeholder quote from a body recomp client. Scale weight barely changed but everything else did. This perspective resonates with a lot of people who aren't looking to just lose weight."</div>
+      </div>
+    </div>
+
+    <!-- RESULT 4 -->
+    <div class="result-full-card" data-category="fat-loss">
+      <div class="ba-slider-wrap" data-slider="4">
+        <div class="ba-before-panel">
+          <div class="panel-placeholder">📸</div>
+          <div class="panel-text">Before photo</div>
+        </div>
+        <div class="ba-after-panel">
+          <div class="panel-placeholder">📸</div>
+          <div class="panel-text">After photo</div>
+        </div>
+        <div class="ba-clip" data-clip="4">
+          <div class="ba-after-panel">
+            <div class="panel-placeholder">📸</div>
+            <div class="panel-text">After photo</div>
+          </div>
+        </div>
+        <div class="ba-line" data-line="4"></div>
+        <div class="ba-handle-btn" data-handle="4">⟷</div>
+        <div class="ba-label before">Before</div>
+        <div class="ba-label after">After</div>
+      </div>
+      <div class="result-full-body">
+        <div class="result-full-header">
+          <div>
+            <div class="result-full-name">Client name — placeholder</div>
+            <div class="result-full-type">Fat loss</div>
+          </div>
+          <div class="result-full-stats">
+            <div class="result-full-stat">
+              <div class="result-full-stat-num">-18kg</div>
+              <div class="result-full-stat-label">Lost</div>
+            </div>
+            <div class="result-full-stat">
+              <div class="result-full-stat-num">24wk</div>
+              <div class="result-full-stat-label">Duration</div>
+            </div>
+          </div>
+        </div>
+        <div class="result-full-quote">"Placeholder — a longer journey, bigger result. This client stuck with it through the tough weeks and came out the other side. That consistency story is incredibly powerful."</div>
+      </div>
+    </div>
+
+    <!-- TIMELINE CARD -->
+    <div class="timeline-card">
+      <div class="timeline-header">
+        <div class="timeline-eyebrow">Client journey spotlight</div>
+        <div class="timeline-title">12-week transformation — week by week progress</div>
+      </div>
+      <div class="timeline-body">
+        <div class="timeline-track">
+          <div class="timeline-node active" onclick="setTimeline(0, this)">
+            <div class="timeline-dot">W1</div>
+            <div class="timeline-node-label">Week 1</div>
+          </div>
+          <div class="timeline-node" onclick="setTimeline(1, this)">
+            <div class="timeline-dot">W4</div>
+            <div class="timeline-node-label">Week 4</div>
+          </div>
+          <div class="timeline-node" onclick="setTimeline(2, this)">
+            <div class="timeline-dot">W8</div>
+            <div class="timeline-node-label">Week 8</div>
+          </div>
+          <div class="timeline-node" onclick="setTimeline(3, this)">
+            <div class="timeline-dot">W12</div>
+            <div class="timeline-node-label">Week 12</div>
+          </div>
+        </div>
+        <div class="timeline-content" id="timelineContent">
+          <div class="timeline-placeholder">
+            <div class="timeline-placeholder-icon">📸</div>
+            <div class="timeline-placeholder-label">Week 1 progress photo</div>
+          </div>
+          <div style="flex: 2; display: flex; flex-direction: column; gap: 12px; padding-top: 8px;">
+            <div style="font-size: 16px; font-weight: 500; color: var(--text);" id="timelineTitle">Week 1 — Starting point</div>
+            <div style="font-size: 13px; color: var(--muted2); line-height: 1.75;" id="timelineDesc">First week of the programme. Training split established, nutrition targets set, baseline measurements taken. Energy levels low but motivation is high.</div>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;" id="timelineStats">
+              <div><div style="font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--lime);">92kg</div><div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;">Weight</div></div>
+              <div><div style="font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--lime);">28%</div><div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;">Body fat</div></div>
+              <div><div style="font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--lime);">Day 1</div><div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;">Journey</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="cta-strip">
+  <h2 class="cta-strip-heading">YOUR RESULTS<br>START <span class="lime">HERE.</span></h2>
+  <p class="cta-strip-sub">Every person on this page started with a 5-minute application. That's all it takes to find out if we're a good fit.</p>
+  <a href="luke-apply.html" class="btn-primary">Apply to work with Luke</a>
+</div>
+
+<footer>
+  <div class="footer-left">Luke Wood Coaching. All rights reserved. 2026.</div>
+  <ul class="footer-nav">
+    <li><a href="luke-index.html">Home</a></li>
+    <li><a href="luke-apply.html">Apply</a></li>
+    <li><a href="luke-index.html#faq">FAQ</a></li>
+  </ul>
+</footer>
+
+<script>
+// FILTER
+function filterResults(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.result-full-card').forEach(card => {
+    if (cat === 'all' || card.dataset.category === cat) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+}
+
+// BEFORE/AFTER SLIDERS
+function initSlider(wrap) {
+  const id = wrap.dataset.slider;
+  const clip = wrap.querySelector(`[data-clip="${id}"]`);
+  const line = wrap.querySelector(`[data-line="${id}"]`);
+  const handle = wrap.querySelector(`[data-handle="${id}"]`);
+  let dragging = false;
+
+  function setPos(x) {
+    const rect = wrap.getBoundingClientRect();
+    let pct = Math.max(5, Math.min(95, ((x - rect.left) / rect.width) * 100));
+    clip.style.clipPath = `inset(0 ${100-pct}% 0 0)`;
+    line.style.left = pct + '%';
+    handle.style.left = pct + '%';
+  }
+
+  wrap.addEventListener('mousedown', e => { dragging = true; setPos(e.clientX); });
+  wrap.addEventListener('touchstart', e => { dragging = true; setPos(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('mousemove', e => { if (dragging) setPos(e.clientX); });
+  window.addEventListener('touchmove', e => { if (dragging) setPos(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('mouseup', () => dragging = false);
+  window.addEventListener('touchend', () => dragging = false);
+}
+
+document.querySelectorAll('.ba-slider-wrap').forEach(initSlider);
+
+// TIMELINE
+const timelineData = [
+  { title: 'Week 1 — Starting point', desc: 'First week of the programme. Training split established, nutrition targets set, baseline measurements taken. Energy levels low but motivation is high.', stats: [['92kg','Weight'],['28%','Body fat'],['Day 1','Journey']] },
+  { title: 'Week 4 — First changes', desc: 'Starting to feel the difference in energy and strength. Scale hasn\'t moved much but clothes are fitting better. Training is clicking into place.', stats: [['89kg','Weight'],['26%','Body fat'],['Week 4','Journey']] },
+  { title: 'Week 8 — Real momentum', desc: 'Visible changes now. Strength is up significantly, sleep has improved, and the nutrition approach feels natural rather than restrictive. Consistency is paying off.', stats: [['85kg','Weight'],['23%','Body fat'],['Week 8','Journey']] },
+  { title: 'Week 12 — Transformation', desc: 'Final check-in. 12 weeks of consistent work showing in every metric. Programme continues with new targets and a refreshed training phase.', stats: [['80kg','Weight'],['20%','Body fat'],['Week 12','Journey']] },
+];
+
+function setTimeline(idx, node) {
+  document.querySelectorAll('.timeline-node').forEach(n => n.classList.remove('active'));
+  node.classList.add('active');
+  const d = timelineData[idx];
+  document.getElementById('timelineTitle').textContent = d.title;
+  document.getElementById('timelineDesc').textContent = d.desc;
+  document.getElementById('timelineStats').innerHTML = d.stats.map(([num, label]) =>
+    `<div><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--lime)">${num}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">${label}</div></div>`
+  ).join('');
+}
+function toggleNav() {
+  const drawer = document.getElementById('navDrawer');
+  drawer.classList.toggle('open');
+  document.body.style.overflow = drawer.classList.contains('open') ? 'hidden' : '';
+}
+function closeNav() {
+  document.getElementById('navDrawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+</script>
+</body>
+</html>

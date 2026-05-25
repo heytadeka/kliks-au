@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luke Wood — Online Coaching</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --black: #060608;
+  --bg1: #0d0d10;
+  --bg2: #141418;
+  --bg3: #1c1c22;
+  --border: #222228;
+  --border2: #2a2a32;
+  --lime: #c8f040;
+  --lime-dim: #8aaa28;
+  --text: #f0ede6;
+  --muted: #52525e;
+  --muted2: #7a7a8a;
+  --white: #fafaf8;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--black);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px; height: 64px;
+  background: rgba(6,6,8,0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 0.1em; color: var(--text);
+}
+.nav-logo span { color: var(--lime); }
+.nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
+.nav-links a {
+  font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted2); text-decoration: none; transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-cta {
+  background: var(--lime); color: var(--black);
+  padding: 10px 22px; border-radius: 100px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; transition: opacity 0.2s;
+}
+.nav-cta:hover { opacity: 0.85; color: var(--black); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: grid; grid-template-columns: 1fr 1fr;
+  position: relative; overflow: hidden;
+  padding-top: 64px;
+}
+.hero-left {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 80px 48px 80px 48px;
+  position: relative; z-index: 1;
+}
+.hero-right {
+  position: relative; overflow: hidden;
+}
+.hero-img-placeholder {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #1a1a20 0%, #0d0d10 100%);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px;
+}
+.hero-img-placeholder::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--black) 0%, transparent 30%);
+}
+.placeholder-icon { font-size: 80px; opacity: 0.12; }
+.placeholder-label {
+  font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.6;
+}
+.hero-glow {
+  position: absolute; top: 20%; left: -100px; z-index: 0;
+  width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(200,240,64,0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--lime); margin-bottom: 24px; font-weight: 500;
+}
+.hero-eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--lime); }
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(64px, 8vw, 112px);
+  line-height: 0.88; letter-spacing: 0.02em;
+  color: var(--text); margin-bottom: 28px;
+}
+.hero-title .lime { color: var(--lime); }
+.hero-title .outline {
+  -webkit-text-stroke: 1px var(--muted);
+  color: transparent;
+}
+.hero-sub {
+  font-size: 15px; color: var(--muted2); max-width: 420px;
+  line-height: 1.85; font-weight: 300; margin-bottom: 40px;
+}
+.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 56px; }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--lime); color: var(--black);
+  padding: 14px 28px; border-radius: 100px;
+  font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; transition: all 0.15s; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-primary:hover { opacity: 0.88; transform: scale(0.98); }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; color: var(--muted2);
+  padding: 14px 28px; border-radius: 100px;
+  font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; transition: all 0.15s;
+  border: 1px solid var(--border2); cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-secondary:hover { color: var(--text); border-color: var(--muted); }
+.hero-stats { display: flex; gap: 32px; }
+.hero-stat {}
+.hero-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px; color: var(--lime); line-height: 1; margin-bottom: 4px;
+}
+.hero-stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* TICKER */
+.ticker {
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  background: var(--bg1); overflow: hidden; padding: 14px 0;
+}
+.ticker-track {
+  display: flex; gap: 0; white-space: nowrap;
+  animation: ticker 30s linear infinite;
+}
+.ticker-item {
+  display: inline-flex; align-items: center; gap: 20px;
+  padding: 0 40px; font-size: 12px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted2);
+  flex-shrink: 0;
+}
+.ticker-item span { color: var(--lime); font-weight: 500; }
+.ticker-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border2); }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* SECTIONS */
+.section { padding: 96px 48px; border-bottom: 1px solid var(--border); }
+.section-label {
+  font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--muted); font-weight: 500; margin-bottom: 40px;
+  display: flex; align-items: center; gap: 16px;
+}
+.section-label .num { color: var(--lime); }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); max-width: 80px; }
+.section-heading {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 0.92; margin-bottom: 20px; color: var(--text);
+}
+.section-heading .lime { color: var(--lime); }
+.section-heading .outline {
+  -webkit-text-stroke: 1px var(--muted);
+  color: transparent;
+}
+.section-intro {
+  font-size: 14px; color: var(--muted2); max-width: 520px;
+  line-height: 1.85; font-weight: 300; margin-bottom: 56px;
+}
+
+/* PROBLEM SECTION */
+.problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; border-radius: 16px; overflow: hidden; }
+.problem-item {
+  background: var(--bg1); padding: 32px;
+  transition: background 0.2s; position: relative; overflow: hidden;
+}
+.problem-item::before {
+  content: '';
+  position: absolute; top: 0; left: 0; width: 2px; height: 0;
+  background: var(--lime); transition: height 0.3s;
+}
+.problem-item:hover::before { height: 100%; }
+.problem-item:hover { background: var(--bg2); }
+.problem-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px; color: var(--border2); line-height: 1; margin-bottom: 16px;
+}
+.problem-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.problem-desc { font-size: 13px; color: var(--muted2); line-height: 1.75; }
+
+/* PROCESS */
+.process-steps { display: flex; flex-direction: column; gap: 2px; }
+.process-step {
+  display: flex; align-items: flex-start; gap: 32px;
+  background: var(--bg1); padding: 32px 36px;
+  transition: background 0.2s; position: relative;
+}
+.process-step:first-child { border-radius: 16px 16px 4px 4px; }
+.process-step:last-child { border-radius: 4px 4px 16px 16px; }
+.process-step:hover { background: var(--bg2); }
+.process-step-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 64px; color: var(--border); line-height: 1;
+  min-width: 60px; flex-shrink: 0;
+}
+.process-step-body { padding-top: 8px; }
+.process-step-title { font-size: 18px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.process-step-desc { font-size: 13px; color: var(--muted2); line-height: 1.8; max-width: 560px; }
+.process-step-tag {
+  display: inline-block; margin-top: 14px;
+  background: rgba(200,240,64,0.08); border: 1px solid rgba(200,240,64,0.2);
+  border-radius: 100px; padding: 4px 12px;
+  font-size: 10px; color: var(--lime); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+}
+
+/* PACKAGES */
+.packages-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.package-card {
+  background: var(--bg1); border: 1px solid var(--border2);
+  border-radius: 20px; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.package-card:hover { border-color: rgba(200,240,64,0.3); }
+.package-card.featured {
+  border-color: var(--lime);
+  position: relative;
+}
+.package-badge {
+  position: absolute; top: 20px; right: 20px;
+  background: var(--lime); color: var(--black);
+  padding: 4px 12px; border-radius: 100px;
+  font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.package-top { padding: 32px 32px 24px; border-bottom: 1px solid var(--border); }
+.package-icon { font-size: 32px; margin-bottom: 16px; }
+.package-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px; color: var(--text); line-height: 1; margin-bottom: 8px;
+}
+.package-tagline { font-size: 13px; color: var(--muted2); line-height: 1.6; }
+.package-body { padding: 24px 32px 32px; }
+.package-features { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+.package-feature {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 13px; color: var(--muted2); line-height: 1.5;
+}
+.feature-check {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+  background: rgba(200,240,64,0.1); border: 1px solid rgba(200,240,64,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--lime);
+}
+.package-cta {
+  display: block; text-align: center;
+  background: var(--lime); color: var(--black);
+  padding: 14px; border-radius: 12px;
+  font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; transition: opacity 0.15s;
+}
+.package-cta:hover { opacity: 0.85; }
+.package-cta.outlined {
+  background: transparent; color: var(--muted2);
+  border: 1px solid var(--border2);
+}
+.package-cta.outlined:hover { color: var(--text); border-color: var(--muted); }
+
+/* IS THIS FOR YOU */
+.fit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fit-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+.fit-card.yes { border-color: rgba(200,240,64,0.2); }
+.fit-card.no { border-color: rgba(255,80,50,0.15); }
+.fit-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.fit-card-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.fit-card.yes .fit-card-icon { background: rgba(200,240,64,0.1); }
+.fit-card.no .fit-card-icon { background: rgba(255,80,50,0.08); }
+.fit-card-title { font-size: 14px; font-weight: 500; }
+.fit-card.yes .fit-card-title { color: var(--lime); }
+.fit-card.no .fit-card-title { color: #ff6040; }
+.fit-items { display: flex; flex-direction: column; gap: 12px; }
+.fit-item { display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: var(--muted2); line-height: 1.6; }
+.fit-bullet {
+  width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0;
+}
+.fit-card.yes .fit-bullet { background: var(--lime); }
+.fit-card.no .fit-bullet { background: #ff6040; }
+
+/* TESTIMONIALS */
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.testimonial-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px;
+}
+.testimonial-stars { color: var(--lime); font-size: 14px; margin-bottom: 14px; letter-spacing: 2px; }
+.testimonial-text { font-size: 13px; color: var(--muted2); line-height: 1.8; margin-bottom: 20px; font-style: italic; }
+.testimonial-author { display: flex; align-items: center; gap: 12px; }
+.testimonial-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.testimonial-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.testimonial-meta { font-size: 11px; color: var(--muted); }
+
+/* RESULTS PREVIEW */
+.results-preview {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px;
+}
+.result-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden; cursor: pointer;
+  transition: border-color 0.2s; text-decoration: none;
+}
+.result-card:hover { border-color: rgba(200,240,64,0.3); }
+.result-card-imgs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px; height: 140px;
+}
+.result-img {
+  background: var(--bg2);
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px;
+}
+.result-img.after { background: rgba(200,240,64,0.06); }
+.result-img-label {
+  font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+}
+.result-img-icon { font-size: 28px; opacity: 0.3; }
+.result-card-body { padding: 16px 20px; }
+.result-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+.result-stats { display: flex; gap: 12px; }
+.result-stat {
+  font-size: 11px; color: var(--muted2);
+}
+.result-stat strong { color: var(--lime); font-weight: 500; }
+
+/* FAQ */
+.faq-list { display: flex; flex-direction: column; gap: 2px; }
+.faq-item { background: var(--bg1); border-radius: 4px; overflow: hidden; }
+.faq-item:first-child { border-radius: 16px 16px 4px 4px; }
+.faq-item:last-child { border-radius: 4px 4px 16px 16px; }
+.faq-question {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 28px; cursor: pointer; font-size: 14px; font-weight: 500;
+  color: var(--text); transition: color 0.2s; user-select: none;
+}
+.faq-question:hover { color: var(--lime); }
+.faq-icon {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--muted2); flex-shrink: 0;
+  transition: all 0.2s;
+}
+.faq-item.open .faq-icon { background: var(--lime); color: var(--black); border-color: var(--lime); transform: rotate(45deg); }
+.faq-answer {
+  max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+  font-size: 13px; color: var(--muted2); line-height: 1.8;
+}
+.faq-answer-inner { padding: 0 28px 22px; }
+.faq-item.open .faq-answer { max-height: 200px; }
+
+/* FINAL CTA */
+.final-cta {
+  padding: 96px 48px; text-align: center;
+  background: var(--bg1); position: relative; overflow: hidden;
+}
+.final-cta-glow {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 600px; height: 400px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(200,240,64,0.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+.final-cta-content { position: relative; z-index: 1; }
+.final-cta-heading {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 8vw, 96px);
+  line-height: 0.9; color: var(--text); margin-bottom: 24px;
+}
+.final-cta-heading .lime { color: var(--lime); }
+.final-cta-sub {
+  font-size: 15px; color: var(--muted2); max-width: 400px;
+  margin: 0 auto 40px; line-height: 1.8; font-weight: 300;
+}
+.final-cta-note { font-size: 12px; color: var(--muted); margin-top: 16px; }
+
+/* STICKY MOBILE CTA */
+.sticky-cta {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  padding: 16px 20px; background: rgba(6,6,8,0.95);
+  border-top: 1px solid var(--border); backdrop-filter: blur(12px);
+}
+.sticky-cta a { display: block; width: 100%; text-align: center; }
+
+footer {
+  padding: 24px 48px; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 8px;
+}
+.footer-left { font-size: 12px; color: var(--muted); }
+.footer-nav { display: flex; gap: 24px; list-style: none; }
+.footer-nav a { font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.footer-nav a:hover { color: var(--text); }
+
+/* MOBILE NAV DRAWER */
+.nav-hamburger {
+  display: none; flex-direction: column; gap: 5px; cursor: pointer;
+  padding: 8px; border: none; background: transparent;
+}
+.nav-hamburger span {
+  display: block; width: 22px; height: 2px;
+  background: var(--text); border-radius: 2px;
+  transition: all 0.25s;
+}
+.nav-drawer {
+  display: none; position: fixed; top: 64px; left: 0; right: 0; bottom: 0;
+  background: rgba(6,6,8,0.98); z-index: 190;
+  flex-direction: column; align-items: center; justify-content: center; gap: 32px;
+  backdrop-filter: blur(20px);
+}
+.nav-drawer.open { display: flex; }
+.nav-drawer a {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 40px; letter-spacing: 0.06em; color: var(--text);
+  text-decoration: none; transition: color 0.2s;
+}
+.nav-drawer a:hover { color: var(--lime); }
+.nav-drawer .nav-drawer-cta {
+  background: var(--lime); color: var(--black);
+  padding: 14px 36px; border-radius: 100px;
+  font-size: 16px; font-weight: 500; letter-spacing: 0.1em;
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+.hero-eyebrow { animation: fadeUp 0.7s ease 0.1s both; }
+.hero-title { animation: fadeUp 0.7s ease 0.25s both; }
+.hero-sub { animation: fadeUp 0.7s ease 0.4s both; }
+.hero-ctas { animation: fadeUp 0.7s ease 0.5s both; }
+.hero-stats { animation: fadeUp 0.7s ease 0.6s both; }
+
+@media (max-width: 768px) {
+  /* NAV */
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+
+  /* HERO */
+  .hero { grid-template-columns: 1fr; min-height: auto; }
+  .hero-left { padding: 40px 20px 36px; }
+  .hero-right { height: 260px; }
+  .hero-title { font-size: clamp(52px, 14vw, 80px); }
+  .hero-sub { font-size: 14px; max-width: 100%; }
+  .hero-ctas { flex-direction: column; gap: 10px; }
+  .hero-ctas .btn-primary,
+  .hero-ctas .btn-secondary { justify-content: center; width: 100%; }
+  .hero-stats { gap: 20px; }
+  .hero-stat-num { font-size: 28px; }
+
+  /* TICKER */
+  .ticker-track { animation-duration: 20s; }
+
+  /* SECTIONS */
+  .section { padding: 56px 20px; }
+  .section-heading { font-size: clamp(36px, 10vw, 52px); }
+
+  /* PROBLEM */
+  .problem-grid { grid-template-columns: 1fr; }
+  .problem-item { padding: 24px 20px; }
+  .problem-num { font-size: 36px; }
+
+  /* PROCESS */
+  .process-step { flex-direction: column; gap: 12px; padding: 24px 20px; }
+  .process-step-num { font-size: 48px; min-width: auto; }
+
+  /* PACKAGES */
+  .packages-grid { grid-template-columns: 1fr; }
+  .package-top { padding: 24px 20px 18px; }
+  .package-body { padding: 18px 20px 24px; }
+  .package-badge { top: 14px; right: 14px; }
+
+  /* FIT CHECK */
+  .fit-grid { grid-template-columns: 1fr; }
+  .fit-card { padding: 24px 20px; }
+
+  /* TESTIMONIALS */
+  .testimonials-grid { grid-template-columns: 1fr; }
+  .testimonial-card { padding: 22px 20px; }
+
+  /* RESULTS PREVIEW */
+  .results-preview { grid-template-columns: 1fr; }
+
+  /* FAQ */
+  .faq-question { padding: 18px 20px; font-size: 13px; }
+  .faq-answer-inner { padding: 0 20px 18px; }
+
+  /* FINAL CTA */
+  .final-cta { padding: 64px 20px; }
+  .final-cta-heading { font-size: clamp(44px, 12vw, 72px); }
+  .final-cta-sub { font-size: 14px; }
+
+  /* FOOTER */
+  footer { padding: 20px; flex-direction: column; align-items: flex-start; gap: 16px; }
+
+  /* STICKY CTA */
+  .sticky-cta { display: block; }
+  body { padding-bottom: 80px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">LUKE <span>WOOD</span></div>
+  <ul class="nav-links">
+    <li><a href="#process">How it works</a></li>
+    <li><a href="#packages">Packages</a></li>
+    <li><a href="luke-results.html">Results</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="luke-apply.html" class="nav-cta">Apply now</a></li>
+  </ul>
+  <button class="nav-hamburger" onclick="toggleNav()" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="nav-drawer" id="navDrawer">
+  <a href="#process" onclick="closeNav()">How it works</a>
+  <a href="#packages" onclick="closeNav()">Packages</a>
+  <a href="luke-results.html" onclick="closeNav()">Results</a>
+  <a href="#faq" onclick="closeNav()">FAQ</a>
+  <a href="luke-apply.html" class="nav-drawer-cta" onclick="closeNav()">Apply now</a>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-left">
+    <div class="hero-eyebrow">Online coaching and nutrition</div>
+    <h1 class="hero-title">
+      BUILD THE<br>
+      BODY YOU<br>
+      <span class="lime">ACTUALLY</span><br>
+      <span class="outline">WANT.</span>
+    </h1>
+    <p class="hero-sub">No cookie-cutter plans. No guesswork. Just a proven system built around your life, your schedule, and your body. 1-on-1 online coaching with nutrition included.</p>
+    <div class="hero-ctas">
+      <a href="luke-apply.html" class="btn-primary">Apply to work with me</a>
+      <a href="luke-results.html" class="btn-secondary">See results</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">50+</div>
+        <div class="hero-stat-label">Clients coached</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">94%</div>
+        <div class="hero-stat-label">Retention rate</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">12wk</div>
+        <div class="hero-stat-label">Avg transformation</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-img-placeholder">
+      <div class="placeholder-icon">📸</div>
+      <div class="placeholder-label">Luke's photo goes here</div>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <div class="ticker-item"><span>Online coaching</span><div class="ticker-dot"></div></div>
+    <div class="ticker-item"><span>Nutrition planning</span><div class="ticker-dot"></div></div>
+    <div class="ticker-item">Real results<div class="ticker-dot"></div></div>
+    <div class="ticker-item"><span>1-on-1 support</span><div class="ticker-dot"></div></div>
+    <div class="ticker-item">Weekly check-ins<div class="ticker-dot"></div></div>
+    <div class="ticker-item"><span>Custom programming</span><div class="ticker-dot"></div></div>
+    <div class="ticker-item">No cookie-cutter plans<div class="ticker-dot"></div></div>
+    <div class="ticker-item"><span>Online coaching</span><div class="ticker-dot"></div></div>
+    <div class="ticker-item"><span>Nutrition planning</span><div class="ticker-dot"></div></div>
+    <div class="ticker-item">Real results<div class="ticker-dot"></div></div>
+    <div class="ticker-item"><span>1-on-1 support</span><div class="ticker-dot"></div></div>
+    <div class="ticker-item">Weekly check-ins<div class="ticker-dot"></div></div>
+    <div class="ticker-item"><span>Custom programming</span><div class="ticker-dot"></div></div>
+    <div class="ticker-item">No cookie-cutter plans<div class="ticker-dot"></div></div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="section" id="problem">
+  <div class="section-label"><span class="num">01</span> Sound familiar?</div>
+  <h2 class="section-heading">YOU'VE TRIED<br><span class="lime">EVERYTHING.</span><br><span class="outline">IT HASN'T WORKED.</span></h2>
+  <p class="section-intro">Most people aren't failing because of lack of effort. They're failing because they don't have the right system or the right support. Here's what usually gets in the way.</p>
+
+  <div class="problem-grid">
+    <div class="problem-item">
+      <div class="problem-num">01</div>
+      <div class="problem-title">Training without a real plan</div>
+      <div class="problem-desc">Going to the gym consistently but not seeing progress because your training isn't structured, progressive, or built for your actual goals.</div>
+    </div>
+    <div class="problem-item">
+      <div class="problem-num">02</div>
+      <div class="problem-title">Nutrition feels impossible</div>
+      <div class="problem-desc">You've tried tracking, cutting carbs, eating clean. Nothing sticks because the approach doesn't fit your lifestyle or your relationship with food.</div>
+    </div>
+    <div class="problem-item">
+      <div class="problem-num">03</div>
+      <div class="problem-title">No accountability</div>
+      <div class="problem-desc">When life gets busy the gym is the first thing to go. Without someone in your corner, motivation comes and goes and results never last.</div>
+    </div>
+    <div class="problem-item">
+      <div class="problem-num">04</div>
+      <div class="problem-title">Information overload</div>
+      <div class="problem-desc">Too much conflicting advice online. You don't know what to follow so you switch between approaches and never see anything through long enough to work.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="section" id="process">
+  <div class="section-label"><span class="num">02</span> How it works</div>
+  <h2 class="section-heading">SIMPLE.<br><span class="lime">PROVEN.</span><br><span class="outline">EFFECTIVE.</span></h2>
+  <p class="section-intro">Three steps from where you are now to where you want to be. No complicated onboarding, no overwhelming information dump. Just a clear path forward.</p>
+
+  <div class="process-steps">
+    <div class="process-step">
+      <div class="process-step-num">01</div>
+      <div class="process-step-body">
+        <div class="process-step-title">Apply and tell me about yourself</div>
+        <div class="process-step-desc">Fill out a short application so I can understand your goals, your current situation, your schedule, and whether we're a good fit. Takes about 5 minutes. No commitment required at this stage.</div>
+        <span class="process-step-tag">5 minute application</span>
+      </div>
+    </div>
+    <div class="process-step">
+      <div class="process-step-num">02</div>
+      <div class="process-step-body">
+        <div class="process-step-title">Free strategy call</div>
+        <div class="process-step-desc">If your application looks like a good fit I'll reach out to book a free 20-minute call. We'll talk through your goals in detail, I'll explain exactly how the coaching works, and we'll figure out the right approach for you.</div>
+        <span class="process-step-tag">20 min free call</span>
+      </div>
+    </div>
+    <div class="process-step">
+      <div class="process-step-num">03</div>
+      <div class="process-step-body">
+        <div class="process-step-title">Your custom plan starts week one</div>
+        <div class="process-step-desc">Training program built for your equipment and schedule. Nutrition approach designed around your lifestyle. Weekly check-ins to review progress, adjust the plan, and keep you accountable. This is where the work begins.</div>
+        <span class="process-step-tag">Week one kickoff</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PACKAGES -->
+<section class="section" id="packages">
+  <div class="section-label"><span class="num">03</span> Packages</div>
+  <h2 class="section-heading">FIND YOUR<br><span class="lime">FIT.</span></h2>
+  <p class="section-intro">Two options depending on what you need. Both include weekly check-ins, custom programming, and direct access to me. Pricing discussed on the strategy call.</p>
+
+  <div class="packages-grid">
+    <div class="package-card featured">
+      <div class="package-badge">Most popular</div>
+      <div class="package-top">
+        <div class="package-icon">🏆</div>
+        <div class="package-name">Coaching and Nutrition</div>
+        <div class="package-tagline">Full support — training and nutrition working together for faster, longer-lasting results.</div>
+      </div>
+      <div class="package-body">
+        <div class="package-features">
+          <div class="package-feature"><div class="feature-check">✓</div>Custom training program (gym or home)</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Personalised nutrition plan (no rigid meal plans)</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Weekly check-in and programme adjustment</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Direct messaging support 7 days a week</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Monthly strategy call (video)</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Progress tracking and body composition reviews</div>
+        </div>
+        <a href="luke-apply.html" class="package-cta">Apply for this package</a>
+      </div>
+    </div>
+    <div class="package-card">
+      <div class="package-top">
+        <div class="package-icon">💪</div>
+        <div class="package-name">Training Only</div>
+        <div class="package-tagline">For those who have nutrition handled and want expert programming and accountability.</div>
+      </div>
+      <div class="package-body">
+        <div class="package-features">
+          <div class="package-feature"><div class="feature-check">✓</div>Custom training program (gym or home)</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Weekly check-in and programme adjustment</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Direct messaging support 7 days a week</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Monthly strategy call (video)</div>
+          <div class="package-feature"><div class="feature-check">✓</div>Progress tracking and strength benchmarks</div>
+        </div>
+        <a href="luke-apply.html" class="package-cta outlined">Apply for this package</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IS THIS FOR YOU -->
+<section class="section">
+  <div class="section-label"><span class="num">04</span> Honest fit check</div>
+  <h2 class="section-heading">IS THIS<br><span class="lime">FOR YOU?</span></h2>
+  <p class="section-intro">I only take on clients I know I can genuinely help. Here's a straight answer on who this works for and who it doesn't.</p>
+
+  <div class="fit-grid">
+    <div class="fit-card yes">
+      <div class="fit-card-header">
+        <div class="fit-card-icon">✓</div>
+        <div class="fit-card-title">This is for you if...</div>
+      </div>
+      <div class="fit-items">
+        <div class="fit-item"><div class="fit-bullet"></div>You're ready to commit to at least 3 months and show up consistently</div>
+        <div class="fit-item"><div class="fit-bullet"></div>You want a plan built specifically for your life, not a generic template</div>
+        <div class="fit-item"><div class="fit-bullet"></div>You're open to coaching and honest feedback, even when it's uncomfortable</div>
+        <div class="fit-item"><div class="fit-bullet"></div>You've tried going it alone and know you need proper structure and support</div>
+        <div class="fit-item"><div class="fit-bullet"></div>You're willing to invest in yourself and take this seriously</div>
+      </div>
+    </div>
+    <div class="fit-card no">
+      <div class="fit-card-header">
+        <div class="fit-card-icon">✕</div>
+        <div class="fit-card-title">This is NOT for you if...</div>
+      </div>
+      <div class="fit-items">
+        <div class="fit-item"><div class="fit-bullet"></div>You're looking for a quick fix or a crash diet</div>
+        <div class="fit-item"><div class="fit-bullet"></div>You want someone to just give you a plan with no check-ins or accountability</div>
+        <div class="fit-item"><div class="fit-bullet"></div>You're not willing to track progress or be honest about how things are going</div>
+        <div class="fit-item"><div class="fit-bullet"></div>You're expecting results without putting in the work</div>
+        <div class="fit-item"><div class="fit-bullet"></div>You're not open to changing habits that aren't serving you</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS PREVIEW -->
+<section class="section" id="results">
+  <div class="section-label"><span class="num">05</span> Client results</div>
+  <h2 class="section-heading">REAL PEOPLE.<br><span class="lime">REAL RESULTS.</span></h2>
+  <p class="section-intro">A snapshot of what's possible. Every transformation is different — different starting points, different goals, different timelines. What they all have in common is commitment.</p>
+
+  <div class="results-preview">
+    <a href="luke-results.html" class="result-card">
+      <div class="result-card-imgs">
+        <div class="result-img"><div class="result-img-icon">📸</div><div class="result-img-label">Before</div></div>
+        <div class="result-img after"><div class="result-img-icon">📸</div><div class="result-img-label">After</div></div>
+      </div>
+      <div class="result-card-body">
+        <div class="result-name">Client placeholder</div>
+        <div class="result-stats">
+          <div class="result-stat"><strong>-12kg</strong> lost</div>
+          <div class="result-stat"><strong>16 weeks</strong></div>
+          <div class="result-stat">Fat loss</div>
+        </div>
+      </div>
+    </a>
+    <a href="luke-results.html" class="result-card">
+      <div class="result-card-imgs">
+        <div class="result-img"><div class="result-img-icon">📸</div><div class="result-img-label">Before</div></div>
+        <div class="result-img after"><div class="result-img-icon">📸</div><div class="result-img-label">After</div></div>
+      </div>
+      <div class="result-card-body">
+        <div class="result-name">Client placeholder</div>
+        <div class="result-stats">
+          <div class="result-stat"><strong>+8kg</strong> muscle</div>
+          <div class="result-stat"><strong>20 weeks</strong></div>
+          <div class="result-stat">Muscle gain</div>
+        </div>
+      </div>
+    </a>
+    <a href="luke-results.html" class="result-card">
+      <div class="result-card-imgs">
+        <div class="result-img"><div class="result-img-icon">📸</div><div class="result-img-label">Before</div></div>
+        <div class="result-img after"><div class="result-img-icon">📸</div><div class="result-img-label">After</div></div>
+      </div>
+      <div class="result-card-body">
+        <div class="result-name">Client placeholder</div>
+        <div class="result-stats">
+          <div class="result-stat"><strong>Recomp</strong></div>
+          <div class="result-stat"><strong>12 weeks</strong></div>
+          <div class="result-stat">Body recomp</div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div style="text-align: center;">
+    <a href="luke-results.html" class="btn-secondary">View all results</a>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section">
+  <div class="section-label"><span class="num">06</span> What clients say</div>
+  <h2 class="section-heading">DON'T TAKE<br><span class="lime">MY WORD FOR IT.</span></h2>
+
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <div class="testimonial-text">"Placeholder testimonial — Luke's client shares their experience, what changed, what they achieved, and why they'd recommend him to anyone in a similar position."</div>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">👤</div>
+        <div>
+          <div class="testimonial-name">Client name</div>
+          <div class="testimonial-meta">Fat loss client, 16 weeks</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <div class="testimonial-text">"Placeholder testimonial — another client story here. The more specific and honest, the better. Numbers, timeline, and emotional transformation all land well."</div>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">👤</div>
+        <div>
+          <div class="testimonial-name">Client name</div>
+          <div class="testimonial-meta">Muscle gain client, 20 weeks</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <div class="testimonial-text">"Placeholder testimonial — a third perspective here, ideally from a different type of client with different goals to show range and versatility."</div>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">👤</div>
+        <div>
+          <div class="testimonial-name">Client name</div>
+          <div class="testimonial-meta">Body recomp client, 12 weeks</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="section-label"><span class="num">07</span> FAQ</div>
+  <h2 class="section-heading">QUESTIONS<br><span class="lime">ANSWERED.</span></h2>
+  <p class="section-intro" style="margin-bottom: 40px;">The most common things people ask before applying. If yours isn't here, send me a message.</p>
+
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        Do I need a gym membership?
+        <div class="faq-icon">+</div>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner">No. Programmes can be built around a gym, home equipment, or a combination of both. When you apply just let me know what you have access to and we'll build around it.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        How much time do I need to commit per week?
+        <div class="faq-icon">+</div>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner">Most clients train 3 to 5 days per week. Sessions are typically 45 to 60 minutes. The programme is designed around your schedule so if you only have 3 days available, we build for 3 days.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        What does nutrition coaching actually look like?
+        <div class="faq-icon">+</div>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner">No rigid meal plans. Instead we work out your targets, build a flexible framework that fits your food preferences and lifestyle, and adjust it as we go based on how your body responds and how you're feeling.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        How long until I see results?
+        <div class="faq-icon">+</div>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner">Most clients notice meaningful changes within the first 4 to 6 weeks. Visible body composition changes typically come at the 8 to 12 week mark depending on starting point and consistency. The minimum commitment is 12 weeks for a reason.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question" onclick="toggleFaq(this)">
+        How do check-ins work?
+        <div class="faq-icon">+</div>
+      </div>
+      <div class="faq-answer"><div class="faq-answer-inner">Weekly check-ins via a short form — progress photos, weight, energy levels, how training felt. I review everything and adjust your programme accordingly. You also have direct message access to me throughout the week for any questions that come up.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<div class="final-cta">
+  <div class="final-cta-glow"></div>
+  <div class="final-cta-content">
+    <h2 class="final-cta-heading">READY TO<br><span class="lime">START?</span></h2>
+    <p class="final-cta-sub">Applications take 5 minutes. If we're a good fit I'll be in touch within 48 hours to book your free strategy call.</p>
+    <a href="luke-apply.html" class="btn-primary" style="font-size: 13px; padding: 16px 36px;">Apply to work with me</a>
+    <div class="final-cta-note">Limited spots available each month. No obligation to proceed after the call.</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-left">Luke Wood Coaching. All rights reserved. 2026.</div>
+  <ul class="footer-nav">
+    <li><a href="luke-results.html">Results</a></li>
+    <li><a href="luke-apply.html">Apply</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+</footer>
+
+<div class="sticky-cta">
+  <a href="luke-apply.html" class="btn-primary" style="justify-content: center;">Apply to work with Luke</a>
+</div>
+
+<script>
+function toggleFaq(el) {
+  const item = el.parentElement;
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+function toggleNav() {
+  const drawer = document.getElementById('navDrawer');
+  const burger = document.getElementById('hamburger');
+  drawer.classList.toggle('open');
+  burger.classList.toggle('open');
+  document.body.style.overflow = drawer.classList.contains('open') ? 'hidden' : '';
+}
+function closeNav() {
+  document.getElementById('navDrawer').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
+</script>
+</body>
+</html>
