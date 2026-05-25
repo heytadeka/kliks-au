@@ -1,4 +1,8 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/lukewood", "destination": "/", "permanent": false },
+    { "source": "/oh-my-days", "destination": "/", "permanent": false }
+  ]
 }
