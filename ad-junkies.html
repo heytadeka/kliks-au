@@ -307,6 +307,18 @@
     .signup-form input[type="url"]:focus { border-color: rgba(100,75,255,0.4); }
     .signup-form input::placeholder { color: rgba(255,255,255,0.35); }
     .signup-form .btn { width: 100%; justify-content: center; border-radius: 12px; }
+    .klaviyo-form button[type="submit"],
+    .klaviyo-form [data-testid="submit-button"],
+    .klaviyo-form .go-submit {
+      background: var(--orange) !important;
+      background-color: var(--orange) !important;
+    }
+    .klaviyo-form button[type="submit"]:hover,
+    .klaviyo-form [data-testid="submit-button"]:hover,
+    .klaviyo-form .go-submit:hover {
+      background: var(--orange-dark) !important;
+      background-color: var(--orange-dark) !important;
+    }
     .form-note {
       font-size: 13px;
       color: rgba(255,255,255,0.35);
