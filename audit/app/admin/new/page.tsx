@@ -119,6 +119,13 @@ export default function NewAuditPage() {
     return () => clearInterval(interval)
   }, [success])
 
+  function formatUrl(val: string) {
+    const trimmed = val.trim()
+    if (!trimmed) return trimmed
+    if (/^https?:\/\//i.test(trimmed)) return trimmed
+    return 'https://' + trimmed
+  }
+
   function set(field: keyof FormData) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (field === 'slug') setSlugManual(true)
@@ -126,15 +133,21 @@ export default function NewAuditPage() {
     }
   }
 
+  function handleUrlBlur() {
+    setForm(f => ({ ...f, store_url: formatUrl(f.store_url) }))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
+    const normalised = { ...form, store_url: formatUrl(form.store_url) }
+    setForm(normalised)
     try {
       const res = await fetch('/api/audit/admin/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(normalised),
       })
       const data = await res.json()
       if (data.success) {
@@ -274,7 +287,7 @@ Kliks`
 
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>Store URL *</label>
-              <input value={form.store_url} onChange={set('store_url')} placeholder="https://example.com.au" required style={inputStyle} type="url" />
+              <input value={form.store_url} onChange={set('store_url')} onBlur={handleUrlBlur} placeholder="https://example.com.au" required style={inputStyle} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>

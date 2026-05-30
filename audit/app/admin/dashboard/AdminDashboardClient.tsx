@@ -68,7 +68,7 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 900 }}>
             <thead>
               <tr style={{ background: S.bg }}>
-                {['Brand', 'Slug', 'Email', 'Created', 'Last Accessed', 'Views', 'CRO Status', 'Active', 'Edit'].map(h => (
+                {['Brand', 'Slug', 'Email', 'Created', 'Last Accessed', 'Views', 'CRO Status', 'Active', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                 ))}
               </tr>
@@ -98,7 +98,10 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                       </button>
                     </td>
                     <td style={{ padding: '12px 14px' }}>
-                      <Link href={`/audit/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <Link href={`/audit/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
+                        <a href={`https://kliks.com.au/audit/${p.slug}`} target="_blank" rel="noreferrer" style={{ color: S.orange, fontSize: 13, textDecoration: 'none' }}>View</a>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -119,7 +122,10 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                     <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600 }}>{p.brand_name}</div>
                     <div style={{ fontSize: 13, color: S.muted }}>/{p.slug}</div>
                   </div>
-                  <Link href={`/audit/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <Link href={`/audit/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
+                    <a href={`https://kliks.com.au/audit/${p.slug}`} target="_blank" rel="noreferrer" style={{ color: S.orange, fontSize: 13, textDecoration: 'none' }}>View</a>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 13, color: S.muted }}>
                   <span>{p.prospect_email}</span>
