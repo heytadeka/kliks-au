@@ -20,28 +20,33 @@ export async function POST(req: NextRequest) {
   const { prospect_id, store_url } = await req.json()
   const domain = store_url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
+  let overview = null
+  let keywords: any[] = []
+  let gaps = null
+
   try {
-    const [overviewRes, keywordsRes, gapsRes] = await Promise.all([
-      dfsPost('/dataforseo_labs/google/domain_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }]),
-      dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 10, order_by: ['keyword_data.keyword_info.search_volume,desc'] }]),
-      dfsPost('/dataforseo_labs/google/keyword_gap/live', [{ targets: [domain], location_code: 2036, language_code: 'en', limit: 10 }]),
-    ])
+    const res = await dfsPost('/dataforseo_labs/google/domain_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }])
+    overview = res?.tasks?.[0]?.result?.[0] ?? null
+  } catch {}
 
-    const overview = overviewRes?.tasks?.[0]?.result?.[0] ?? null
-    const keywords = keywordsRes?.tasks?.[0]?.result?.[0]?.items ?? []
-    const gaps = gapsRes?.tasks?.[0]?.result?.[0]?.items ?? []
+  try {
+    const res = await dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 10, order_by: ['keyword_data.keyword_info.search_volume,desc'] }])
+    keywords = res?.tasks?.[0]?.result?.[0]?.items ?? []
+  } catch {}
 
-    await supabaseAdmin
-      .from('audit_data_cache')
-      .upsert({
-        prospect_id,
-        dataforseo_overview: overview,
-        dataforseo_keywords: keywords,
-        dataforseo_gaps: gaps,
-      }, { onConflict: 'prospect_id' })
+  try {
+    const res = await dfsPost('/dataforseo_labs/google/domain_rank_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }])
+    gaps = res?.tasks?.[0]?.result?.[0] ?? null
+  } catch {}
 
-    return NextResponse.json({ success: true, overview, keywords, gaps })
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
-  }
+  await supabaseAdmin
+    .from('audit_data_cache')
+    .upsert({
+      prospect_id,
+      dataforseo_overview: overview,
+      dataforseo_keywords: keywords,
+      dataforseo_gaps: gaps,
+    }, { onConflict: 'prospect_id' })
+
+  return NextResponse.json({ success: true, overview, keywords, gaps })
 }

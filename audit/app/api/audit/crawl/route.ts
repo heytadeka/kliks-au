@@ -49,8 +49,62 @@ const FIXES: Record<string, string> = {
   trust_badges_home: 'Add trust badges (payment methods, guarantees) to the homepage.',
 }
 
+function checkHtml(html: string) {
+  const h = html.toLowerCase()
+
+  // Homepage checks
+  const sticky_header = /position\s*:\s*(fixed|sticky)/.test(h) && /<header/i.test(html)
+  const announcement_bar = /class="[^"]*announcement|class="[^"]*banner|id="[^"]*announcement|class="[^"]*notice/.test(h)
+  const exit_intent = ['data-exit-intent', 'klaviyo', 'optinmonster', 'privy', 'sumo'].some(p => h.includes(p))
+  const email_capture = ['klaviyo', 'class="[^"]*popup', 'class="[^"]*modal', 'input type="email"', "input type='email'"].some(p => h.includes(p)) ||
+    /input[^>]+type=["']email["']/.test(h)
+  const trust_badges_home = ['secure', 'guarantee', 'afterpay', 'klarna', 'paypal', 'visa', 'mastercard', 'certified'].some(k => h.includes(k))
+  const live_chat = ['gorgias', 'tidio', 'intercom', 'zendesk', 'crisp'].some(c => h.includes(c))
+  const mobile_menu = ['hamburger', 'mobile-menu', 'aria-label="menu"', "aria-label='menu'", 'nav-toggle'].some(p => h.includes(p))
+  const cart_count = ['cart-count', 'cart-badge', 'cart-qty', 'cart_count', 'cartcount'].some(p => h.includes(p))
+  const social_proof_bar = ['marquee', 'logo-bar', 'social-proof', 'logo_bar'].some(p => h.includes(p))
+  const blog_section = ['/blogs/', '/journal', '/articles', '>blog<', '>journal<'].some(p => h.includes(p))
+
+  // Product page checks (applied to same HTML if it's a product page, else defaults to false)
+  const sticky_atc = /(position\s*:\s*(fixed|sticky)[^}]*add.to.cart|add.to.cart[^}]*position\s*:\s*(fixed|sticky))/i.test(html) ||
+    /class="[^"]*sticky[^"]*atc|class="[^"]*sticky[^"]*add|id="[^"]*sticky[^"]*cart/.test(h)
+  const reviews = ['yotpo', 'okendo', 'judge.me', 'stamped', 'loox', 'class="[^"]*review', 'class="[^"]*rating', '.star-rating'].some(p => h.includes(p))
+  const trust_badges_product = trust_badges_home // re-check same signals on product page
+  const countdown_timer = ['countdown', 'timer', 'ends in', 'limited time', 'hurry'].some(p => h.includes(p))
+  const quantity_selector = ['name="quantity"', "name='quantity'", 'class="[^"]*quantity', 'id="[^"]*quantity'].some(p => h.includes(p)) ||
+    /name=["']quantity["']/.test(h)
+  const image_gallery = (h.match(/product[^"]*img|product-image|product_image/g) ?? []).length > 2
+  const related_products = ['you may also like', 'recently viewed', 'related products', 'customers also bought', 'frequently bought'].some(p => h.includes(p))
+  const breadcrumbs = ['breadcrumb', 'typeof="breadcrumblist"', 'aria-label="breadcrumb"'].some(p => h.includes(p))
+  const product_schema = /"@type"\s*:\s*"Product"/.test(html) || /'@type'\s*:\s*'Product'/.test(html)
+  const lazy_loading = /loading=["']lazy["']/.test(h)
+
+  return {
+    sticky_header, announcement_bar, exit_intent, email_capture,
+    trust_badges_home, live_chat, mobile_menu, cart_count,
+    social_proof_bar, blog_section, sticky_atc, reviews,
+    trust_badges_product, countdown_timer, quantity_selector,
+    image_gallery, related_products, breadcrumbs, product_schema, lazy_loading,
+  }
+}
+
+async function fetchHtml(url: string): Promise<string> {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
+  return res.text()
+}
+
+function findProductUrl(html: string, baseUrl: string): string | null {
+  const match = html.match(/href="(\/products\/[^"?#]+)"/i)
+  if (!match) return null
+  const base = new URL(baseUrl)
+  return `${base.protocol}//${base.host}${match[1]}`
+}
+
 export async function POST(req: NextRequest) {
-  // Auth check
   const serviceKey = req.headers.get('x-service-key')
   if (serviceKey !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -59,237 +113,66 @@ export async function POST(req: NextRequest) {
   const { prospect_id, store_url } = await req.json()
 
   try {
-    // Dynamic import for Vercel compatibility
-    const chromium = await import('@sparticuz/chromium')
-    const puppeteer = await import('puppeteer-core')
+    // Fetch homepage
+    const homeHtml = await fetchHtml(store_url)
+    const homeChecks = checkHtml(homeHtml)
 
-    const browser = await puppeteer.default.launch({
-      args: chromium.default.args,
-      defaultViewport: { width: 1280, height: 800 },
-      executablePath: await chromium.default.executablePath(),
-      headless: true,
-    })
-
-    const results: any[] = []
-
-    try {
-      const page = await browser.newPage()
-      await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-      await page.goto(store_url, { waitUntil: 'networkidle2', timeout: 25000 })
-
-      // Homepage checks
-      const homepageResults = await page.evaluate(() => {
-        const checks: Record<string, boolean> = {}
-
-        // 1. Sticky header
-        const header = document.querySelector('header, [id*="header"], [class*="header"]')
-        if (header) {
-          const style = window.getComputedStyle(header)
-          checks.sticky_header = style.position === 'fixed' || style.position === 'sticky'
-        } else {
-          checks.sticky_header = false
-        }
-
-        // 2. Announcement bar
-        const announcementSelectors = ['[class*="announcement"]', '[class*="banner"]', '[id*="announcement"]', '[class*="notice"]']
-        checks.announcement_bar = announcementSelectors.some(s => {
-          const el = document.querySelector(s)
-          return el && (el as HTMLElement).offsetHeight > 0
-        })
-
-        // 3. Exit intent
-        const exitIntentPatterns = ['data-exit-intent', 'klaviyo', 'optinmonster', 'privy', 'sumo']
-        const allScripts = Array.from(document.scripts).map(s => s.src.toLowerCase())
-        const bodyHTML = document.body.innerHTML.toLowerCase()
-        checks.exit_intent = exitIntentPatterns.some(p => allScripts.some(s => s.includes(p)) || bodyHTML.includes(p))
-
-        // 4. Email capture
-        checks.email_capture = !!(
-          document.querySelector('[class*="klaviyo"]') ||
-          document.querySelector('[class*="popup"]') ||
-          document.querySelector('[class*="modal"]') ||
-          document.querySelector('form input[type="email"]')
-        )
-
-        // 5. Trust badges homepage
-        const imgAlts = Array.from(document.images).map(i => (i.alt + ' ' + i.src).toLowerCase())
-        const trustKeywords = ['secure', 'guarantee', 'ssl', 'trusted', 'certified', 'visa', 'mastercard', 'paypal', 'afterpay', 'klarna']
-        checks.trust_badges_home = imgAlts.some(alt => trustKeywords.some(k => alt.includes(k)))
-
-        // 6. Live chat
-        const chatScripts = ['gorgias', 'tidio', 'intercom', 'zendesk', 'crisp']
-        checks.live_chat = chatScripts.some(c => allScripts.some(s => s.includes(c)) || bodyHTML.includes(c))
-
-        // 7. Mobile menu
-        checks.mobile_menu = !!(
-          document.querySelector('[class*="hamburger"]') ||
-          document.querySelector('[class*="mobile-menu"]') ||
-          document.querySelector('[aria-label*="menu"]')
-        )
-
-        // 8. Cart count
-        checks.cart_count = !!(
-          document.querySelector('[class*="cart-count"]') ||
-          document.querySelector('[class*="cart-badge"]') ||
-          document.querySelector('[class*="cart-qty"]')
-        )
-
-        // 9. Social proof bar
-        checks.social_proof_bar = !!(
-          document.querySelector('[class*="marquee"]') ||
-          document.querySelector('[class*="logo-bar"]') ||
-          document.querySelector('[class*="social-proof"]')
-        )
-
-        // 10. Blog section
-        const navLinks = Array.from(document.querySelectorAll('a')).map(a => a.textContent?.toLowerCase() + ' ' + a.href.toLowerCase())
-        checks.blog_section = navLinks.some(l => ['blog', 'journal', 'articles', 'tips'].some(k => l.includes(k)))
-
-        return checks
-      })
-
-      Object.assign(results, homepageResults)
-
-      // Find first product link
-      let productUrl: string | null = null
+    // Fetch first product page and merge checks
+    let productChecks = homeChecks
+    const productUrl = findProductUrl(homeHtml, store_url)
+    if (productUrl) {
       try {
-        productUrl = await page.evaluate(() => {
-          const links = Array.from(document.querySelectorAll('a[href*="/products/"]'))
-          return links.length > 0 ? (links[0] as HTMLAnchorElement).href : null
-        })
+        const productHtml = await fetchHtml(productUrl)
+        const pc = checkHtml(productHtml)
+        // Product-specific checks come from the product page
+        productChecks = {
+          ...homeChecks,
+          sticky_atc: pc.sticky_atc,
+          reviews: pc.reviews,
+          trust_badges_product: pc.trust_badges_product,
+          countdown_timer: pc.countdown_timer,
+          quantity_selector: pc.quantity_selector,
+          image_gallery: pc.image_gallery,
+          related_products: pc.related_products,
+          breadcrumbs: pc.breadcrumbs,
+          product_schema: pc.product_schema,
+          lazy_loading: pc.lazy_loading,
+        }
       } catch {}
-
-      // Product page checks
-      let productResults: Record<string, boolean> = {
-        sticky_atc: false,
-        reviews: false,
-        trust_badges_product: false,
-        countdown_timer: false,
-        quantity_selector: false,
-        image_gallery: false,
-        related_products: false,
-        breadcrumbs: false,
-        product_schema: false,
-        lazy_loading: false,
-      }
-
-      if (productUrl) {
-        await page.goto(productUrl, { waitUntil: 'networkidle2', timeout: 20000 })
-
-        productResults = await page.evaluate(() => {
-          const checks: Record<string, boolean> = {}
-          const bodyHTML = document.body.innerHTML.toLowerCase()
-          const allScripts = Array.from(document.scripts).map(s => s.src.toLowerCase())
-
-          // 11. Sticky ATC
-          const atcButtons = document.querySelectorAll('[class*="add-to-cart"], [id*="add-to-cart"], button[name="add"]')
-          checks.sticky_atc = Array.from(atcButtons).some(btn => {
-            const style = window.getComputedStyle(btn)
-            return style.position === 'fixed' || style.position === 'sticky'
-          })
-
-          // 12. Reviews
-          const reviewPlatforms = ['yotpo', 'okendo', 'judge.me', 'judging.me', 'stamped', 'loox']
-          checks.reviews = reviewPlatforms.some(p => allScripts.some(s => s.includes(p)) || bodyHTML.includes(p)) ||
-            !!(document.querySelector('[class*="review"]') || document.querySelector('[class*="rating"]') || document.querySelector('.star'))
-
-          // 13. Trust badges product
-          const imgAlts = Array.from(document.images).map(i => (i.alt + ' ' + i.src).toLowerCase())
-          const trustKeywords = ['secure', 'guarantee', 'ssl', 'trusted', 'certified', 'visa', 'mastercard', 'paypal', 'afterpay', 'klarna']
-          checks.trust_badges_product = imgAlts.some(alt => trustKeywords.some(k => alt.includes(k)))
-
-          // 14. Countdown
-          checks.countdown_timer = !!(
-            document.querySelector('[class*="countdown"]') ||
-            document.querySelector('[class*="timer"]') ||
-            bodyHTML.includes('ends in') ||
-            bodyHTML.includes('limited time')
-          )
-
-          // 15. Quantity selector
-          checks.quantity_selector = !!(
-            document.querySelector('input[name="quantity"]') ||
-            document.querySelector('[class*="quantity"]')
-          )
-
-          // 16. Image gallery
-          const productImages = document.querySelectorAll('[class*="product"] img, [id*="product"] img')
-          checks.image_gallery = productImages.length > 2
-
-          // 17. Related products
-          checks.related_products = !!(
-            bodyHTML.includes('you may also like') ||
-            bodyHTML.includes('recently viewed') ||
-            bodyHTML.includes('related products') ||
-            bodyHTML.includes('customers also bought')
-          )
-
-          // 18. Breadcrumbs
-          checks.breadcrumbs = !!(
-            document.querySelector('[class*="breadcrumb"]') ||
-            document.querySelector('nav[aria-label*="breadcrumb"]') ||
-            document.querySelector('[typeof="BreadcrumbList"]')
-          )
-
-          // 19. Product schema
-          const schemaScripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
-          checks.product_schema = schemaScripts.some(s => {
-            try {
-              const parsed = JSON.parse(s.textContent || '')
-              return parsed['@type'] === 'Product'
-            } catch { return false }
-          })
-
-          // 20. Lazy loading
-          const images = document.querySelectorAll('img')
-          checks.lazy_loading = Array.from(images).some(img => img.loading === 'lazy')
-
-          return checks
-        })
-      }
-
-      const allChecks = { ...homepageResults, ...productResults }
-
-      // Build results array
-      const checkResults = CRO_CHECKS.map(check => ({
-        ...check,
-        passed: !!(allChecks as any)[check.id],
-        fix: (allChecks as any)[check.id] ? undefined : FIXES[check.id],
-      }))
-
-      const passed = checkResults.filter(c => c.passed).length
-      const criticalIssues = checkResults.filter(c => !c.passed && c.importance === 'high').length
-      const warnings = checkResults.filter(c => !c.passed && c.importance === 'medium').length
-      const opportunities = checkResults.filter(c => !c.passed && c.importance === 'low').length
-
-      await supabaseAdmin
-        .from('audit_data_cache')
-        .upsert({
-          prospect_id,
-          cro_checklist: {
-            results: checkResults,
-            summary: { total_checks: 20, passed, critical_issues: criticalIssues, warnings, opportunities },
-          },
-          crawled_at: new Date().toISOString(),
-        }, { onConflict: 'prospect_id' })
-
-      await browser.close()
-      return NextResponse.json({ success: true, passed, results: checkResults })
-
-    } catch (crawlErr: any) {
-      await browser.close()
-      // Store error state
-      await supabaseAdmin
-        .from('audit_data_cache')
-        .upsert({
-          prospect_id,
-          cro_checklist: { error: true, message: crawlErr.message },
-          crawled_at: new Date().toISOString(),
-        }, { onConflict: 'prospect_id' })
-      return NextResponse.json({ success: false, error: crawlErr.message }, { status: 500 })
     }
 
+    const checkResults = CRO_CHECKS.map(check => ({
+      ...check,
+      passed: !!(productChecks as any)[check.id],
+      fix: (productChecks as any)[check.id] ? undefined : FIXES[check.id],
+    }))
+
+    const passed = checkResults.filter(c => c.passed).length
+    const criticalIssues = checkResults.filter(c => !c.passed && c.importance === 'high').length
+    const warnings = checkResults.filter(c => !c.passed && c.importance === 'medium').length
+    const opportunities = checkResults.filter(c => !c.passed && c.importance === 'low').length
+
+    await supabaseAdmin
+      .from('audit_data_cache')
+      .upsert({
+        prospect_id,
+        cro_checklist: {
+          results: checkResults,
+          summary: { total_checks: 20, passed, critical_issues: criticalIssues, warnings, opportunities },
+        },
+        crawled_at: new Date().toISOString(),
+      }, { onConflict: 'prospect_id' })
+
+    return NextResponse.json({ success: true, passed, results: checkResults })
+
   } catch (err: any) {
+    await supabaseAdmin
+      .from('audit_data_cache')
+      .upsert({
+        prospect_id,
+        cro_checklist: { error: true, message: err.message },
+        crawled_at: new Date().toISOString(),
+      }, { onConflict: 'prospect_id' })
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
   }
 }
