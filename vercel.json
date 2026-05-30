@@ -5,6 +5,7 @@
     { "src": "*.html", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "https://www.kliks.com.au/(.*)", "headers": { "Location": "https://kliks.com.au/$1" }, "status": 301 },
     { "src": "/api/audit/(.*)", "dest": "/api/audit/$1" },
     { "src": "/lukewood", "status": 302, "headers": { "Location": "/" } },
     { "src": "/oh-my-days", "status": 302, "headers": { "Location": "/" } },
