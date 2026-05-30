@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const response = NextResponse.json({
     success: true,
-    redirect: `/${slug}/report`,
+    redirect: `/audit/${slug}/report`,
   })
 
   response.cookies.set(`audit_${slug}_auth`, 'true', {
