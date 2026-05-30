@@ -1,10 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "audit/app/api/audit/**": {
-      "maxDuration": 60
-    }
-  },
   "builds": [
     { "src": "audit/package.json", "use": "@vercel/next", "config": { "distDir": ".next" } },
     { "src": "*.html", "use": "@vercel/static" }
