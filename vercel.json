@@ -1,7 +1,7 @@
 {
   "version": 2,
   "builds": [
-    { "src": "audit", "use": "@vercel/next" },
+    { "src": "audit/package.json", "use": "@vercel/next", "config": { "distDir": ".next" } },
     { "src": "*.html", "use": "@vercel/static" }
   ],
   "routes": [
