@@ -1,17 +1,16 @@
 {
   "version": 2,
   "builds": [
-    { "src": "audit/package.json", "use": "@vercel/next" },
+    { "src": "audit", "use": "@vercel/next" },
     { "src": "*.html", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/lukewood", "status": 302, "headers": { "Location": "/" } },
     { "src": "/oh-my-days", "status": 302, "headers": { "Location": "/" } },
     { "src": "/audit/_next/(.*)", "dest": "/_next/$1" },
-    { "src": "/api/audit/(.*)", "dest": "/api/audit/$1" },
-    { "src": "/audit/(.*)", "dest": "/$1" },
-    { "src": "/favicon.ico", "dest": "/audit/favicon.ico" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "handle": "filesystem" },
+    { "src": "/audit/(.*)", "dest": "/$1" },
     { "src": "/([^/.]+)$", "dest": "/$1.html" }
   ]
 }
