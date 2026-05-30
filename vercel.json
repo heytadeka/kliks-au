@@ -7,6 +7,7 @@
   "routes": [
     { "src": "/lukewood", "status": 302, "headers": { "Location": "/" } },
     { "src": "/oh-my-days", "status": 302, "headers": { "Location": "/" } },
+    { "src": "/_next/(.*)", "dest": "/_next/$1" },
     { "src": "/audit/(.*)", "dest": "/$1" },
     { "handle": "filesystem" },
     { "src": "/([^/.]+)$", "dest": "/$1.html" }
