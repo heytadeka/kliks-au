@@ -9,9 +9,8 @@
     { "src": "https://www.kliks.com.au/(.*)", "headers": { "Location": "https://kliks.com.au/$1" }, "status": 301 },
     { "src": "/lukewood", "status": 302, "headers": { "Location": "/" } },
     { "src": "/oh-my-days", "status": 302, "headers": { "Location": "/" } },
-    { "src": "/audit/admin/(.*)", "dest": "/admin/$1" },
-    { "handle": "filesystem" },
     { "src": "/audit/(.*)", "dest": "/$1" },
+    { "handle": "filesystem" },
     { "src": "/([^/.]+)$", "dest": "/$1.html" }
   ]
 }
