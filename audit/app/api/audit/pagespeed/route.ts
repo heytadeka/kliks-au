@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const maxDuration = 60
+
 async function fetchPageSpeed(url: string, strategy: 'mobile' | 'desktop') {
   const apiKey = process.env.PAGESPEED_API_KEY
   const endpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${strategy}&key=${apiKey}`

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
   const { prospect_id, brand_name } = await req.json()
   const token = process.env.META_ACCESS_TOKEN

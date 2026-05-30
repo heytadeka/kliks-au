@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const maxDuration = 60
+
 const CRO_CHECKS = [
   { id: 'sticky_header', label: 'Sticky Header', category: 'Navigation', importance: 'medium' },
   { id: 'announcement_bar', label: 'Announcement Bar', category: 'Navigation', importance: 'medium' },

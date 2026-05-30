@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { prospect_id, niche, store_url: _store_url } = await req.json()
