@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { BP } from '@/lib/config'
 
 export default function GatePage({ params }: { params: { slug: string } }) {
   const [email, setEmail] = useState('')
@@ -12,13 +13,14 @@ export default function GatePage({ params }: { params: { slug: string } }) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const res = await fetch('/api/audit/gate', {
+    const res = await fetch(`${BP}/api/audit/gate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slug: params.slug, email }),
     })
     const data = await res.json()
     if (data.success) {
+      // data.redirect is e.g. "/test-brand/report" — basePath prepends /audit automatically
       router.push(data.redirect)
     } else {
       setError(data.message)
@@ -47,7 +49,7 @@ export default function GatePage({ params }: { params: { slug: string } }) {
         }
       `}</style>
 
-      {/* Wordmark */}
+      {/* Wordmark — plain anchor to domain root, not affected by basePath */}
       <a href="/" style={{ position: 'absolute', top: 32, left: 32, fontFamily: '"Clash Display", sans-serif', fontSize: 22, fontWeight: 700, color: '#fff', textDecoration: 'none', letterSpacing: '-0.5px', zIndex: 10 }}>
         KLIKS<span style={{ color: '#ff4315' }}>.</span>
       </a>

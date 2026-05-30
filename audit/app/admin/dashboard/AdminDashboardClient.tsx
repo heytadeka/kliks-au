@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { BP } from '@/lib/config'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)', purple: '#644bff' }
 
@@ -21,12 +22,13 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
   )
 
   async function handleLogout() {
-    await fetch('/api/audit/admin/auth', { method: 'DELETE' })
+    await fetch(`${BP}/api/audit/admin/auth`, { method: 'DELETE' })
+    // Full browser navigation — /audit/admin is the correct absolute path
     window.location.href = '/audit/admin'
   }
 
   async function toggleActive(id: string, current: boolean) {
-    await fetch('/api/audit/admin/prospect', {
+    await fetch(`${BP}/api/audit/admin/prospect`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, is_active: !current }),
@@ -39,7 +41,8 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
       <nav style={{ background: 'rgba(14,13,26,0.95)', borderBottom: `1px solid ${S.border}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
         <a href="/" style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, color: S.white, textDecoration: 'none' }}>KLIKS<span style={{ color: S.orange }}>.</span></a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link href="/audit/admin/team" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Team</Link>
+          {/* Link hrefs without /audit prefix — basePath adds it automatically */}
+          <Link href="/admin/team" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Team</Link>
           <button onClick={handleLogout} style={{ background: 'none', border: `1px solid ${S.border}`, color: S.muted, borderRadius: 8, padding: '6px 14px', fontSize: 14, cursor: 'pointer' }}>Logout</button>
         </div>
       </nav>
@@ -47,7 +50,7 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
           <h1 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, letterSpacing: '0.01em' }}>Audits</h1>
-          <Link href="/audit/admin/new" style={{ background: S.orange, color: '#fff', borderRadius: 100, padding: '12px 28px', textDecoration: 'none', fontWeight: 600, fontSize: 15 }}>+ New Audit</Link>
+          <Link href="/admin/new" style={{ background: S.orange, color: '#fff', borderRadius: 100, padding: '12px 28px', textDecoration: 'none', fontWeight: 600, fontSize: 15 }}>+ New Audit</Link>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 40 }}>
@@ -64,7 +67,6 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
           style={{ width: '100%', maxWidth: 400, background: 'rgba(255,255,255,0.06)', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 12, padding: '12px 16px', color: S.white, fontFamily: 'Satoshi, sans-serif', fontSize: 14, outline: 'none', marginBottom: 20, boxSizing: 'border-box' }}
         />
 
-        {/* Desktop table - hidden on mobile via class, shown via media query in global css */}
         <div style={{ overflowX: 'auto', marginBottom: 16 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 900 }}>
             <thead>
@@ -99,7 +101,7 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                       </button>
                     </td>
                     <td style={{ padding: '12px 14px' }}>
-                      <Link href={`/audit/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
+                      <Link href={`/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
                     </td>
                   </tr>
                 )
@@ -120,7 +122,7 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                     <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600 }}>{p.brand_name}</div>
                     <div style={{ fontSize: 13, color: S.muted }}>/{p.slug}</div>
                   </div>
-                  <Link href={`/audit/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
+                  <Link href={`/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
                 </div>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 13, color: S.muted }}>
                   <span>{p.prospect_email}</span>

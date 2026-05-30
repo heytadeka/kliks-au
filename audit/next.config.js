@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  basePath: '/audit',
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',

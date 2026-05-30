@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { BP } from '@/lib/config'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', orangeDark: '#c42f08', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)', purple: '#644bff' }
 
@@ -35,7 +36,7 @@ export default function TeamPage() {
 
   async function loadUsers() {
     try {
-      const res = await fetch('/api/audit/admin/team')
+      const res = await fetch(`${BP}/api/audit/admin/team`)
       if (res.status === 401) {
         window.location.href = '/audit/admin'
         return
@@ -54,7 +55,7 @@ export default function TeamPage() {
     setError('')
     setSuccess('')
     try {
-      const res = await fetch('/api/audit/admin/team', {
+      const res = await fetch(`${BP}/api/audit/admin/team`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -78,7 +79,7 @@ export default function TeamPage() {
     <div style={{ minHeight: '100vh', background: S.bg, color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
       <nav style={{ background: 'rgba(14,13,26,0.95)', borderBottom: `1px solid ${S.border}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
         <a href="/" style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, color: S.white, textDecoration: 'none' }}>KLIKS<span style={{ color: S.orange }}>.</span></a>
-        <Link href="/audit/admin/dashboard" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Back to Dashboard</Link>
+        <Link href="/admin/dashboard" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Back to Dashboard</Link>
       </nav>
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 24px' }}>
