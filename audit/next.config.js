@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// cache-bust: 2026-05-30
 const nextConfig = {
   // On Vercel the @vercel/next builder scopes its output to the audit/
   // subdirectory, so static assets are served from /audit/_next/* in URL space.
