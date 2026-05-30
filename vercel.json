@@ -9,7 +9,6 @@
     { "src": "/api/audit/(.*)", "dest": "/api/audit/$1" },
     { "src": "/lukewood", "status": 302, "headers": { "Location": "/" } },
     { "src": "/oh-my-days", "status": 302, "headers": { "Location": "/" } },
-    { "src": "/audit/_next/(.*)", "dest": "/_next/$1" },
     { "handle": "filesystem" },
     { "src": "/audit/(.*)", "dest": "/$1" },
     { "src": "/([^/.]+)$", "dest": "/$1.html" }
