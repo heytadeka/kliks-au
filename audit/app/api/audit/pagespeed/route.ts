@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
     const mobileMetrics = extractMetrics(mobile)
     const desktopMetrics = extractMetrics(desktop)
 
-    await supabaseAdmin
+    console.log('[pagespeed] writing to DB for prospect_id:', prospect_id)
+    const { error: dbError } = await supabaseAdmin
       .from('audit_data_cache')
       .upsert({
         prospect_id,
@@ -50,6 +51,11 @@ export async function POST(req: NextRequest) {
         pagespeed_fetched_at: new Date().toISOString(),
       }, { onConflict: 'prospect_id' })
 
+    if (dbError) {
+      console.error('[pagespeed] Supabase write error:', JSON.stringify(dbError))
+      return NextResponse.json({ success: false, error: dbError.message }, { status: 500 })
+    }
+    console.log('[pagespeed] Supabase write success for prospect_id:', prospect_id)
     return NextResponse.json({ success: true, mobile: mobileMetrics, desktop: desktopMetrics })
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })

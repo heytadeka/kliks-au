@@ -35,7 +35,7 @@ create table if not exists audit_content (
 
 create table if not exists audit_data_cache (
   id uuid primary key default gen_random_uuid(),
-  prospect_id uuid not null references prospects(id) on delete cascade,
+  prospect_id uuid not null unique references prospects(id) on delete cascade,
   pagespeed_mobile jsonb,
   pagespeed_desktop jsonb,
   dataforseo_overview jsonb,
