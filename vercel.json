@@ -1,19 +1,14 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
   "builds": [
-    {
-      "src": "audit/package.json",
-      "use": "@vercel/next"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    }
+    { "src": "audit/package.json", "use": "@vercel/next" },
+    { "src": "*.html", "use": "@vercel/static" }
   ],
-  "redirects": [
-    { "source": "/lukewood", "destination": "/", "permanent": false },
-    { "source": "/oh-my-days", "destination": "/", "permanent": false }
+  "routes": [
+    { "src": "/lukewood", "status": 302, "headers": { "Location": "/" } },
+    { "src": "/oh-my-days", "status": 302, "headers": { "Location": "/" } },
+    { "src": "/audit/(.*)", "dest": "/$1" },
+    { "handle": "filesystem" },
+    { "src": "/([^/.]+)$", "dest": "/$1.html" }
   ]
 }

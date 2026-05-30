@@ -33,17 +33,16 @@ export async function POST(req: NextRequest) {
 
   await supabaseAdmin.from('audit_data_cache').insert({ prospect_id: prospect.id })
 
-  // Fire background jobs — API routes live at /audit/api/* (basePath: /audit)
+  // Fire background jobs
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://kliks.com.au'
-  const apiBase = `${base}/audit/api/audit`
   const headers = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }
 
   Promise.all([
-    fetch(`${apiBase}/pagespeed`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
-    fetch(`${apiBase}/crawl`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
-    fetch(`${apiBase}/dataforseo`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
-    fetch(`${apiBase}/keyword-planner`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, niche, store_url }) }),
-    fetch(`${apiBase}/meta-ads`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, brand_name, store_url }) }),
+    fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
+    fetch(`${base}/api/audit/crawl`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
+    fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
+    fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, niche, store_url }) }),
+    fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, brand_name, store_url }) }),
   ]).catch(() => {})
 
   return NextResponse.json({ success: true, prospect_id: prospect.id, slug: prospect.slug, brand_name })

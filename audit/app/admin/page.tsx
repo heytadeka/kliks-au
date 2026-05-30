@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BP } from '@/lib/config'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', orangeDark: '#c42f08', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)' }
 
@@ -16,14 +15,13 @@ export default function AdminLoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const res = await fetch(`${BP}/api/audit/admin/auth`, {
+    const res = await fetch('/api/audit/admin/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     })
     const data = await res.json()
-    // basePath prepends /audit — so push /admin/dashboard → browser URL /audit/admin/dashboard
-    if (data.success) router.push('/admin/dashboard')
+    if (data.success) router.push('/audit/admin/dashboard')
     else { setError(data.message); setLoading(false) }
   }
 

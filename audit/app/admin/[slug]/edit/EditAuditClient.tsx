@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { BP } from '@/lib/config'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', orangeDark: '#c42f08', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)', purple: '#644bff' }
 
@@ -71,7 +70,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
     setError('')
     setSaved(false)
     try {
-      const res = await fetch(`${BP}/api/audit/admin/update`, {
+      const res = await fetch('/api/audit/admin/update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prospect_id: prospect.id, ...form }),
@@ -94,7 +93,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
     setRescanning(true)
     setError('')
     try {
-      const res = await fetch(`${BP}/api/audit/admin/rescan`, {
+      const res = await fetch('/api/audit/admin/rescan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prospect_id: prospect.id }),
@@ -110,7 +109,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
   }
 
   async function handleToggleActive() {
-    await fetch(`${BP}/api/audit/admin/prospect`, {
+    await fetch('/api/audit/admin/prospect', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: prospect.id, is_active: !prospect.is_active }),
@@ -121,13 +120,13 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
   async function handleDelete() {
     if (!confirm(`Permanently delete the audit for ${prospect.brand_name}? This cannot be undone.`)) return
     setDeleting(true)
-    const res = await fetch(`${BP}/api/audit/admin/prospect`, {
+    const res = await fetch('/api/audit/admin/prospect', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: prospect.id }),
     })
     const data = await res.json()
-    if (data.success) router.push('/admin/dashboard')
+    if (data.success) router.push('/audit/admin/dashboard')
     else { setError(data.error || 'Delete failed'); setDeleting(false) }
   }
 
@@ -137,7 +136,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
     <div style={{ minHeight: '100vh', background: S.bg, color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
       <nav style={{ background: 'rgba(14,13,26,0.95)', borderBottom: `1px solid ${S.border}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
         <a href="/" style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, color: S.white, textDecoration: 'none' }}>KLIKS<span style={{ color: S.orange }}>.</span></a>
-        <Link href="/admin/dashboard" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Back to Dashboard</Link>
+        <Link href="/audit/admin/dashboard" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Back to Dashboard</Link>
       </nav>
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 24px' }}>

@@ -23,15 +23,14 @@ export async function POST(req: NextRequest) {
     .eq('prospect_id', prospect_id)
 
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://kliks.com.au'
-  const apiBase = `${base}/audit/api/audit`
   const headers = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }
 
   Promise.all([
-    fetch(`${apiBase}/pagespeed`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
-    fetch(`${apiBase}/crawl`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
-    fetch(`${apiBase}/dataforseo`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
-    fetch(`${apiBase}/keyword-planner`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, niche: prospect.niche, store_url: prospect.store_url }) }),
-    fetch(`${apiBase}/meta-ads`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, brand_name: prospect.brand_name, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/crawl`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, niche: prospect.niche, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, brand_name: prospect.brand_name, store_url: prospect.store_url }) }),
   ]).catch(() => {})
 
   return NextResponse.json({ success: true })

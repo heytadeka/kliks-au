@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { BP } from '@/lib/config'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', orangeDark: '#c42f08', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)', purple: '#644bff' }
 
@@ -110,7 +109,7 @@ export default function NewAuditPage() {
     if (!success) return
     const poll = async () => {
       try {
-        const res = await fetch(`${BP}/api/audit/status?prospect_id=${success.prospect_id}`)
+        const res = await fetch(`/api/audit/status?prospect_id=${success.prospect_id}`)
         const data = await res.json()
         setAuditStatus(data)
       } catch {}
@@ -132,7 +131,7 @@ export default function NewAuditPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${BP}/api/audit/admin/create`, {
+      const res = await fetch('/api/audit/admin/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -183,7 +182,7 @@ Kliks`
       <div style={{ minHeight: '100vh', background: S.bg, color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
         <nav style={{ background: 'rgba(14,13,26,0.95)', borderBottom: `1px solid ${S.border}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
           <a href="/" style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, color: S.white, textDecoration: 'none' }}>KLIKS<span style={{ color: S.orange }}>.</span></a>
-          <Link href="/admin/dashboard" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Back to Dashboard</Link>
+          <Link href="/audit/admin/dashboard" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Back to Dashboard</Link>
         </nav>
 
         <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 24px' }}>
@@ -235,8 +234,8 @@ Kliks`
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
-            <Link href="/admin/dashboard" style={{ flex: 1, background: S.bg2, border: `1px solid ${S.border}`, color: S.white, borderRadius: 100, padding: '14px 28px', textDecoration: 'none', fontWeight: 600, fontSize: 15, textAlign: 'center' as const }}>Back to Dashboard</Link>
-            <Link href="/admin/new" style={{ flex: 1, background: S.orange, color: '#fff', borderRadius: 100, padding: '14px 28px', textDecoration: 'none', fontWeight: 600, fontSize: 15, textAlign: 'center' as const }}>Create Another</Link>
+            <Link href="/audit/admin/dashboard" style={{ flex: 1, background: S.bg2, border: `1px solid ${S.border}`, color: S.white, borderRadius: 100, padding: '14px 28px', textDecoration: 'none', fontWeight: 600, fontSize: 15, textAlign: 'center' as const }}>Back to Dashboard</Link>
+            <Link href="/audit/admin/new" style={{ flex: 1, background: S.orange, color: '#fff', borderRadius: 100, padding: '14px 28px', textDecoration: 'none', fontWeight: 600, fontSize: 15, textAlign: 'center' as const }}>Create Another</Link>
           </div>
         </div>
       </div>
@@ -247,7 +246,7 @@ Kliks`
     <div style={{ minHeight: '100vh', background: S.bg, color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
       <nav style={{ background: 'rgba(14,13,26,0.95)', borderBottom: `1px solid ${S.border}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
         <a href="/" style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, color: S.white, textDecoration: 'none' }}>KLIKS<span style={{ color: S.orange }}>.</span></a>
-        <Link href="/admin/dashboard" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Back to Dashboard</Link>
+        <Link href="/audit/admin/dashboard" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>Back to Dashboard</Link>
       </nav>
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 24px' }}>
