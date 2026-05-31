@@ -69,6 +69,7 @@ export default function NewAuditPage() {
   const [slugManual, setSlugManual] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [slugError, setSlugError] = useState('')
   const [success, setSuccess] = useState<{ slug: string; brand_name: string; prospect_id: string } | null>(null)
   const [auditStatus, setAuditStatus] = useState<AuditStatus | null>(null)
   const [copied, setCopied] = useState('')
@@ -97,7 +98,7 @@ export default function NewAuditPage() {
 
   function set(field: keyof FormData) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      if (field === 'slug') setSlugManual(true)
+      if (field === 'slug') { setSlugManual(true); setSlugError('') }
       setForm(f => ({ ...f, [field]: e.target.value }))
     }
   }
@@ -115,8 +116,10 @@ export default function NewAuditPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (loading) return  // double-submit guard
     setLoading(true)
     setError('')
+    setSlugError('')
     const normalised = { ...form, store_url: formatUrl(form.store_url) }
     setForm(normalised)
     try {
@@ -128,6 +131,9 @@ export default function NewAuditPage() {
       const data = await res.json()
       if (data.success) {
         setSuccess({ slug: data.slug, brand_name: data.brand_name, prospect_id: data.prospect_id })
+      } else if (res.status === 409) {
+        setSlugError(data.error || 'This slug is already in use.')
+        setLoading(false)
       } else {
         setError(data.error || 'Something went wrong')
         setLoading(false)
@@ -254,8 +260,17 @@ Kliks`
               </div>
               <div>
                 <label style={labelStyle}>Slug *</label>
-                <input value={form.slug} onChange={set('slug')} placeholder="e.g. bondi-boost" required style={inputStyle} />
-                <p style={helperStyle}>Auto-generated from brand name. Edit to customise.</p>
+                <input
+                  value={form.slug}
+                  onChange={set('slug')}
+                  placeholder="e.g. bondi-boost"
+                  required
+                  style={{ ...inputStyle, borderColor: slugError ? 'rgba(239,68,68,0.6)' : undefined }}
+                />
+                {slugError
+                  ? <p style={{ ...helperStyle, color: '#ef4444', marginTop: 6 }}>{slugError}</p>
+                  : <p style={helperStyle}>Auto-generated from brand name. Edit to customise.</p>
+                }
               </div>
             </div>
 

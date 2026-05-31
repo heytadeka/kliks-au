@@ -13,6 +13,20 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link } = body
 
+  // Guard: check for duplicate slug before inserting
+  const { data: existing } = await supabaseAdmin
+    .from('prospects')
+    .select('id')
+    .eq('slug', slug)
+    .single()
+
+  if (existing) {
+    return NextResponse.json({
+      success: false,
+      error: 'A prospect with this slug already exists. Use a different slug or edit the existing audit.',
+    }, { status: 409 })
+  }
+
   const { data: prospect, error: prospectError } = await supabaseAdmin
     .from('prospects')
     .insert({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link: cta_link || '/book' })
