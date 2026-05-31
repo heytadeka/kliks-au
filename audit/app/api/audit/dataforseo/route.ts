@@ -38,10 +38,10 @@ export async function POST(req: NextRequest) {
 
   let overview = null
   let keywords: any[] = []
-  let gaps = null
 
+  // domain_overview/live not available on this plan - use domain_rank_overview/live instead
   try {
-    const res = await dfsPost('/dataforseo_labs/google/domain_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }])
+    const res = await dfsPost('/dataforseo_labs/google/domain_rank_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }])
     overview = res?.tasks?.[0]?.result?.[0] ?? null
     console.log('[dataforseo] overview result:', overview ? 'ok' : 'null')
   } catch (e: any) { console.error('[dataforseo] overview failed:', e.message) }
@@ -52,23 +52,17 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo] keywords count:', keywords.length)
   } catch (e: any) { console.error('[dataforseo] keywords failed:', e.message) }
 
-  try {
-    const res = await dfsPost('/dataforseo_labs/google/domain_rank_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }])
-    gaps = res?.tasks?.[0]?.result?.[0] ?? null
-    console.log('[dataforseo] rank overview result:', gaps ? 'ok' : 'null')
-  } catch (e: any) { console.error('[dataforseo] rank overview failed:', e.message) }
-
   const { error: dbError } = await supabaseAdmin
     .from('audit_data_cache')
     .upsert({
       prospect_id,
       dataforseo_overview: overview,
       dataforseo_keywords: keywords,
-      dataforseo_gaps: gaps,
+      dataforseo_gaps: null,
     }, { onConflict: 'prospect_id' })
 
   if (dbError) console.error('[dataforseo] Supabase write error:', JSON.stringify(dbError))
   else console.log('[dataforseo] Supabase write success')
 
-  return NextResponse.json({ success: true, overview, keywords, gaps })
+  return NextResponse.json({ success: true, overview, keywords })
 }
