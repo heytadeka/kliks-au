@@ -25,28 +25,23 @@ export async function POST(req: NextRequest) {
     .eq('prospect_id', prospect_id)
 
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://kliks.com.au'
-  const headers = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }
+  const h = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }
 
-  // Run all data collection jobs in parallel
-  await Promise.allSettled([
-    fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
-    fetch(`${base}/api/audit/crawl`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
-    fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
-    fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, niche: prospect.niche, store_url: prospect.store_url }) }),
-    fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers, body: JSON.stringify({ prospect_id, brand_name: prospect.brand_name, store_url: prospect.store_url }) }),
-  ])
-
-  // Generate AI commentary after data is collected
-  try {
-    await fetch(`${base}/api/audit/generate-commentary`, {
+  // Phase 2: fire all jobs in background without awaiting - return to browser immediately
+  // Chain: data jobs first, then commentary. All fire-and-forget.
+  Promise.allSettled([
+    fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/crawl`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id, niche: prospect.niche, store_url: prospect.store_url }) }),
+    fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id, brand_name: prospect.brand_name, store_url: prospect.store_url }) }),
+  ]).then(() =>
+    fetch(`${base}/api/audit/generate-commentary`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! },
+      headers: h,
       body: JSON.stringify({ prospect_id }),
-      signal: AbortSignal.timeout(30000),
     })
-  } catch (e: any) {
-    console.error('[rescan] commentary generation failed:', e.message)
-  }
+  ).catch((e: any) => console.error('[rescan] background jobs failed:', e.message))
 
   return NextResponse.json({ success: true })
 }

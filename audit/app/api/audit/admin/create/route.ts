@@ -24,29 +24,25 @@ export async function POST(req: NextRequest) {
   await supabaseAdmin.from('audit_content').insert({ prospect_id: prospect.id })
   await supabaseAdmin.from('audit_data_cache').insert({ prospect_id: prospect.id })
 
-  // Fire data collection jobs in parallel
+  // Phase 2: fire all jobs in background without awaiting - return to browser immediately
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://kliks.com.au'
-  const headers = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }
+  const h = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }
+  const pid = prospect.id
 
-  await Promise.allSettled([
-    fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
-    fetch(`${base}/api/audit/crawl`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
-    fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, store_url }) }),
-    fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, niche, store_url }) }),
-    fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers, body: JSON.stringify({ prospect_id: prospect.id, brand_name, store_url }) }),
-  ])
-
-  // Generate AI commentary after data is collected
-  try {
-    await fetch(`${base}/api/audit/generate-commentary`, {
+  // Chain: data jobs first, then commentary. All fire-and-forget.
+  Promise.allSettled([
+    fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
+    fetch(`${base}/api/audit/crawl`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
+    fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
+    fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, niche, store_url }) }),
+    fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, brand_name, store_url }) }),
+  ]).then(() =>
+    fetch(`${base}/api/audit/generate-commentary`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! },
-      body: JSON.stringify({ prospect_id: prospect.id }),
-      signal: AbortSignal.timeout(30000),
+      headers: h,
+      body: JSON.stringify({ prospect_id: pid }),
     })
-  } catch (e: any) {
-    console.error('[create] commentary generation failed:', e.message)
-  }
+  ).catch((e: any) => console.error('[create] background jobs failed:', e.message))
 
   return NextResponse.json({ success: true, prospect_id: prospect.id, slug: prospect.slug, brand_name })
 }
