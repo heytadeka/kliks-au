@@ -340,20 +340,22 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           </div>
         </SectionWrap>
 
-        {/* SECTION 04 - AD STRATEGY */}
-        <SectionWrap id="strategy">
-          <GhostNumber n="04" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>AD STRATEGY</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>Ad Strategy</h2>
-            {content?.section_strategy_headline && (
-              <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 22, fontWeight: 600, marginBottom: 16 }}>{content.section_strategy_headline}</h3>
-            )}
-            {content?.section_strategy_body && (
-              <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_strategy_body}</p>
-            )}
-          </div>
-        </SectionWrap>
+        {/* SECTION 04 - AD STRATEGY (legacy manual content, only shown if populated) */}
+        {(content?.section_strategy_headline || content?.section_strategy_body) && (
+          <SectionWrap id="strategy">
+            <GhostNumber n="04" />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <SectionLabel>AD STRATEGY</SectionLabel>
+              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>Ad Strategy</h2>
+              {content?.section_strategy_headline && (
+                <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 22, fontWeight: 600, marginBottom: 16 }}>{content.section_strategy_headline}</h3>
+              )}
+              {content?.section_strategy_body && (
+                <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_strategy_body}</p>
+              )}
+            </div>
+          </SectionWrap>
+        )}
 
         {/* SECTION 05 - SEO */}
         <SectionWrap id="seo">

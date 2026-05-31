@@ -55,10 +55,16 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo] keywords count:', keywords.length)
   } catch (e: any) { console.error('[dataforseo] keywords failed:', e.message) }
 
+  const JUNK_DOMAINS = ['facebook', 'youtube', 'instagram', 'twitter', 'pinterest', 'amazon', 'ebay', 'etsy', 'google', 'tiktok', 'reddit', 'wikipedia']
+
   try {
-    const res = await dfsPost('/dataforseo_labs/google/competitors_domain/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 5 }])
-    competitors = res?.tasks?.[0]?.result?.[0]?.items ?? []
-    console.log('[dataforseo] competitors count:', competitors.length)
+    const res = await dfsPost('/dataforseo_labs/google/competitors_domain/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 10 }])
+    const raw: any[] = res?.tasks?.[0]?.result?.[0]?.items ?? []
+    competitors = raw.filter((c: any) => {
+      const d = (c.domain ?? '').toLowerCase()
+      return !JUNK_DOMAINS.some(junk => d.includes(junk))
+    }).slice(0, 5)
+    console.log('[dataforseo] competitors count (filtered):', competitors.length)
   } catch (e: any) { console.error('[dataforseo] competitors failed:', e.message) }
 
   const topCompetitor = competitors[0]?.domain ?? null
@@ -84,7 +90,7 @@ export async function POST(req: NextRequest) {
       dataforseo_overview: overview,
       dataforseo_keywords: keywords,
       dataforseo_gaps: null,
-      dataforseo_competitors: competitors.length > 0 ? competitors : null,
+      dataforseo_competitors: competitors.length > 0 ? competitors : [],
       dataforseo_serp_features: serpFeatures,
       dataforseo_content_gap: contentGap.length > 0 ? contentGap : null,
     }, { onConflict: 'prospect_id' })
