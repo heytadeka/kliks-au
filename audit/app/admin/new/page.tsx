@@ -17,12 +17,6 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 }
 
-const textareaStyle: React.CSSProperties = {
-  ...inputStyle,
-  minHeight: 120,
-  resize: 'vertical',
-}
-
 const labelStyle: React.CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
@@ -50,15 +44,6 @@ interface FormData {
   prospect_email: string
   niche: string
   cta_link: string
-  section_ads_headline: string
-  section_ads_body: string
-  section_strategy_headline: string
-  section_strategy_body: string
-  section_seo_headline: string
-  section_seo_body: string
-  section_opportunity_headline: string
-  section_opportunity_body: string
-  section_closing_body: string
 }
 
 interface AuditStatus {
@@ -79,15 +64,6 @@ export default function NewAuditPage() {
     prospect_email: '',
     niche: '',
     cta_link: '',
-    section_ads_headline: '',
-    section_ads_body: '',
-    section_strategy_headline: '',
-    section_strategy_body: '',
-    section_seo_headline: '',
-    section_seo_body: '',
-    section_opportunity_headline: '',
-    section_opportunity_body: '',
-    section_closing_body: '',
   })
 
   const [slugManual, setSlugManual] = useState(false)
@@ -119,18 +95,18 @@ export default function NewAuditPage() {
     return () => clearInterval(interval)
   }, [success])
 
-  function formatUrl(val: string) {
-    const trimmed = val.trim()
-    if (!trimmed) return trimmed
-    if (/^https?:\/\//i.test(trimmed)) return trimmed
-    return 'https://' + trimmed
-  }
-
   function set(field: keyof FormData) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (field === 'slug') setSlugManual(true)
       setForm(f => ({ ...f, [field]: e.target.value }))
     }
+  }
+
+  function formatUrl(val: string) {
+    const trimmed = val.trim()
+    if (!trimmed) return trimmed
+    if (/^https?:\/\//i.test(trimmed)) return trimmed
+    return 'https://' + trimmed
   }
 
   function handleUrlBlur() {
@@ -172,7 +148,7 @@ export default function NewAuditPage() {
     const auditUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://kliks.com.au'}/audit/${success.slug}`
     const coldEmail = `Hi ${form.prospect_name || 'there'},
 
-I put together a quick growth audit for ${success.brand_name} — covers your Core Web Vitals, a 20-point CRO checklist, your organic search footprint, and what I think the biggest opportunity is.
+I put together a quick growth audit for ${success.brand_name} - covers your Core Web Vitals, a 20-point CRO checklist, your organic search footprint, and what I think the biggest opportunity is.
 
 You can view it here: ${auditUrl}
 
@@ -202,7 +178,7 @@ Kliks`
           <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 20, padding: 40, marginBottom: 40 }}>
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#22c55e', display: 'block', marginBottom: 12 }}>AUDIT CREATED</span>
             <h1 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, marginBottom: 8 }}>{success.brand_name}</h1>
-            <p style={{ color: S.muted, marginBottom: 24 }}>Background jobs are running. The report will populate as data comes in.</p>
+            <p style={{ color: S.muted, marginBottom: 24 }}>Background jobs are running. AI commentary will generate automatically once data is collected.</p>
 
             {/* Status */}
             <div style={{ background: S.bg2, borderRadius: 12, padding: 24, marginBottom: 24 }}>
@@ -265,11 +241,9 @@ Kliks`
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 24px' }}>
         <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 12 }}>ADMIN</span>
         <h1 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 36, fontWeight: 700, letterSpacing: '0.01em', marginBottom: 8 }}>New Audit</h1>
-        <p style={{ color: S.muted, marginBottom: 48 }}>Create a personalised audit report. Background jobs will run immediately.</p>
+        <p style={{ color: S.muted, marginBottom: 48 }}>Fill in the prospect details. All data collection and AI commentary runs automatically on submission.</p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-
-          {/* --- PROSPECT DETAILS --- */}
+        <form onSubmit={handleSubmit}>
           <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
             <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 24 }}>Prospect Details</h2>
 
@@ -309,80 +283,8 @@ Kliks`
               </div>
               <div>
                 <label style={labelStyle}>CTA Link</label>
-                <input value={form.cta_link} onChange={set('cta_link')} placeholder="https://cal.com/..." style={inputStyle} type="url" />
+                <input value={form.cta_link} onChange={set('cta_link')} placeholder="https://cal.com/..." style={inputStyle} />
                 <p style={helperStyle}>Defaults to /book if blank.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* --- WRITTEN CONTENT --- */}
-          <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 6 }}>Written Content</h2>
-            <p style={{ color: S.muted, fontSize: 14, marginBottom: 24 }}>Personalised commentary shown in the report. Each section has a headline and body.</p>
-
-            {/* Ads */}
-            <div style={{ marginBottom: 28, paddingBottom: 28, borderBottom: `1px solid ${S.border}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 12 }}>Section 03 — Ads & Creative</div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Headline</label>
-                <input value={form.section_ads_headline} onChange={set('section_ads_headline')} placeholder="e.g. What I noticed in your ads" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Body</label>
-                <textarea value={form.section_ads_body} onChange={set('section_ads_body')} placeholder="Your observations about their creative, angle, hooks, frequency..." style={textareaStyle} />
-                <p style={helperStyle}>What did you notice in the Meta Ad Library? Are they testing angles, running UGC, retargeting?</p>
-              </div>
-            </div>
-
-            {/* Strategy */}
-            <div style={{ marginBottom: 28, paddingBottom: 28, borderBottom: `1px solid ${S.border}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 12 }}>Section 04 — Ad Strategy</div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Headline</label>
-                <input value={form.section_strategy_headline} onChange={set('section_strategy_headline')} placeholder="e.g. Where the strategy is strong — and where it isn't" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Body</label>
-                <textarea value={form.section_strategy_body} onChange={set('section_strategy_body')} placeholder="Your assessment of their paid media strategy..." style={textareaStyle} />
-                <p style={helperStyle}>Budget allocation, funnel coverage, retargeting depth, platform mix.</p>
-              </div>
-            </div>
-
-            {/* SEO */}
-            <div style={{ marginBottom: 28, paddingBottom: 28, borderBottom: `1px solid ${S.border}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 12 }}>Section 06 — Search Opportunity</div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Headline</label>
-                <input value={form.section_seo_headline} onChange={set('section_seo_headline')} placeholder="e.g. There's untapped search demand here" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Body</label>
-                <textarea value={form.section_seo_body} onChange={set('section_seo_body')} placeholder="Commentary on their organic search position, content gaps, keyword opportunities..." style={textareaStyle} />
-                <p style={helperStyle}>Contextualise the DataForSEO data. Are they ranking for brand only? Missing high-intent terms?</p>
-              </div>
-            </div>
-
-            {/* Opportunity */}
-            <div style={{ marginBottom: 28, paddingBottom: 28, borderBottom: `1px solid ${S.border}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 12 }}>Section 07 — Biggest Opportunity</div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Headline</label>
-                <input value={form.section_opportunity_headline} onChange={set('section_opportunity_headline')} placeholder="e.g. Fix the funnel before scaling spend" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Body</label>
-                <textarea value={form.section_opportunity_body} onChange={set('section_opportunity_body')} placeholder="The single most impactful thing they could do..." style={textareaStyle} />
-                <p style={helperStyle}>This is the hero section. Make it specific, credible, and compelling.</p>
-              </div>
-            </div>
-
-            {/* Closing */}
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 12 }}>Section 10 — Closing / What Happens Next</div>
-              <div>
-                <label style={labelStyle}>Body</label>
-                <textarea value={form.section_closing_body} onChange={set('section_closing_body')} placeholder="e.g. I've kept this deliberately focused on the highest-leverage areas..." style={textareaStyle} />
-                <p style={helperStyle}>Bridge from the audit to the call. Keep it personal and low-pressure.</p>
               </div>
             </div>
           </div>
@@ -393,9 +295,10 @@ Kliks`
             </div>
           )}
 
-          <button type="submit" disabled={loading} style={{ background: loading ? S.orangeDark : S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '18px 48px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 17, cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}>
-            {loading ? 'Creating audit...' : 'Create Audit'}
+          <button type="submit" disabled={loading} style={{ width: '100%', background: loading ? S.orangeDark : S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '18px 48px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 17, cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s', marginBottom: 12 }}>
+            {loading ? 'Creating audit and generating AI commentary...' : 'Create Audit'}
           </button>
+          <p style={{ textAlign: 'center', color: S.muted, fontSize: 13 }}>AI commentary will be generated automatically from live data after submission.</p>
         </form>
       </div>
     </div>

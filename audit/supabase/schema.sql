@@ -57,6 +57,21 @@ create table if not exists admin_users (
   is_active boolean not null default true
 );
 
+-- AI commentary columns (added after initial release)
+-- Run this block in Supabase SQL editor if upgrading an existing database:
+--
+-- ALTER TABLE audit_content
+--   ADD COLUMN IF NOT EXISTS ai_performance_commentary text,
+--   ADD COLUMN IF NOT EXISTS ai_cro_commentary text,
+--   ADD COLUMN IF NOT EXISTS ai_seo_commentary text,
+--   ADD COLUMN IF NOT EXISTS ai_opportunity_commentary text,
+--   ADD COLUMN IF NOT EXISTS ai_closing_commentary text;
+--
+-- ALTER TABLE audit_data_cache
+--   ADD COLUMN IF NOT EXISTS dataforseo_competitors jsonb,
+--   ADD COLUMN IF NOT EXISTS dataforseo_serp_features jsonb,
+--   ADD COLUMN IF NOT EXISTS dataforseo_content_gap jsonb;
+
 -- Seed test prospect
 insert into prospects (slug, brand_name, store_url, prospect_email, prospect_name, niche)
 values ('test-brand', 'Test Brand', 'https://apple.com', 'wearekliks@gmail.com', 'Adam', 'Consumer Electronics')

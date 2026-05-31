@@ -38,6 +38,9 @@ export async function POST(req: NextRequest) {
 
   let overview = null
   let keywords: any[] = []
+  let competitors: any[] = []
+  let serpFeatures = null
+  let contentGap: any[] = []
 
   // domain_overview/live not available on this plan - use domain_rank_overview/live instead
   try {
@@ -52,6 +55,28 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo] keywords count:', keywords.length)
   } catch (e: any) { console.error('[dataforseo] keywords failed:', e.message) }
 
+  try {
+    const res = await dfsPost('/dataforseo_labs/google/competitors_domain/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 5 }])
+    competitors = res?.tasks?.[0]?.result?.[0]?.items ?? []
+    console.log('[dataforseo] competitors count:', competitors.length)
+  } catch (e: any) { console.error('[dataforseo] competitors failed:', e.message) }
+
+  const topCompetitor = competitors[0]?.domain ?? null
+
+  if (topCompetitor) {
+    try {
+      const res = await dfsPost('/dataforseo_labs/google/domain_intersection/live', [{ target1: domain, target2: topCompetitor, location_code: 2036, language_code: 'en', limit: 10 }])
+      serpFeatures = res?.tasks?.[0]?.result?.[0] ?? null
+      console.log('[dataforseo] serp features result:', serpFeatures ? 'ok' : 'null')
+    } catch (e: any) { console.error('[dataforseo] serp features failed:', e.message) }
+
+    try {
+      const res = await dfsPost('/dataforseo_labs/google/keyword_gap/live', [{ targets: [domain, topCompetitor], location_code: 2036, language_code: 'en', limit: 10 }])
+      contentGap = res?.tasks?.[0]?.result?.[0]?.items ?? []
+      console.log('[dataforseo] content gap count:', contentGap.length)
+    } catch (e: any) { console.error('[dataforseo] content gap failed:', e.message) }
+  }
+
   const { error: dbError } = await supabaseAdmin
     .from('audit_data_cache')
     .upsert({
@@ -59,10 +84,13 @@ export async function POST(req: NextRequest) {
       dataforseo_overview: overview,
       dataforseo_keywords: keywords,
       dataforseo_gaps: null,
+      dataforseo_competitors: competitors.length > 0 ? competitors : null,
+      dataforseo_serp_features: serpFeatures,
+      dataforseo_content_gap: contentGap.length > 0 ? contentGap : null,
     }, { onConflict: 'prospect_id' })
 
   if (dbError) console.error('[dataforseo] Supabase write error:', JSON.stringify(dbError))
   else console.log('[dataforseo] Supabase write success')
 
-  return NextResponse.json({ success: true, overview, keywords })
+  return NextResponse.json({ success: true, overview, keywords, competitors: competitors.length, contentGap: contentGap.length })
 }

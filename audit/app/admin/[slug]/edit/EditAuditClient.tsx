@@ -18,12 +18,6 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 }
 
-const textareaStyle: React.CSSProperties = {
-  ...inputStyle,
-  minHeight: 120,
-  resize: 'vertical',
-}
-
 const labelStyle: React.CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
@@ -41,15 +35,6 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
     prospect_email: prospect.prospect_email ?? '',
     niche: prospect.niche ?? '',
     cta_link: prospect.cta_link ?? '',
-    section_ads_headline: content?.section_ads_headline ?? '',
-    section_ads_body: content?.section_ads_body ?? '',
-    section_strategy_headline: content?.section_strategy_headline ?? '',
-    section_strategy_body: content?.section_strategy_body ?? '',
-    section_seo_headline: content?.section_seo_headline ?? '',
-    section_seo_body: content?.section_seo_body ?? '',
-    section_opportunity_headline: content?.section_opportunity_headline ?? '',
-    section_opportunity_body: content?.section_opportunity_body ?? '',
-    section_closing_body: content?.section_closing_body ?? '',
   })
 
   const [loading, setLoading] = useState(false)
@@ -100,7 +85,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
       })
       const data = await res.json()
       if (!data.success) setError(data.error || 'Rescan failed')
-      else alert('Rescan triggered. Data will update in ~30 seconds.')
+      else alert('Rescan complete. AI commentary has been regenerated.')
     } catch {
       setError('Network error')
     } finally {
@@ -148,7 +133,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <a href={auditUrl} target="_blank" style={{ color: S.purple, fontSize: 13, textDecoration: 'none', border: `1px solid ${S.border}`, borderRadius: 8, padding: '6px 14px' }}>Preview</a>
             <button onClick={handleRescan} disabled={rescanning} style={{ background: 'rgba(100,75,255,0.12)', color: S.purple, border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
-              {rescanning ? 'Rescanning...' : 'Rescan'}
+              {rescanning ? 'Rescanning...' : 'Re-run Data Scan'}
             </button>
             <button onClick={handleToggleActive} style={{ background: prospect.is_active ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)', color: prospect.is_active ? '#ef4444' : '#22c55e', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
               {prospect.is_active ? 'Deactivate' : 'Activate'}
@@ -161,9 +146,19 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
 
         <p style={{ color: S.muted, fontSize: 13, marginBottom: 40 }}>/{prospect.slug} &middot; {prospect.access_count ?? 0} views &middot; {prospect.is_active ? 'Active' : 'Inactive'}</p>
 
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {/* AI commentary status */}
+        {content?.ai_opportunity_commentary && (
+          <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
+            <p style={{ color: '#22c55e', fontSize: 13, fontWeight: 600 }}>AI commentary is live. Run a data scan to regenerate.</p>
+          </div>
+        )}
+        {!content?.ai_opportunity_commentary && (
+          <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
+            <p style={{ color: S.orange, fontSize: 13, fontWeight: 600 }}>AI commentary not yet generated. Run a data scan to generate.</p>
+          </div>
+        )}
 
-          {/* Prospect Details */}
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
             <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 24 }}>Prospect Details</h2>
 
@@ -174,7 +169,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
               </div>
               <div>
                 <label style={labelStyle}>Store URL</label>
-                <input value={form.store_url} onChange={set('store_url')} style={inputStyle} type="url" />
+                <input value={form.store_url} onChange={set('store_url')} style={inputStyle} />
               </div>
             </div>
 
@@ -198,36 +193,6 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
                 <label style={labelStyle}>CTA Link</label>
                 <input value={form.cta_link} onChange={set('cta_link')} style={inputStyle} />
               </div>
-            </div>
-          </div>
-
-          {/* Written Content */}
-          <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 24 }}>Written Content</h2>
-
-            {[
-              { key_h: 'section_ads_headline', key_b: 'section_ads_body', label: 'Ads & Creative', placeholder_h: 'What I noticed in your ads', placeholder_b: 'Your observations about their creative...' },
-              { key_h: 'section_strategy_headline', key_b: 'section_strategy_body', label: 'Ad Strategy', placeholder_h: 'Where the strategy is strong — and where it isn\'t', placeholder_b: 'Your assessment of their paid media strategy...' },
-              { key_h: 'section_seo_headline', key_b: 'section_seo_body', label: 'Search Opportunity', placeholder_h: 'There\'s untapped search demand here', placeholder_b: 'Commentary on their organic search position...' },
-              { key_h: 'section_opportunity_headline', key_b: 'section_opportunity_body', label: 'Biggest Opportunity', placeholder_h: 'Fix the funnel before scaling spend', placeholder_b: 'The single most impactful thing they could do...' },
-            ].map(({ key_h, key_b, label, placeholder_h, placeholder_b }, i) => (
-              <div key={key_h} style={{ marginBottom: i < 3 ? 28 : 0, paddingBottom: i < 3 ? 28 : 0, borderBottom: i < 3 ? `1px solid ${S.border}` : 'none' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 12 }}>{label}</div>
-                <div style={{ marginBottom: 12 }}>
-                  <label style={labelStyle}>Headline</label>
-                  <input value={(form as any)[key_h]} onChange={set(key_h)} placeholder={placeholder_h} style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Body</label>
-                  <textarea value={(form as any)[key_b]} onChange={set(key_b)} placeholder={placeholder_b} style={textareaStyle} />
-                </div>
-              </div>
-            ))}
-
-            <div style={{ marginTop: 28, paddingTop: 28, borderTop: `1px solid ${S.border}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 12 }}>Closing</div>
-              <label style={labelStyle}>Body</label>
-              <textarea value={form.section_closing_body} onChange={set('section_closing_body')} placeholder="Bridge from the audit to the call..." style={textareaStyle} />
             </div>
           </div>
 

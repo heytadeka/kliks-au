@@ -51,6 +51,16 @@ function getStatus(value: number, thresholds: [number, number]): 'good' | 'needs
 
 function msToS(ms: number) { return (ms / 1000).toFixed(2) }
 
+function AdamsTake({ text }: { text?: string | null }) {
+  if (!text) return null
+  return (
+    <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24, marginTop: 24 }}>
+      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 10 }}>ADAM&apos;S TAKE</span>
+      <p style={{ color: S.white, lineHeight: 1.8, fontSize: 16, margin: 0 }}>{text}</p>
+    </div>
+  )
+}
+
 export default function ReportClient({ prospect, content, cache }: { prospect: any; content: any; cache: any }) {
   const ps = cache?.pagespeed_mobile
   const psDesktop = cache?.pagespeed_desktop
@@ -60,6 +70,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const dfsKeywords: any[] = useMemo(() => cache?.dataforseo_keywords ?? [], [cache?.dataforseo_keywords])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const dfsGaps: any[] = useMemo(() => cache?.dataforseo_gaps ?? [], [cache?.dataforseo_gaps])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const dfsCompetitors: any[] = useMemo(() => cache?.dataforseo_competitors ?? [], [cache?.dataforseo_competitors])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const dfsContentGap: any[] = useMemo(() => cache?.dataforseo_content_gap ?? [], [cache?.dataforseo_content_gap])
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
 
@@ -202,6 +216,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     <p style={{ color: S.muted, fontSize: 13 }}>Based on Google research and industry conversion benchmarks.</p>
                   </div>
                 )}
+
+                <AdamsTake text={content?.ai_performance_commentary} />
               </>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
@@ -236,7 +252,12 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             <span style={{ fontSize: 15, color: item.passed ? S.white : S.muted }}>{item.label}</span>
                             <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', padding: '2px 7px', borderRadius: 99, background: item.importance === 'high' ? 'rgba(239,68,68,0.12)' : item.importance === 'medium' ? 'rgba(249,115,22,0.12)' : 'rgba(100,75,255,0.12)', color: item.importance === 'high' ? '#ef4444' : item.importance === 'medium' ? '#f97316' : S.purple }}>{item.importance.toUpperCase()}</span>
                           </div>
-                          {!item.passed && item.fix && <p style={{ fontSize: 13, color: 'rgba(255,100,50,0.8)', marginTop: 4, lineHeight: 1.5 }}>{item.fix}</p>}
+                          {!item.passed && item.fix && (
+                            <p style={{ fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
+                              <span style={{ fontWeight: 700, color: S.orange, marginRight: 4 }}>FIX:</span>
+                              <span style={{ color: 'rgba(255,100,50,0.8)' }}>{item.fix}</span>
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -254,6 +275,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     {cro.summary.passed < 10 ? 'Significant conversion optimisation opportunity identified.' : cro.summary.passed <= 15 ? 'Room for meaningful improvement across key conversion signals.' : 'Strong CRO foundation detected.'}
                   </p>
                 </div>
+
+                <AdamsTake text={content?.ai_cro_commentary} />
               </>
             ) : (
               <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 32, textAlign: 'center' }}>
@@ -268,8 +291,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <GhostNumber n="03" />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <SectionLabel>WHAT I NOTICED</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>{content?.section_ads_headline || 'Ads and Creative'}</h2>
-            <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17, marginBottom: 40 }}>{content?.section_ads_body}</p>
+            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>Ads and Creative</h2>
 
             {metaAds && !metaAds.error ? (
               <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 24 }}>
@@ -323,8 +345,13 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <GhostNumber n="04" />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <SectionLabel>AD STRATEGY</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>{content?.section_strategy_headline || 'Ad Strategy'}</h2>
-            <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content?.section_strategy_body}</p>
+            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>Ad Strategy</h2>
+            {content?.section_strategy_headline && (
+              <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 22, fontWeight: 600, marginBottom: 16 }}>{content.section_strategy_headline}</h3>
+            )}
+            {content?.section_strategy_body && (
+              <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_strategy_body}</p>
+            )}
           </div>
         </SectionWrap>
 
@@ -378,9 +405,62 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   </div>
                 )}
 
+                {dfsCompetitors.length > 0 && (
+                  <div style={{ marginBottom: 40 }}>
+                    <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Top Competitors</h3>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                        <thead>
+                          <tr style={{ background: S.bg }}>
+                            {['Domain', 'Est. Monthly Traffic', 'Keyword Overlap'].map(h => (
+                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dfsCompetitors.slice(0, 5).map((comp: any, i: number) => (
+                            <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                              <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted }}>{(comp.full_domain_metrics?.organic?.etv ?? comp.avg_position ?? 0).toLocaleString()}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted }}>{comp.intersections?.toLocaleString() ?? '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {dfsContentGap.length > 0 && (
+                  <div style={{ marginBottom: 40 }}>
+                    <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Keywords You&apos;re Missing</h3>
+                    <p style={{ color: S.muted, fontSize: 13, marginBottom: 16 }}>Keywords your top competitor ranks for that you don&apos;t.</p>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                        <thead>
+                          <tr style={{ background: S.bg }}>
+                            {['Keyword', 'Monthly Volume', 'Top Competitor'].map(h => (
+                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dfsContentGap.slice(0, 10).map((gap: any, i: number) => (
+                            <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                              <td style={{ padding: '10px 14px', color: S.white }}>{gap.keyword_data?.keyword ?? gap.keyword}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted }}>{(gap.keyword_data?.keyword_info?.search_volume ?? 0).toLocaleString()}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted, fontSize: 12 }}>{dfsCompetitors[0]?.domain ?? '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
                 {dfsGaps.length > 0 && (
                   <div style={{ marginBottom: 40 }}>
-                    <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Keywords Competitors Rank For That You Don&apos;t</h3>
+                    <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Keyword Gap Analysis</h3>
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                         <thead>
@@ -411,7 +491,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 )}
 
                 {gads && !gads.error && gads.keyword_ideas?.length > 0 && (
-                  <div>
+                  <div style={{ marginBottom: 40 }}>
                     <p style={{ color: S.muted, fontSize: 13, marginBottom: 16 }}>Source: Google Ads Planner - category-level search intelligence to complement organic findings.</p>
                     <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Category and Keyword Opportunity</h3>
                     <div style={{ overflowX: 'auto' }}>
@@ -445,6 +525,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     <p style={{ color: S.muted, fontSize: 14 }}>Google Ads Planner data requires API configuration. Contact hello@kliks.com.au to enable.</p>
                   </div>
                 )}
+
+                <AdamsTake text={content?.ai_seo_commentary} />
               </>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
@@ -454,23 +536,33 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           </div>
         </SectionWrap>
 
-        {/* SECTION 06 - SEO COMMENTARY */}
-        <SectionWrap id="seo-commentary">
-          <GhostNumber n="06" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>SEARCH OPPORTUNITY</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>{content?.section_seo_headline || 'Search Opportunity'}</h2>
-            <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content?.section_seo_body}</p>
-          </div>
-        </SectionWrap>
+        {/* SECTION 06 - SEO COMMENTARY (legacy manual content, shown only if populated) */}
+        {content?.section_seo_headline && (
+          <SectionWrap id="seo-commentary">
+            <GhostNumber n="06" />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <SectionLabel>SEARCH OPPORTUNITY</SectionLabel>
+              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>{content.section_seo_headline}</h2>
+              {content?.section_seo_body && <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_seo_body}</p>}
+            </div>
+          </SectionWrap>
+        )}
 
         {/* SECTION 07 - BIGGEST OPPORTUNITY */}
         <SectionWrap id="opportunity">
           <GhostNumber n="07" />
           <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255,67,21,0.03)', border: '1px solid rgba(255,67,21,0.4)', boxShadow: '0 0 0 1px rgba(255,67,21,0.2), 0 0 48px rgba(255,67,21,0.08)', borderRadius: 16, padding: 40 }}>
             <SectionLabel>YOUR BIGGEST OPPORTUNITY</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>{content?.section_opportunity_headline || 'Highest Leverage Move'}</h2>
-            <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content?.section_opportunity_body}</p>
+            {content?.ai_opportunity_commentary ? (
+              <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.ai_opportunity_commentary}</p>
+            ) : content?.section_opportunity_headline ? (
+              <>
+                <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>{content.section_opportunity_headline}</h2>
+                {content?.section_opportunity_body && <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_opportunity_body}</p>}
+              </>
+            ) : (
+              <div style={{ height: 80, borderRadius: 8, background: 'rgba(255,67,21,0.08)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            )}
           </div>
         </SectionWrap>
 
@@ -530,7 +622,9 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     { metric: 'Core Web Vitals (LCP/FCP/TBT/CLS)', status: ps ? 'Verified' : 'Pending', source: 'Google PSI API', action: 'None' },
                     { metric: 'CRO Elements Audit', status: cro?.results ? 'Verified' : cro?.error ? 'Failed' : 'Pending', source: 'Automated Site Crawl', action: 'None' },
                     { metric: 'Organic Keywords', status: dfsOverview ? 'Verified' : 'Pending', source: 'DataForSEO Labs API', action: 'None' },
-                    { metric: 'Keyword Gap Analysis', status: dfsGaps.length > 0 ? 'Verified' : 'Pending', source: 'DataForSEO Labs API', action: 'None' },
+                    { metric: 'Competitor Analysis', status: dfsCompetitors.length > 0 ? 'Verified' : 'Pending', source: 'DataForSEO Labs API', action: 'None' },
+                    { metric: 'Content Gap Analysis', status: dfsContentGap.length > 0 ? 'Verified' : 'Pending', source: 'DataForSEO Labs API', action: 'None' },
+                    { metric: 'AI Commentary', status: content?.ai_opportunity_commentary ? 'Verified' : 'Pending', source: 'Claude AI', action: 'None' },
                     { metric: 'Category Keyword Intelligence', status: gads && !gads.error ? 'Verified' : 'Not Connected', source: 'DataForSEO + Google Ads Planner', action: gads?.error ? 'Configure API' : 'None' },
                     { metric: 'Meta Ad Library', status: metaAds && !metaAds.error ? 'Verified' : 'Not Connected', source: 'Meta Ad Library API', action: metaAds?.error ? 'Configure API' : 'None' },
                     { metric: 'Google Analytics 4', status: 'Not Connected', source: 'GA4 API', action: 'Connect data source' },
@@ -560,7 +654,11 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <GhostNumber n="10" />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <SectionLabel>WHAT HAPPENS NEXT</SectionLabel>
-            <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17, marginBottom: 48 }}>{content?.section_closing_body}</p>
+            {(content?.ai_closing_commentary || content?.section_closing_body) && (
+              <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17, marginBottom: 48 }}>
+                {content?.ai_closing_commentary || content?.section_closing_body}
+              </p>
+            )}
 
             <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 20, padding: 48, textAlign: 'center' }}>
               <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 12 }}>Book a call with Adam.</h2>
