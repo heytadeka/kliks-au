@@ -138,6 +138,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const kwBuckets = useMemo(() => {
+    console.log('[report] dfsKeywords raw:', JSON.stringify(dfsKeywords?.slice(0, 2)))
+    console.log('[report] dfsKeywords length:', dfsKeywords?.length, 'dfsContentGap length:', dfsContentGap?.length)
     const isBlog = (url: string) => url.includes('/blog/') || url.includes('/blogs/')
     const winning = dfsKeywords
       .filter(kw => {

@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     competitors = raw.filter((c: any) => {
       const d = (c.domain ?? '').toLowerCase()
       const etv = c.full_domain_metrics?.organic?.etv ?? 0
-      return !JUNK_DOMAINS.some(junk => d.includes(junk)) && etv <= 5_000_000
+      return !JUNK_DOMAINS.some(junk => d.includes(junk)) && etv <= 5_000_000 && d !== domain.toLowerCase()
     }).slice(0, 5)
     console.log('[dataforseo] competitors count (filtered):', competitors.length)
   } catch (e: any) { console.error('[dataforseo] competitors failed:', e.message) }

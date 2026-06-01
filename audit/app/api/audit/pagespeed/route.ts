@@ -97,7 +97,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const mobile = await fetchPageSpeed(store_url, 'mobile')
+    console.log('[pagespeed] mobile loadingExperience:', JSON.stringify(mobile?.loadingExperience ?? null))
+    const mobileCrux = extractCrux(mobile)
+    console.log('[pagespeed] mobile extractCrux result:', JSON.stringify(mobileCrux))
     mobileMetrics = buildMetrics(mobile)
+    console.log('[pagespeed] mobile buildMetrics result:', JSON.stringify(mobileMetrics))
     if (!mobileMetrics) console.error(`[pagespeed] No PageSpeed data available for ${domain}`)
   } catch (err: any) {
     if (err.name === 'AbortError') {
