@@ -60,12 +60,16 @@ export async function POST(req: NextRequest) {
   try {
     const res = await dfsPost('/dataforseo_labs/google/competitors_domain/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 10 }])
     const raw: any[] = res?.tasks?.[0]?.result?.[0]?.items ?? []
+    raw.forEach((c: any) => {
+      const etv = c.full_domain_metrics?.organic?.etv ?? 0
+      console.log(`[dataforseo] competitor candidate: ${c.domain} etv=${Math.round(etv)}`)
+    })
     competitors = raw.filter((c: any) => {
       const d = (c.domain ?? '').toLowerCase()
       const etv = c.full_domain_metrics?.organic?.etv ?? 0
-      return !JUNK_DOMAINS.some(junk => d.includes(junk)) && etv <= 5_000_000 && d !== domain.toLowerCase()
+      return !JUNK_DOMAINS.some(junk => d.includes(junk)) && etv <= 50_000_000 && d !== domain.toLowerCase()
     }).slice(0, 5)
-    console.log('[dataforseo] competitors count (filtered):', competitors.length)
+    console.log('[dataforseo] competitors after filter:', competitors.map((c: any) => c.domain))
   } catch (e: any) { console.error('[dataforseo] competitors failed:', e.message) }
 
   const topCompetitor = competitors[0]?.domain ?? null

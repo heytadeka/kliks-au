@@ -42,12 +42,10 @@ function extractLighthouse(data: any) {
   }
 }
 
-function buildMetrics(data: any) {
-  const crux = extractCrux(data)
-  const lighthouse = extractLighthouse(data)
+function buildMetrics(crux: any, lighthouse: any) {
   if (!crux && !lighthouse) return null
   return {
-    // Flat top-level fields for backward compat - CrUX primary, lighthouse fallback
+    // Flat top-level fields - CrUX primary, lighthouse fallback
     performance_score: lighthouse?.performance_score ?? null,
     lcp: crux?.lcp ?? lighthouse?.lcp ?? null,
     fcp: crux?.fcp ?? lighthouse?.fcp ?? null,
@@ -68,19 +66,16 @@ function buildMetrics(data: any) {
     crux_lcp_category: crux?.lcp_category ?? null,
     crux_fcp_category: crux?.fcp_category ?? null,
     crux_cls_category: crux?.cls_category ?? null,
-    // Full sub-objects per spec
     crux,
     lighthouse,
   }
 }
 
-async function fetchPageSpeed(url: string, strategy: 'mobile' | 'desktop') {
-  const apiKey = process.env.PAGESPEED_API_KEY
-  const endpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${strategy}&key=${apiKey}`
+async function fetchWithTimeout(url: string, timeoutMs: number) {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 45000)
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const res = await fetch(endpoint, { signal: controller.signal, next: { revalidate: 0 } })
+    const res = await fetch(url, { signal: controller.signal, next: { revalidate: 0 } })
     if (!res.ok) throw new Error(`PageSpeed API error: ${res.status}`)
     return res.json()
   } finally {
@@ -91,39 +86,64 @@ async function fetchPageSpeed(url: string, strategy: 'mobile' | 'desktop') {
 export async function POST(req: NextRequest) {
   const { prospect_id, store_url } = await req.json()
   const domain = store_url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
+  const apiKey = process.env.PAGESPEED_API_KEY
+  const encoded = encodeURIComponent(store_url)
+  const base = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed`
 
-  let mobileMetrics = null
-  let desktopMetrics = null
+  let crux: any = null
+  let mobileLighthouse: any = null
+  let desktopLighthouse: any = null
 
+  // Fetch 1: CrUX only - fast, no lighthouse overhead
+  // strategy=DESKTOP, fields=loadingExperience gives real-user field data immediately
   try {
-    const mobile = await fetchPageSpeed(store_url, 'mobile')
-    console.log('[pagespeed] mobile loadingExperience:', JSON.stringify(mobile?.loadingExperience ?? null))
-    const mobileCrux = extractCrux(mobile)
-    console.log('[pagespeed] mobile extractCrux result:', JSON.stringify(mobileCrux))
-    mobileMetrics = buildMetrics(mobile)
-    console.log('[pagespeed] mobile buildMetrics result:', JSON.stringify(mobileMetrics))
-    if (!mobileMetrics) console.error(`[pagespeed] No PageSpeed data available for ${domain}`)
+    const cruxUrl = `${base}?url=${encoded}&strategy=DESKTOP&fields=loadingExperience&key=${apiKey}`
+    const cruxData = await fetchWithTimeout(cruxUrl, 15000)
+    crux = extractCrux(cruxData)
+    console.log('[pagespeed] crux result:', JSON.stringify(crux))
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.error(`[pagespeed] PageSpeed timed out for ${domain} - store may be slow`)
+      console.error(`[pagespeed] CrUX fetch timed out for ${domain}`)
     } else {
-      console.error('[pagespeed] mobile fetch failed:', err.message)
+      console.error('[pagespeed] CrUX fetch failed:', err.message)
     }
   }
 
+  // Fetch 2: full mobile lighthouse (slow, can timeout)
   try {
-    const desktop = await fetchPageSpeed(store_url, 'desktop')
-    desktopMetrics = buildMetrics(desktop)
-    if (!desktopMetrics) console.error(`[pagespeed] No PageSpeed data available for ${domain} (desktop)`)
+    const mobileData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=mobile&key=${apiKey}`, 45000)
+    mobileLighthouse = extractLighthouse(mobileData)
+    console.log('[pagespeed] mobile lighthouse score:', mobileLighthouse?.performance_score ?? 'null')
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.error(`[pagespeed] PageSpeed timed out for ${domain} - store may be slow`)
+      console.error(`[pagespeed] mobile lighthouse timed out for ${domain} - store may be slow`)
     } else {
-      console.error('[pagespeed] desktop fetch failed:', err.message)
+      console.error('[pagespeed] mobile lighthouse failed:', err.message)
     }
   }
 
-  console.log('[pagespeed] writing to DB for prospect_id:', prospect_id, '- mobile:', !!mobileMetrics, 'desktop:', !!desktopMetrics)
+  // Fetch 3: full desktop lighthouse (slow, can timeout)
+  try {
+    const desktopData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=desktop&key=${apiKey}`, 45000)
+    desktopLighthouse = extractLighthouse(desktopData)
+    console.log('[pagespeed] desktop lighthouse score:', desktopLighthouse?.performance_score ?? 'null')
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      console.error(`[pagespeed] desktop lighthouse timed out for ${domain} - store may be slow`)
+    } else {
+      console.error('[pagespeed] desktop lighthouse failed:', err.message)
+    }
+  }
+
+  // mobile = CrUX + mobile lighthouse; desktop = desktop lighthouse only
+  const mobileMetrics = buildMetrics(crux, mobileLighthouse)
+  const desktopMetrics = buildMetrics(null, desktopLighthouse)
+
+  if (!mobileMetrics && !desktopMetrics) {
+    console.error(`[pagespeed] No PageSpeed data available for ${domain}`)
+  }
+
+  console.log('[pagespeed] writing to DB - mobile:', !!mobileMetrics, 'desktop:', !!desktopMetrics)
   const { error: dbError } = await supabaseAdmin
     .from('audit_data_cache')
     .upsert({
@@ -137,6 +157,6 @@ export async function POST(req: NextRequest) {
     console.error('[pagespeed] Supabase write error:', JSON.stringify(dbError))
     return NextResponse.json({ success: false, error: dbError.message }, { status: 500 })
   }
-  console.log('[pagespeed] Supabase write success for prospect_id:', prospect_id)
-  return NextResponse.json({ success: true, mobile: mobileMetrics, desktop: desktopMetrics })
+  console.log('[pagespeed] write success for prospect_id:', prospect_id)
+  return NextResponse.json({ success: true, crux: !!crux, mobile: !!mobileLighthouse, desktop: !!desktopLighthouse })
 }

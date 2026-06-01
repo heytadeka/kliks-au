@@ -138,8 +138,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const kwBuckets = useMemo(() => {
-    console.log('[report] dfsKeywords raw:', JSON.stringify(dfsKeywords?.slice(0, 2)))
     console.log('[report] dfsKeywords length:', dfsKeywords?.length, 'dfsContentGap length:', dfsContentGap?.length)
+    console.log('[report] dfsKeywords[0] sample:', JSON.stringify(dfsKeywords?.[0] ?? null))
     const isBlog = (url: string) => url.includes('/blog/') || url.includes('/blogs/')
     const winning = dfsKeywords
       .filter(kw => {
@@ -158,6 +158,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     const money = [...dfsContentGap]
       .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
       .slice(0, 10)
+    console.log('[report] kwBuckets', { winning: winning.length, close: close.length, money: money.length, rawKeywords: dfsKeywords?.length })
     return { winning, close, money }
   }, [dfsKeywords, dfsContentGap])
 
