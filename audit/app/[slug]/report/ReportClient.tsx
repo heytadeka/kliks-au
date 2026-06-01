@@ -139,25 +139,30 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const kwBuckets = useMemo(() => {
     const isBlog = (url: string) => url.includes('/blog/') || url.includes('/blogs/')
+    const minVol = 50
     const winning = dfsKeywords
       .filter((kw: any) => {
         const pos = kw.ranked_serp_element?.serp_item?.rank_group
         const url = kw.ranked_serp_element?.serp_item?.url ?? ''
-        return pos >= 1 && pos <= 5 && !isBlog(url)
+        const vol = kw.keyword_data?.keyword_info?.search_volume ?? 0
+        return pos >= 1 && pos <= 5 && vol >= minVol && !isBlog(url)
       })
       .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
     const close = dfsKeywords
       .filter((kw: any) => {
         const pos = kw.ranked_serp_element?.serp_item?.rank_group
         const url = kw.ranked_serp_element?.serp_item?.url ?? ''
-        return pos >= 6 && pos <= 15 && !isBlog(url)
+        const vol = kw.keyword_data?.keyword_info?.search_volume ?? 0
+        return pos >= 6 && pos <= 15 && vol >= minVol && !isBlog(url)
       })
       .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
-    const money = [...dfsContentGap]
+    // Money: use dfsGaps (serp intersection) if available, otherwise fall back to dfsContentGap
+    const moneySource = dfsGaps.length > 0 ? dfsGaps : dfsContentGap
+    const money = [...moneySource]
       .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
       .slice(0, 10)
     return { winning, close, money }
-  }, [dfsKeywords, dfsContentGap])
+  }, [dfsKeywords, dfsContentGap, dfsGaps])
 
   const navStyle: React.CSSProperties = {
     position: 'sticky', top: 0, zIndex: 100,
@@ -397,12 +402,19 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             {dfsOverview ? (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 40 }}>
-                  {[
-                    { label: 'Organic Keywords', value: (dfsOverview.metrics?.organic?.count ?? 0).toLocaleString() },
-                    { label: 'Est. Monthly Traffic', value: (dfsOverview.metrics?.organic?.etv ?? 0).toLocaleString() },
-                    { label: 'Est. Traffic Value', value: `$${((dfsOverview.metrics?.organic?.etv ?? 0) * 1.2).toLocaleString()}` },
-                    { label: 'Referring Domains', value: (dfsOverview.metrics?.referring_domains ?? 0).toLocaleString() },
-                  ].map(item => (
+                  {(() => {
+                    const overviewCount = dfsOverview.metrics?.organic?.count ?? 0
+                    const overviewEtv = dfsOverview.metrics?.organic?.etv ?? 0
+                    // Fall back to keyword data if overview metrics are zero
+                    const kwCount = overviewCount > 0 ? overviewCount : dfsKeywords.length
+                    const kwEtv = overviewEtv > 0 ? overviewEtv : dfsKeywords.reduce((sum: number, kw: any) => sum + (kw.keyword_data?.keyword_info?.search_volume ?? 0), 0)
+                    return [
+                      { label: 'Organic Keywords', value: kwCount.toLocaleString() },
+                      { label: 'Est. Monthly Traffic', value: kwEtv.toLocaleString() },
+                      { label: 'Est. Traffic Value', value: `$${Math.round(kwEtv * 1.2).toLocaleString()}` },
+                      { label: 'Referring Domains', value: (dfsOverview.metrics?.referring_domains ?? 0).toLocaleString() },
+                    ]
+                  })().map(item => (
                     <div key={item.label} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px' }}>
                       <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color: S.white }}>{item.value}</div>
                       <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>{item.label}</div>
