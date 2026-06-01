@@ -31,8 +31,11 @@ export default async function ReportPage({ params }: { params: { slug: string } 
     .eq('prospect_id', prospect.id)
     .single()
 
+  console.log('[page] reached cache query - slug:', params.slug)
   console.log('[page] cache keys:', Object.keys(cache || {}))
-  console.log('[page] dfsKeywords raw:', JSON.stringify(cache?.dataforseo_keywords)?.slice(0, 300))
+  console.log('[page] dfsKeywords type:', typeof cache?.dataforseo_keywords)
+  console.log('[page] dfsKeywords value:', JSON.stringify(cache?.dataforseo_keywords)?.slice(0, 500))
+  console.log('[page] ReportClient receives prop: cache (cache.dataforseo_keywords fed to dfsKeywords via useMemo in client)')
 
   return <ReportClient prospect={prospect} content={content} cache={cache} />
 }
