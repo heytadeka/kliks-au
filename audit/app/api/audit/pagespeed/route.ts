@@ -3,21 +3,74 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 60
 
-function extractMetrics(data: any) {
+function extractCrux(data: any) {
+  const metrics = data.loadingExperience?.metrics
+  const overall = data.loadingExperience?.overall_category
+  if (!metrics && !overall) return null
+  const clsRaw = metrics?.CUMULATIVE_LAYOUT_SHIFT_SCORE?.percentile
+  return {
+    lcp: metrics?.LARGEST_CONTENTFUL_PAINT_MS?.percentile ?? null,
+    fcp: metrics?.FIRST_CONTENTFUL_PAINT_MS?.percentile ?? null,
+    fid: metrics?.FIRST_INPUT_DELAY_MS?.percentile ?? null,
+    cls: clsRaw != null ? +(clsRaw / 100).toFixed(3) : null,
+    inp: metrics?.INTERACTION_TO_NEXT_PAINT?.percentile ?? null,
+    ttfb: metrics?.EXPERIMENTAL_TIME_TO_FIRST_BYTE?.percentile ?? null,
+    overall_category: overall ?? null,
+    lcp_category: metrics?.LARGEST_CONTENTFUL_PAINT_MS?.category ?? null,
+    fcp_category: metrics?.FIRST_CONTENTFUL_PAINT_MS?.category ?? null,
+    cls_category: metrics?.CUMULATIVE_LAYOUT_SHIFT_SCORE?.category ?? null,
+    inp_category: metrics?.INTERACTION_TO_NEXT_PAINT?.category ?? null,
+  }
+}
+
+function extractLighthouse(data: any) {
   const cats = data.lighthouseResult?.categories
   const audits = data.lighthouseResult?.audits
+  if (!cats && !audits) return null
   return {
     performance_score: Math.round((cats?.performance?.score ?? 0) * 100),
-    lcp: audits?.['largest-contentful-paint']?.numericValue,
-    fcp: audits?.['first-contentful-paint']?.numericValue,
-    tbt: audits?.['total-blocking-time']?.numericValue,
-    cls: audits?.['cumulative-layout-shift']?.numericValue,
-    speed_index: audits?.['speed-index']?.numericValue,
-    lcp_display: audits?.['largest-contentful-paint']?.displayValue,
-    fcp_display: audits?.['first-contentful-paint']?.displayValue,
-    tbt_display: audits?.['total-blocking-time']?.displayValue,
-    cls_display: audits?.['cumulative-layout-shift']?.displayValue,
-    speed_index_display: audits?.['speed-index']?.displayValue,
+    lcp: audits?.['largest-contentful-paint']?.numericValue ?? null,
+    fcp: audits?.['first-contentful-paint']?.numericValue ?? null,
+    tbt: audits?.['total-blocking-time']?.numericValue ?? null,
+    cls: audits?.['cumulative-layout-shift']?.numericValue ?? null,
+    speed_index: audits?.['speed-index']?.numericValue ?? null,
+    lcp_display: audits?.['largest-contentful-paint']?.displayValue ?? null,
+    fcp_display: audits?.['first-contentful-paint']?.displayValue ?? null,
+    tbt_display: audits?.['total-blocking-time']?.displayValue ?? null,
+    cls_display: audits?.['cumulative-layout-shift']?.displayValue ?? null,
+    speed_index_display: audits?.['speed-index']?.displayValue ?? null,
+  }
+}
+
+function buildMetrics(data: any) {
+  const crux = extractCrux(data)
+  const lighthouse = extractLighthouse(data)
+  if (!crux && !lighthouse) return null
+  return {
+    // Flat top-level fields for backward compat - CrUX primary, lighthouse fallback
+    performance_score: lighthouse?.performance_score ?? null,
+    lcp: crux?.lcp ?? lighthouse?.lcp ?? null,
+    fcp: crux?.fcp ?? lighthouse?.fcp ?? null,
+    cls: crux?.cls ?? lighthouse?.cls ?? null,
+    tbt: lighthouse?.tbt ?? null,
+    speed_index: lighthouse?.speed_index ?? null,
+    lcp_display: lighthouse?.lcp_display ?? null,
+    fcp_display: lighthouse?.fcp_display ?? null,
+    tbt_display: lighthouse?.tbt_display ?? null,
+    cls_display: lighthouse?.cls_display ?? null,
+    speed_index_display: lighthouse?.speed_index_display ?? null,
+    // CrUX-only fields
+    crux_available: crux !== null,
+    crux_overall: crux?.overall_category ?? null,
+    crux_inp: crux?.inp ?? null,
+    crux_ttfb: crux?.ttfb ?? null,
+    crux_fid: crux?.fid ?? null,
+    crux_lcp_category: crux?.lcp_category ?? null,
+    crux_fcp_category: crux?.fcp_category ?? null,
+    crux_cls_category: crux?.cls_category ?? null,
+    // Full sub-objects per spec
+    crux,
+    lighthouse,
   }
 }
 
@@ -44,7 +97,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const mobile = await fetchPageSpeed(store_url, 'mobile')
-    mobileMetrics = extractMetrics(mobile)
+    mobileMetrics = buildMetrics(mobile)
+    if (!mobileMetrics) console.error(`[pagespeed] No PageSpeed data available for ${domain}`)
   } catch (err: any) {
     if (err.name === 'AbortError') {
       console.error(`[pagespeed] PageSpeed timed out for ${domain} - store may be slow`)
@@ -55,7 +109,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const desktop = await fetchPageSpeed(store_url, 'desktop')
-    desktopMetrics = extractMetrics(desktop)
+    desktopMetrics = buildMetrics(desktop)
+    if (!desktopMetrics) console.error(`[pagespeed] No PageSpeed data available for ${domain} (desktop)`)
   } catch (err: any) {
     if (err.name === 'AbortError') {
       console.error(`[pagespeed] PageSpeed timed out for ${domain} - store may be slow`)

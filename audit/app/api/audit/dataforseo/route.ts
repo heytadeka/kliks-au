@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   } catch (e: any) { console.error('[dataforseo] overview failed:', e.message) }
 
   try {
-    const res = await dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 10, order_by: ['keyword_data.keyword_info.search_volume,desc'] }])
+    const res = await dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 50, order_by: ['ranked_serp_element.serp_item.rank_group,asc'] }])
     keywords = res?.tasks?.[0]?.result?.[0]?.items ?? []
     console.log('[dataforseo] keywords count:', keywords.length)
   } catch (e: any) { console.error('[dataforseo] keywords failed:', e.message) }
@@ -62,7 +62,8 @@ export async function POST(req: NextRequest) {
     const raw: any[] = res?.tasks?.[0]?.result?.[0]?.items ?? []
     competitors = raw.filter((c: any) => {
       const d = (c.domain ?? '').toLowerCase()
-      return !JUNK_DOMAINS.some(junk => d.includes(junk))
+      const etv = c.full_domain_metrics?.organic?.etv ?? 0
+      return !JUNK_DOMAINS.some(junk => d.includes(junk)) && etv <= 5_000_000
     }).slice(0, 5)
     console.log('[dataforseo] competitors count (filtered):', competitors.length)
   } catch (e: any) { console.error('[dataforseo] competitors failed:', e.message) }
