@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { cookies } from 'next/headers'
+import { waitUntil } from '@vercel/functions'
 
 export const maxDuration = 60
 
@@ -43,20 +44,23 @@ export async function POST(req: NextRequest) {
   const h = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }
   const pid = prospect.id
 
-  // Chain: data jobs first, then commentary. All fire-and-forget.
-  Promise.allSettled([
-    fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
-    fetch(`${base}/api/audit/crawl`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
-    fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
-    fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, niche, store_url }) }),
-    fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, brand_name, store_url }) }),
-  ]).then(() =>
-    fetch(`${base}/api/audit/generate-commentary`, {
-      method: 'POST',
-      headers: h,
-      body: JSON.stringify({ prospect_id: pid }),
-    })
-  ).catch((e: any) => console.error('[create] background jobs failed:', e.message))
+  // Chain: data jobs first, then commentary. waitUntil keeps function alive until done.
+  console.log('[create] firing background jobs for prospect_id:', pid, 'base:', base)
+  waitUntil(
+    Promise.allSettled([
+      fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
+      fetch(`${base}/api/audit/crawl`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
+      fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
+      fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, niche, store_url }) }),
+      fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, brand_name, store_url }) }),
+    ]).then(() =>
+      fetch(`${base}/api/audit/generate-commentary`, {
+        method: 'POST',
+        headers: h,
+        body: JSON.stringify({ prospect_id: pid }),
+      })
+    ).catch((e: any) => console.error('[create] background jobs failed:', e.message))
+  )
 
   return NextResponse.json({ success: true, prospect_id: prospect.id, slug: prospect.slug, brand_name })
 }
