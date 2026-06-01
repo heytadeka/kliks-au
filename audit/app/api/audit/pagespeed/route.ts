@@ -93,55 +93,54 @@ export async function POST(req: NextRequest) {
   let crux: any = null
   let mobileLighthouse: any = null
   let desktopLighthouse: any = null
+  let siteUnreachable = false
 
-  // Fetch 1: CrUX only - fast, no lighthouse overhead
-  // strategy=DESKTOP, fields=loadingExperience gives real-user field data immediately
+  // Fetch 1: CrUX only - 10s timeout. If this times out, site is blocking Vercel - skip lighthouse.
   try {
     const cruxUrl = `${base}?url=${encoded}&strategy=DESKTOP&fields=loadingExperience&locale=en-AU&key=${apiKey}`
-    const cruxData = await fetchWithTimeout(cruxUrl, 30000)
+    const cruxData = await fetchWithTimeout(cruxUrl, 10000)
     crux = extractCrux(cruxData)
     console.log('[pagespeed] crux available:', crux !== null, 'overall:', crux?.overall_category ?? 'none')
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.error(`[pagespeed] CrUX fetch timed out for ${domain}`)
+      console.error(`[pagespeed] site unreachable from Vercel - skipping all pagespeed checks`)
+      siteUnreachable = true
     } else {
       console.error('[pagespeed] CrUX fetch failed:', err.message)
     }
   }
 
-  // Fetch 2: full mobile lighthouse (slow, can timeout)
-  try {
-    const mobileData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=mobile&key=${apiKey}`, 45000)
-    mobileLighthouse = extractLighthouse(mobileData)
-    console.log('[pagespeed] mobile lighthouse score:', mobileLighthouse?.performance_score ?? 'null')
-  } catch (err: any) {
-    if (err.name === 'AbortError') {
-      console.error(`[pagespeed] mobile lighthouse timed out for ${domain} - store may be slow`)
-    } else {
-      console.error('[pagespeed] mobile lighthouse failed:', err.message)
+  if (!siteUnreachable) {
+    // Fetch 2: full mobile lighthouse (slow, can timeout)
+    try {
+      const mobileData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=mobile&key=${apiKey}`, 45000)
+      mobileLighthouse = extractLighthouse(mobileData)
+      console.log('[pagespeed] mobile lighthouse score:', mobileLighthouse?.performance_score ?? 'null')
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.error(`[pagespeed] mobile lighthouse timed out for ${domain} - store may be slow`)
+      } else {
+        console.error('[pagespeed] mobile lighthouse failed:', err.message)
+      }
     }
-  }
 
-  // Fetch 3: full desktop lighthouse (slow, can timeout)
-  try {
-    const desktopData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=desktop&key=${apiKey}`, 45000)
-    desktopLighthouse = extractLighthouse(desktopData)
-    console.log('[pagespeed] desktop lighthouse score:', desktopLighthouse?.performance_score ?? 'null')
-  } catch (err: any) {
-    if (err.name === 'AbortError') {
-      console.error(`[pagespeed] desktop lighthouse timed out for ${domain} - store may be slow`)
-    } else {
-      console.error('[pagespeed] desktop lighthouse failed:', err.message)
+    // Fetch 3: full desktop lighthouse (slow, can timeout)
+    try {
+      const desktopData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=desktop&key=${apiKey}`, 45000)
+      desktopLighthouse = extractLighthouse(desktopData)
+      console.log('[pagespeed] desktop lighthouse score:', desktopLighthouse?.performance_score ?? 'null')
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.error(`[pagespeed] desktop lighthouse timed out for ${domain} - store may be slow`)
+      } else {
+        console.error('[pagespeed] desktop lighthouse failed:', err.message)
+      }
     }
   }
 
   // mobile = CrUX + mobile lighthouse; desktop = desktop lighthouse only
   const mobileMetrics = buildMetrics(crux, mobileLighthouse)
   const desktopMetrics = buildMetrics(null, desktopLighthouse)
-
-  if (!mobileMetrics && !desktopMetrics) {
-    console.error(`[pagespeed] No PageSpeed data available for ${domain}`)
-  }
 
   console.log('[pagespeed] writing to DB - mobile:', !!mobileMetrics, 'desktop:', !!desktopMetrics)
   const { error: dbError } = await supabaseAdmin

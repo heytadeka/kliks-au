@@ -87,7 +87,6 @@ export async function POST(req: NextRequest) {
         location_code: 2036,
         language_code: 'en',
         limit: 10,
-        filters: [['keyword_data.keyword_info.search_volume', '>', 100]],
       }])
       contentGap = res?.tasks?.[0]?.result?.[0]?.items ?? []
       console.log('[dataforseo] content gap (keywords_for_site) count:', contentGap.length)
