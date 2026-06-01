@@ -97,10 +97,10 @@ export async function POST(req: NextRequest) {
   // Fetch 1: CrUX only - fast, no lighthouse overhead
   // strategy=DESKTOP, fields=loadingExperience gives real-user field data immediately
   try {
-    const cruxUrl = `${base}?url=${encoded}&strategy=DESKTOP&fields=loadingExperience&key=${apiKey}`
-    const cruxData = await fetchWithTimeout(cruxUrl, 15000)
+    const cruxUrl = `${base}?url=${encoded}&strategy=DESKTOP&fields=loadingExperience&locale=en-AU&key=${apiKey}`
+    const cruxData = await fetchWithTimeout(cruxUrl, 30000)
     crux = extractCrux(cruxData)
-    console.log('[pagespeed] crux result:', JSON.stringify(crux))
+    console.log('[pagespeed] crux available:', crux !== null, 'overall:', crux?.overall_category ?? 'none')
   } catch (err: any) {
     if (err.name === 'AbortError') {
       console.error(`[pagespeed] CrUX fetch timed out for ${domain}`)

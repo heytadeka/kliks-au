@@ -82,9 +82,15 @@ export async function POST(req: NextRequest) {
     } catch (e: any) { console.error('[dataforseo] serp features failed:', e.message) }
 
     try {
-      const res = await dfsPost('/dataforseo_labs/google/keyword_gap/live', [{ targets: [domain, topCompetitor], location_code: 2036, language_code: 'en', limit: 10 }])
+      const res = await dfsPost('/dataforseo_labs/google/keywords_for_site/live', [{
+        target: topCompetitor,
+        location_code: 2036,
+        language_code: 'en',
+        limit: 10,
+        filters: [['keyword_data.keyword_info.search_volume', '>', 100]],
+      }])
       contentGap = res?.tasks?.[0]?.result?.[0]?.items ?? []
-      console.log('[dataforseo] content gap count:', contentGap.length)
+      console.log('[dataforseo] content gap (keywords_for_site) count:', contentGap.length)
     } catch (e: any) { console.error('[dataforseo] content gap failed:', e.message) }
   }
 
