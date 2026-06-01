@@ -141,20 +141,20 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     const isBlog = (url: string) => url.includes('/blog/') || url.includes('/blogs/')
     const winning = dfsKeywords
       .filter((kw: any) => {
-        const pos = kw.rank_group
-        const url = kw.url ?? ''
+        const pos = kw.ranked_serp_element?.serp_item?.rank_group
+        const url = kw.ranked_serp_element?.serp_item?.url ?? ''
         return pos >= 1 && pos <= 5 && !isBlog(url)
       })
-      .sort((a: any, b: any) => (b.search_volume ?? 0) - (a.search_volume ?? 0))
+      .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
     const close = dfsKeywords
       .filter((kw: any) => {
-        const pos = kw.rank_group
-        const url = kw.url ?? ''
+        const pos = kw.ranked_serp_element?.serp_item?.rank_group
+        const url = kw.ranked_serp_element?.serp_item?.url ?? ''
         return pos >= 6 && pos <= 15 && !isBlog(url)
       })
-      .sort((a: any, b: any) => (b.search_volume ?? 0) - (a.search_volume ?? 0))
+      .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
     const money = [...dfsContentGap]
-      .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? b.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? a.search_volume ?? 0))
+      .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
       .slice(0, 10)
     return { winning, close, money }
   }, [dfsKeywords, dfsContentGap])
@@ -431,9 +431,9 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             <tbody>
                               {kwBuckets.winning.map((kw: any, i: number) => (
                                 <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                                  <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword}</td>
-                                  <td style={{ padding: '10px 14px', color: '#22c55e', fontWeight: 600 }}>{kw.rank_group}</td>
-                                  <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.search_volume ?? 0)}</td>
+                                  <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword_data?.keyword}</td>
+                                  <td style={{ padding: '10px 14px', color: '#22c55e', fontWeight: 600 }}>{kw.ranked_serp_element?.serp_item?.rank_group}</td>
+                                  <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -461,9 +461,9 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             <tbody>
                               {kwBuckets.close.map((kw: any, i: number) => (
                                 <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                                  <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword}</td>
-                                  <td style={{ padding: '10px 14px', color: S.orange, fontWeight: 600 }}>{kw.rank_group}</td>
-                                  <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.search_volume ?? 0)}</td>
+                                  <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword_data?.keyword}</td>
+                                  <td style={{ padding: '10px 14px', color: S.orange, fontWeight: 600 }}>{kw.ranked_serp_element?.serp_item?.rank_group}</td>
+                                  <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
                                 </tr>
                               ))}
                             </tbody>
