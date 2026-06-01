@@ -33,9 +33,20 @@ export default async function ReportPage({ params }: { params: { slug: string } 
 
   console.log('[page] reached cache query - slug:', params.slug)
   console.log('[page] cache keys:', Object.keys(cache || {}))
-  console.log('[page] dfsKeywords type:', typeof cache?.dataforseo_keywords)
-  console.log('[page] dfsKeywords value:', JSON.stringify(cache?.dataforseo_keywords)?.slice(0, 500))
-  console.log('[page] ReportClient receives prop: cache (cache.dataforseo_keywords fed to dfsKeywords via useMemo in client)')
 
-  return <ReportClient prospect={prospect} content={content} cache={cache} />
+  try {
+    console.log('[page] dfsKeywords type:', typeof cache?.dataforseo_keywords)
+    console.log('[page] dfsKeywords isArray:', Array.isArray(cache?.dataforseo_keywords))
+    console.log('[page] dfsKeywords length:', cache?.dataforseo_keywords?.length)
+    console.log('[page] dfsKeywords first item:', JSON.stringify(cache?.dataforseo_keywords?.[0]))
+  } catch (e) {
+    console.log('[page] dfsKeywords log error:', e)
+  }
+
+  try {
+    return <ReportClient prospect={prospect} content={content} cache={cache} />
+  } catch (e) {
+    console.log('[page] CRASH between cache and return:', e)
+    throw e
+  }
 }
