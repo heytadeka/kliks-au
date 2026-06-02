@@ -10,6 +10,8 @@ function extractLighthouse(data: any) {
   if (!cats && !audits) return null
   return {
     performance_score: Math.round((cats?.performance?.score ?? 0) * 100),
+    seo_score: Math.round((cats?.seo?.score ?? 0) * 100),
+    accessibility_score: Math.round((cats?.accessibility?.score ?? 0) * 100),
     lcp: audits?.['largest-contentful-paint']?.numericValue ?? null,
     fcp: audits?.['first-contentful-paint']?.numericValue ?? null,
     tbt: audits?.['total-blocking-time']?.numericValue ?? null,
@@ -28,6 +30,8 @@ function buildMetrics(crux: any, lighthouse: any) {
   return {
     // Flat top-level fields - CrUX primary, lighthouse fallback
     performance_score: lighthouse?.performance_score ?? null,
+    seo_score: lighthouse?.seo_score ?? null,
+    accessibility_score: lighthouse?.accessibility_score ?? null,
     lcp: crux?.lcp ?? lighthouse?.lcp ?? null,
     fcp: crux?.fcp ?? lighthouse?.fcp ?? null,
     cls: crux?.cls ?? lighthouse?.cls ?? null,

@@ -29,13 +29,15 @@ function SectionWrap({ children, id }: { children: React.ReactNode; id?: string 
   )
 }
 
-function MetricCard({ label, value, unit, status }: { label: string; value: string | number; unit?: string; status: 'good' | 'needs-work' | 'poor' | 'neutral' }) {
+function MetricCard({ label, value, unit, status, description, target }: { label: string; value: string | number; unit?: string; status: 'good' | 'needs-work' | 'poor' | 'neutral'; description?: string; target?: string }) {
   const colours = { good: '#22c55e', 'needs-work': '#f97316', poor: '#ef4444', neutral: S.purple }
   const c = colours[status]
   return (
     <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, color: c }}>{value}{unit && <span style={{ fontSize: 16, marginLeft: 4, color: S.muted }}>{unit}</span>}</span>
       <span style={{ fontSize: 13, color: S.muted }}>{label}</span>
+      {description && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', lineHeight: 1.45 }}>{description}</span>}
+      {target && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>Target: {target}</span>}
       <span style={{ fontSize: 11, fontWeight: 600, color: c, background: `${c}22`, padding: '2px 8px', borderRadius: 99, alignSelf: 'flex-start', letterSpacing: '0.05em' }}>
         {status === 'good' ? 'GOOD' : status === 'needs-work' ? 'NEEDS WORK' : status === 'poor' ? 'POOR' : '-'}
       </span>
@@ -139,7 +141,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const kwBuckets = useMemo(() => {
     const isBlog = (url: string) => url.includes('/blog/') || url.includes('/blogs/')
-    const minVol = 50
+    const minVol = 100
     const winning = dfsKeywords
       .filter((kw: any) => {
         const pos = kw.ranked_serp_element?.serp_item?.rank_group
@@ -147,7 +149,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
         const vol = kw.keyword_data?.keyword_info?.search_volume ?? 0
         return pos >= 1 && pos <= 5 && vol >= minVol && !isBlog(url)
       })
-      .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
+      .sort((a: any, b: any) => (a.ranked_serp_element?.serp_item?.rank_group ?? 99) - (b.ranked_serp_element?.serp_item?.rank_group ?? 99))
+      .slice(0, 15)
     const close = dfsKeywords
       .filter((kw: any) => {
         const pos = kw.ranked_serp_element?.serp_item?.rank_group
@@ -156,6 +159,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
         return pos >= 6 && pos <= 15 && vol >= minVol && !isBlog(url)
       })
       .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
+      .slice(0, 10)
     // Money: use dfsGaps (serp intersection) if available, otherwise fall back to dfsContentGap
     const moneySource = dfsGaps.length > 0 ? dfsGaps : dfsContentGap
     const money = [...moneySource]
@@ -198,6 +202,51 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           </div>
         </div>
 
+        {/* Audit Scores */}
+        <div style={{ marginBottom: 64 }}>
+          <SectionLabel>AUDIT SCORES</SectionLabel>
+          <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 6 }}>Audit Scores</h2>
+          <p style={{ color: S.muted, fontSize: 13, marginBottom: 24 }}>Scores based on Lighthouse analysis &amp; industry benchmarks.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            {(() => {
+              const val = ps?.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="mob" label="Mobile Performance" value={val != null ? val : '--'} unit="/100" status={st} />
+            })()}
+            {(() => {
+              const val = psDesktop?.performance_score != null && psDesktop.performance_score > 0 ? Math.round(psDesktop.performance_score) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="desk" label="Desktop Performance" value={val != null ? val : '--'} unit="/100" status={st} />
+            })()}
+            {(() => {
+              const val = ps?.seo_score != null && ps.seo_score > 0 ? Math.round(ps.seo_score) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="seo" label="SEO Score" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} />
+            })()}
+            {(() => {
+              const val = ps?.accessibility_score != null && ps.accessibility_score > 0 ? Math.round(ps.accessibility_score) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="a11y" label="Accessibility" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} />
+            })()}
+            {(() => {
+              const total = cro?.summary?.total ?? 20
+              const passed = cro?.summary?.passed
+              const pct = passed != null ? (passed / total * 100) : null
+              const display = pct != null ? `${pct.toFixed(1)}%` : '--'
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = pct == null ? 'neutral' : pct >= 90 ? 'good' : pct >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="cr" label="Est. Conv. Rate" value={display} status={st} />
+            })()}
+            {(() => {
+              const total = cro?.summary?.total ?? 20
+              const passed = cro?.summary?.passed
+              const pct = passed != null ? (passed / total * 100) : null
+              const grade = pct == null ? '--' : pct > 85 ? 'A' : pct > 70 ? 'B' : pct > 55 ? 'C' : 'D'
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = grade === 'A' ? 'good' : grade === 'B' ? 'needs-work' : grade === 'C' || grade === 'D' ? 'poor' : 'neutral'
+              return <MetricCard key="cro" label="Overall CRO" value={grade} status={st} />
+            })()}
+          </div>
+        </div>
+
         {/* CRO Score Summary */}
         {cro?.summary ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 64 }}>
@@ -229,12 +278,12 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             {ps ? (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
-                  <MetricCard label="Mobile Performance" value={ps.performance_score} unit="/100" status={ps.performance_score >= 90 ? 'good' : ps.performance_score >= 50 ? 'needs-work' : 'poor'} />
-                  <MetricCard label="LCP" value={ps.lcp ? msToS(ps.lcp) : '-'} unit="s" status={ps.lcp ? getStatus(ps.lcp / 1000, [2.5, 4]) : 'neutral'} />
-                  <MetricCard label="FCP" value={ps.fcp ? msToS(ps.fcp) : '-'} unit="s" status={ps.fcp ? getStatus(ps.fcp / 1000, [1.8, 3]) : 'neutral'} />
-                  <MetricCard label="TBT" value={ps.tbt ? Math.round(ps.tbt) : '-'} unit="ms" status={ps.tbt ? getStatus(ps.tbt, [200, 600]) : 'neutral'} />
-                  <MetricCard label="CLS" value={ps.cls ? ps.cls.toFixed(3) : '-'} status={ps.cls !== undefined ? getStatus(ps.cls, [0.1, 0.25]) : 'neutral'} />
-                  <MetricCard label="Speed Index" value={ps.speed_index ? msToS(ps.speed_index) : '-'} unit="s" status={ps.speed_index ? getStatus(ps.speed_index / 1000, [3.4, 5.8]) : 'neutral'} />
+                  <MetricCard label="Mobile Performance" value={ps.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : '--'} unit="/100" status={ps.performance_score >= 90 ? 'good' : ps.performance_score >= 50 ? 'needs-work' : 'poor'} />
+                  <MetricCard label="LCP" value={ps.lcp ? msToS(ps.lcp) : '-'} unit="s" status={ps.lcp ? getStatus(ps.lcp / 1000, [2.5, 4]) : 'neutral'} description="Largest Contentful Paint — how fast your main content loads" target="<2.5s" />
+                  <MetricCard label="FCP" value={ps.fcp ? msToS(ps.fcp) : '-'} unit="s" status={ps.fcp ? getStatus(ps.fcp / 1000, [1.8, 3]) : 'neutral'} description="First Contentful Paint — when the first element appears" target="<1.8s" />
+                  <MetricCard label="TBT" value={ps.tbt ? Math.round(ps.tbt) : '-'} unit="ms" status={ps.tbt ? getStatus(ps.tbt, [200, 600]) : 'neutral'} description="Total Blocking Time — how long the page is unresponsive" target="<200ms" />
+                  <MetricCard label="CLS" value={ps.cls ? ps.cls.toFixed(3) : '-'} status={ps.cls !== undefined ? getStatus(ps.cls, [0.1, 0.25]) : 'neutral'} description="Cumulative Layout Shift — how much the page jumps around" target="<0.1" />
+                  <MetricCard label="Speed Index" value={ps.speed_index ? msToS(ps.speed_index) : '-'} unit="s" status={ps.speed_index ? getStatus(ps.speed_index / 1000, [3.4, 5.8]) : 'neutral'} description="How quickly content is visually complete" target="<3.4s" />
                 </div>
 
                 {psDesktop && (
