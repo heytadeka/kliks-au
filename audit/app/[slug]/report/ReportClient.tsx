@@ -273,11 +273,6 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = grade === 'A' ? 'good' : grade === 'B' ? 'needs-work' : grade === 'C' || grade === 'D' ? 'poor' : 'neutral'
               return <MetricCard key="cro-grade" label="Overall CRO" value={grade} status={st} />
             })()}
-            {(() => {
-              const rank = backlinksSummary?.rank != null ? Math.round(backlinksSummary.rank) : null
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = rank == null ? 'neutral' : rank > 30 ? 'good' : rank >= 15 ? 'needs-work' : 'poor'
-              return <MetricCard key="bl-rank" label="Domain Rank" value={rank != null ? rank : '--'} status={st} description="AU ecomm avg: ~20" />
-            })()}
           </div>
         </div>
 
@@ -637,29 +632,22 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                         <thead>
                           <tr style={{ background: S.bg }}>
-                            {['Domain', 'Est. Traffic', 'KW Overlap', 'Domain Rank', 'Ref. Domains'].map(h => (
+                            {['Domain', 'Est. Traffic', 'KW Overlap'].map(h => (
                               <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {/* Prospect comparison row */}
-                          <tr style={{ background: 'rgba(100,75,255,0.08)', borderBottom: `1px solid ${S.border}` }}>
-                            <td style={{ padding: '10px 14px', color: S.purple, fontWeight: 600 }}>You ({storeDomain})</td>
-                            <td style={{ padding: '10px 14px', color: S.muted }}>—</td>
-                            <td style={{ padding: '10px 14px', color: S.muted }}>—</td>
-                            <td style={{ padding: '10px 14px', color: backlinksSummary?.rank != null ? S.white : S.muted, fontWeight: backlinksSummary?.rank != null ? 600 : 400 }}>{backlinksSummary?.rank != null ? Math.round(backlinksSummary.rank) : '—'}</td>
-                            <td style={{ padding: '10px 14px', color: S.muted }}>{backlinksSummary?.referring_domains?.toLocaleString() ?? '—'}</td>
-                          </tr>
-                          {dfsCompetitors.slice(0, 5).map((comp: any, i: number) => (
-                            <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                              <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
-                              <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(comp.full_domain_metrics?.organic?.etv ?? comp.avg_position ?? 0)}</td>
-                              <td style={{ padding: '10px 14px', color: S.muted }}>{comp.intersections?.toLocaleString() ?? '-'}</td>
-                              <td style={{ padding: '10px 14px', color: S.muted }}>{comp.backlink_rank != null ? Math.round(comp.backlink_rank) : '-'}</td>
-                              <td style={{ padding: '10px 14px', color: S.muted }}>{comp.referring_domains_bl?.toLocaleString() ?? '-'}</td>
-                            </tr>
-                          ))}
+                          {dfsCompetitors.slice(0, 5).map((comp: any, i: number) => {
+                            const etv = comp.estimated_traffic ?? comp.full_domain_metrics?.organic?.etv ?? 0
+                            return (
+                              <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                                <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
+                                <td style={{ padding: '10px 14px', color: S.muted }}>{etv > 0 ? fmtNum(etv) : '—'}</td>
+                                <td style={{ padding: '10px 14px', color: S.muted }}>{comp.intersections?.toLocaleString() ?? '-'}</td>
+                              </tr>
+                            )
+                          })}
                         </tbody>
                       </table>
                     </div>

@@ -174,18 +174,18 @@ export async function POST(req: NextRequest) {
         const etv = trafficMap.get((c.domain ?? '').toLowerCase()) ?? null
         return etv != null ? { ...c, estimated_traffic: etv } : c
       })
-      // Relative size filter: remove if competitor traffic > 100x prospect traffic
+      // Relative size filter: remove if traffic > 1,000,000 AND > 50x prospect traffic.
+      // Using both conditions keeps small niche competitors (traffic=0 from bulk estimate)
+      // while still removing Bunnings-scale outliers regardless of prospect size.
       const prospectEtv = overview?.metrics?.organic?.etv ?? 0
-      if (prospectEtv > 0) {
-        competitors = competitors.filter((c: any) => {
-          const cEtv = c.estimated_traffic ?? trafficMap.get((c.domain ?? '').toLowerCase()) ?? 0
-          if (cEtv > prospectEtv * 100) {
-            console.log(`[dataforseo] removing oversized competitor: ${c.domain} (${Math.round(cEtv / prospectEtv)}x prospect traffic)`)
-            return false
-          }
-          return true
-        })
-      }
+      competitors = competitors.filter((c: any) => {
+        const cEtv = c.estimated_traffic ?? 0
+        if (cEtv > 1_000_000 && (prospectEtv === 0 || cEtv > prospectEtv * 50)) {
+          console.log(`[dataforseo] removing oversized competitor: ${c.domain} (traffic: ${Math.round(cEtv)}${prospectEtv > 0 ? `, ${Math.round(cEtv / prospectEtv)}x prospect` : ''})`)
+          return false
+        }
+        return true
+      })
       console.log('[dataforseo] competitors after size filter:', competitors.map((c: any) => c.domain))
     } catch (e: any) {
       console.error('[dataforseo] bulk traffic estimation failed:', e.message)
@@ -229,16 +229,10 @@ export async function POST(req: NextRequest) {
     topCompetitor
       ? dfsPost('/dataforseo_labs/google/keywords_for_site/live', [{ target: topCompetitor, location_code: 2036, language_code: 'en', limit: 10 }])
       : Promise.resolve(null),
-    // 3: Prospect backlinks (UPGRADE 3)
-    dfsPost('/backlinks/summary/live', [{ target: domain, include_subdomains: true }]),
-    // 4+: Competitor backlinks (one per competitor, UPGRADE 3)
-    ...competitorDomains.map((d: string) =>
-      dfsPost('/backlinks/summary/live', [{ target: d, include_subdomains: true }])
-    ),
   ]
 
   const phase2Results = await Promise.allSettled(phase2Calls)
-  const [histRes, intersectRes, contentGapRes, prospectBLRes, ...competitorBLResults] = phase2Results
+  const [histRes, intersectRes, contentGapRes] = phase2Results
 
   // Process historical keywords → build trend deltas
   if (histRes.status === 'fulfilled' && histRes.value) {
@@ -279,25 +273,8 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo] content gap count:', contentGap.length)
   }
 
-  // Process prospect backlinks
-  if (prospectBLRes.status === 'fulfilled') {
-    const bl = prospectBLRes.value?.tasks?.[0]?.result?.[0] ?? null
-    backlinksSummary = extractBacklinks(bl)
-    console.log('[dataforseo] prospect backlinks rank:', backlinksSummary?.rank ?? 'null')
-  } else {
-    console.error('[dataforseo] prospect backlinks failed:', (prospectBLRes as PromiseRejectedResult).reason?.message)
-  }
-
-  // Augment each competitor with its backlink data
-  competitors = competitors.map((comp: any, i: number) => {
-    const blRes = competitorBLResults[i]
-    if (blRes?.status === 'fulfilled') {
-      const bl = blRes.value?.tasks?.[0]?.result?.[0] ?? null
-      const blData = extractBacklinks(bl)
-      if (blData) return { ...comp, backlink_rank: blData.rank, referring_domains_bl: blData.referring_domains, backlinks_total: blData.backlinks }
-    }
-    return comp
-  })
+  // Backlinks disabled - requires separate DataForSEO subscription (returns 40204)
+  // backlinksSummary remains null
 
   const { error: dbError } = await supabaseAdmin
     .from('audit_data_cache')
