@@ -4,26 +4,6 @@ import { supabaseAdmin } from '@/lib/supabase'
 export const maxDuration = 60
 export const preferredRegion = 'syd1'
 
-function extractCrux(data: any) {
-  const metrics = data.loadingExperience?.metrics
-  const overall = data.loadingExperience?.overall_category
-  if (!metrics && !overall) return null
-  const clsRaw = metrics?.CUMULATIVE_LAYOUT_SHIFT_SCORE?.percentile
-  return {
-    lcp: metrics?.LARGEST_CONTENTFUL_PAINT_MS?.percentile ?? null,
-    fcp: metrics?.FIRST_CONTENTFUL_PAINT_MS?.percentile ?? null,
-    fid: metrics?.FIRST_INPUT_DELAY_MS?.percentile ?? null,
-    cls: clsRaw != null ? +(clsRaw / 100).toFixed(3) : null,
-    inp: metrics?.INTERACTION_TO_NEXT_PAINT?.percentile ?? null,
-    ttfb: metrics?.EXPERIMENTAL_TIME_TO_FIRST_BYTE?.percentile ?? null,
-    overall_category: overall ?? null,
-    lcp_category: metrics?.LARGEST_CONTENTFUL_PAINT_MS?.category ?? null,
-    fcp_category: metrics?.FIRST_CONTENTFUL_PAINT_MS?.category ?? null,
-    cls_category: metrics?.CUMULATIVE_LAYOUT_SHIFT_SCORE?.category ?? null,
-    inp_category: metrics?.INTERACTION_TO_NEXT_PAINT?.category ?? null,
-  }
-}
-
 function extractLighthouse(data: any) {
   const cats = data.lighthouseResult?.categories
   const audits = data.lighthouseResult?.audits
