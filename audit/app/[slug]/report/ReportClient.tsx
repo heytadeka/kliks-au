@@ -206,35 +206,32 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
         <div style={{ marginBottom: 64 }}>
           <SectionLabel>AUDIT SCORES</SectionLabel>
           <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 6 }}>Audit Scores</h2>
-          <p style={{ color: S.muted, fontSize: 13, marginBottom: 24 }}>Scores based on Lighthouse analysis &amp; industry benchmarks.</p>
+          <p style={{ color: S.muted, fontSize: 13, marginBottom: 24 }}>Scores based on CrUX field data &amp; industry benchmarks.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             {(() => {
-              const val = ps?.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : null
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="mob" label="Mobile Performance" value={val != null ? val : '--'} unit="/100" status={st} />
+              const val = ps?.lcp ? msToS(ps.lcp) : '--'
+              const cat = ps?.crux_lcp_category ?? null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = !ps?.lcp ? 'neutral' : cat === 'FAST' ? 'good' : cat === 'SLOW' ? 'poor' : ps.lcp ? getStatus(ps.lcp / 1000, [2.5, 4]) : 'neutral'
+              return <MetricCard key="lcp" label="LCP" value={val} unit={ps?.lcp ? 's' : undefined} status={st} />
             })()}
             {(() => {
-              const val = psDesktop?.performance_score != null && psDesktop.performance_score > 0 ? Math.round(psDesktop.performance_score) : null
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="desk" label="Desktop Performance" value={val != null ? val : '--'} unit="/100" status={st} />
+              const val = ps?.cls != null ? ps.cls.toFixed(3) : '--'
+              const cat = ps?.crux_cls_category ?? null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = ps?.cls == null ? 'neutral' : cat === 'FAST' ? 'good' : cat === 'SLOW' ? 'poor' : getStatus(ps.cls, [0.1, 0.25])
+              return <MetricCard key="cls" label="CLS" value={val} status={st} />
             })()}
             {(() => {
-              const val = ps?.seo_score != null && ps.seo_score > 0 ? Math.round(ps.seo_score) : null
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="seo" label="SEO Score" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} />
-            })()}
-            {(() => {
-              const val = ps?.accessibility_score != null && ps.accessibility_score > 0 ? Math.round(ps.accessibility_score) : null
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="a11y" label="Accessibility" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} />
-            })()}
-            {(() => {
-              const total = cro?.summary?.total ?? 20
               const passed = cro?.summary?.passed
-              const pct = passed != null ? (passed / total * 100) : null
-              const display = pct != null ? `${pct.toFixed(1)}%` : '--'
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = pct == null ? 'neutral' : pct >= 90 ? 'good' : pct >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="cr" label="Est. Conv. Rate" value={display} status={st} />
+              const total = cro?.summary?.total ?? 20
+              const val = passed != null ? `${passed}/${total}` : '--'
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = passed == null ? 'neutral' : passed >= 16 ? 'good' : passed >= 10 ? 'needs-work' : 'poor'
+              return <MetricCard key="cro-score" label="CRO Score" value={val} status={st} />
+            })()}
+            {(() => {
+              const cat = ps?.crux_overall ?? null
+              const val = cat ?? '--'
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = cat === 'FAST' ? 'good' : cat === 'AVERAGE' ? 'needs-work' : cat === 'SLOW' ? 'poor' : 'neutral'
+              return <MetricCard key="overall" label="Overall Speed" value={val} status={st} />
             })()}
             {(() => {
               const total = cro?.summary?.total ?? 20
@@ -242,7 +239,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               const pct = passed != null ? (passed / total * 100) : null
               const grade = pct == null ? '--' : pct > 85 ? 'A' : pct > 70 ? 'B' : pct > 55 ? 'C' : 'D'
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = grade === 'A' ? 'good' : grade === 'B' ? 'needs-work' : grade === 'C' || grade === 'D' ? 'poor' : 'neutral'
-              return <MetricCard key="cro" label="Overall CRO" value={grade} status={st} />
+              return <MetricCard key="cro-grade" label="Overall CRO" value={grade} status={st} />
             })()}
           </div>
         </div>
