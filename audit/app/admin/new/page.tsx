@@ -70,6 +70,7 @@ export default function NewAuditPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [slugError, setSlugError] = useState('')
+  const [nicheError, setNicheError] = useState('')
   const [success, setSuccess] = useState<{ slug: string; brand_name: string; prospect_id: string } | null>(null)
   const [auditStatus, setAuditStatus] = useState<AuditStatus | null>(null)
   const [copied, setCopied] = useState('')
@@ -120,6 +121,12 @@ export default function NewAuditPage() {
     setLoading(true)
     setError('')
     setSlugError('')
+    setNicheError('')
+    if (form.niche && form.niche.length < 15) {
+      setNicheError("Please be more specific - e.g. 'outdoor cat enclosures Australia'")
+      setLoading(false)
+      return
+    }
     const normalised = { ...form, store_url: formatUrl(form.store_url) }
     setForm(normalised)
     try {
@@ -293,8 +300,17 @@ Kliks`
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label style={labelStyle}>Niche</label>
-                <input value={form.niche} onChange={set('niche')} placeholder="e.g. Haircare, Supplements" style={inputStyle} />
+                <label style={labelStyle}>Store Niche</label>
+                <input
+                  value={form.niche}
+                  onChange={e => { setNicheError(''); set('niche')(e) }}
+                  placeholder="e.g. outdoor cat enclosures Australia, vegan bakery Sydney, eco homewares"
+                  style={{ ...inputStyle, borderColor: nicheError ? 'rgba(239,68,68,0.6)' : undefined }}
+                />
+                {nicheError
+                  ? <p style={{ ...helperStyle, color: '#ef4444', marginTop: 6 }}>{nicheError}</p>
+                  : <p style={helperStyle}>Be specific - the more detail, the better your competitor and keyword analysis.</p>
+                }
               </div>
               <div>
                 <label style={labelStyle}>CTA Link</label>

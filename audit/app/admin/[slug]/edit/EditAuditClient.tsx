@@ -55,6 +55,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
   const [deleting, setDeleting] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [nicheError, setNicheError] = useState('')
 
   function set(field: string) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -67,6 +68,12 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
     setLoading(true)
     setError('')
     setSaved(false)
+    setNicheError('')
+    if (form.niche && form.niche.length < 15) {
+      setNicheError("Please be more specific - e.g. 'outdoor cat enclosures Australia'")
+      setLoading(false)
+      return
+    }
     try {
       const res = await fetch('/api/audit/admin/update', {
         method: 'PATCH',
@@ -227,8 +234,17 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label style={labelStyle}>Niche</label>
-                <input value={form.niche} onChange={set('niche')} style={inputStyle} />
+                <label style={labelStyle}>Store Niche</label>
+                <input
+                  value={form.niche}
+                  onChange={e => { setNicheError(''); set('niche')(e) }}
+                  placeholder="e.g. outdoor cat enclosures Australia, vegan bakery Sydney, eco homewares"
+                  style={{ ...inputStyle, borderColor: nicheError ? 'rgba(239,68,68,0.6)' : undefined }}
+                />
+                {nicheError
+                  ? <p style={{ fontSize: 12, color: '#ef4444', marginTop: 6 }}>{nicheError}</p>
+                  : <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4, lineHeight: 1.5 }}>Be specific - the more detail, the better your competitor and keyword analysis.</p>
+                }
               </div>
               <div>
                 <label style={labelStyle}>CTA Link</label>

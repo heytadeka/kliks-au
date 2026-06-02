@@ -83,8 +83,23 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const dfsCompetitors: any[] = useMemo(() => cache?.dataforseo_competitors ?? [], [cache?.dataforseo_competitors])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const dfsContentGap: any[] = useMemo(() => cache?.dataforseo_content_gap ?? [], [cache?.dataforseo_content_gap])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const keywordTrends: any[] = useMemo(() => cache?.dataforseo_keyword_trends ?? [], [cache?.dataforseo_keyword_trends])
+  const backlinksSummary = cache?.backlinks_summary ?? null
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
+
+  const storeDomain = (prospect.store_url ?? '')
+    .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const trendMap = useMemo(() => {
+    const map = new Map<string, number | null>()
+    for (const t of keywordTrends) {
+      if (t.keyword && t.delta != null) map.set(t.keyword, t.delta)
+    }
+    return map
+  }, [keywordTrends])
 
   const createdDate = new Date(prospect.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -168,6 +183,21 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     return { winning, close, money }
   }, [dfsKeywords, dfsContentGap, dfsGaps])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const movementSummary = useMemo(() => {
+    if (keywordTrends.length === 0) return null
+    let gaining = 0, stable = 0, losing = 0
+    for (const kw of [...kwBuckets.winning, ...kwBuckets.close]) {
+      const kwStr = kw.keyword_data?.keyword ?? ''
+      const delta = trendMap.get(kwStr)
+      if (delta == null) { stable++; continue }
+      if (delta > 0) gaining++
+      else if (delta < 0) losing++
+      else stable++
+    }
+    return { gaining, stable, losing }
+  }, [kwBuckets, trendMap, keywordTrends])
+
   const navStyle: React.CSSProperties = {
     position: 'sticky', top: 0, zIndex: 100,
     background: 'rgba(14,13,26,0.9)', backdropFilter: 'blur(12px)',
@@ -242,6 +272,11 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               const grade = pct == null ? '--' : pct > 85 ? 'A' : pct > 70 ? 'B' : pct > 55 ? 'C' : 'D'
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = grade === 'A' ? 'good' : grade === 'B' ? 'needs-work' : grade === 'C' || grade === 'D' ? 'poor' : 'neutral'
               return <MetricCard key="cro-grade" label="Overall CRO" value={grade} status={st} />
+            })()}
+            {(() => {
+              const rank = backlinksSummary?.rank != null ? Math.round(backlinksSummary.rank) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = rank == null ? 'neutral' : rank > 30 ? 'good' : rank >= 15 ? 'needs-work' : 'poor'
+              return <MetricCard key="bl-rank" label="Domain Rank" value={rank != null ? rank : '--'} status={st} description="AU ecomm avg: ~20" />
             })()}
           </div>
         </div>
@@ -466,6 +501,22 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
                 {(kwBuckets.winning.length > 0 || kwBuckets.close.length > 0 || kwBuckets.money.length > 0) && (
                   <div style={{ marginBottom: 40 }}>
+                    {/* Keyword movement summary */}
+                    {movementSummary && (kwBuckets.winning.length > 0 || kwBuckets.close.length > 0) && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 32 }}>
+                        {[
+                          { label: 'Gaining', count: movementSummary.gaining, color: '#22c55e', icon: '↑' },
+                          { label: 'Stable', count: movementSummary.stable, color: S.muted, icon: '→' },
+                          { label: 'Losing', count: movementSummary.losing, color: '#ef4444', icon: '↓' },
+                        ].map(item => (
+                          <div key={item.label} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '18px 20px', textAlign: 'center' }}>
+                            <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 26, fontWeight: 700, color: item.color }}>{item.icon} {item.count}</div>
+                            <div style={{ fontSize: 12, color: S.muted, marginTop: 4 }}>{item.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {kwBuckets.winning.length > 0 && (
                       <div style={{ marginBottom: 32 }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
@@ -477,19 +528,28 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                             <thead>
                               <tr style={{ background: S.bg }}>
-                                {['Keyword', 'Position', 'Monthly Volume'].map(h => (
+                                {['Keyword', 'Position', 'Monthly Volume', 'Movement'].map(h => (
                                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
-                              {kwBuckets.winning.map((kw: any, i: number) => (
-                                <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                                  <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword_data?.keyword}</td>
-                                  <td style={{ padding: '10px 14px', color: '#22c55e', fontWeight: 600 }}>{kw.ranked_serp_element?.serp_item?.rank_group}</td>
-                                  <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
-                                </tr>
-                              ))}
+                              {kwBuckets.winning.map((kw: any, i: number) => {
+                                const delta = trendMap.get(kw.keyword_data?.keyword ?? '')
+                                return (
+                                  <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                                    <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword_data?.keyword}</td>
+                                    <td style={{ padding: '10px 14px', color: '#22c55e', fontWeight: 600 }}>{kw.ranked_serp_element?.serp_item?.rank_group}</td>
+                                    <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
+                                    <td style={{ padding: '10px 14px' }}>
+                                      {delta == null ? <span style={{ color: S.muted }}>—</span>
+                                        : delta > 0 ? <span style={{ color: '#22c55e', fontWeight: 600 }}>↑ +{delta}</span>
+                                        : delta < 0 ? <span style={{ color: '#ef4444', fontWeight: 600 }}>↓ {delta}</span>
+                                        : <span style={{ color: S.muted }}>→</span>}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -507,19 +567,28 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                             <thead>
                               <tr style={{ background: S.bg }}>
-                                {['Keyword', 'Position', 'Monthly Volume'].map(h => (
+                                {['Keyword', 'Position', 'Monthly Volume', 'Movement'].map(h => (
                                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
-                              {kwBuckets.close.map((kw: any, i: number) => (
-                                <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                                  <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword_data?.keyword}</td>
-                                  <td style={{ padding: '10px 14px', color: S.orange, fontWeight: 600 }}>{kw.ranked_serp_element?.serp_item?.rank_group}</td>
-                                  <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
-                                </tr>
-                              ))}
+                              {kwBuckets.close.map((kw: any, i: number) => {
+                                const delta = trendMap.get(kw.keyword_data?.keyword ?? '')
+                                return (
+                                  <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                                    <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword_data?.keyword}</td>
+                                    <td style={{ padding: '10px 14px', color: S.orange, fontWeight: 600 }}>{kw.ranked_serp_element?.serp_item?.rank_group}</td>
+                                    <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
+                                    <td style={{ padding: '10px 14px' }}>
+                                      {delta == null ? <span style={{ color: S.muted }}>—</span>
+                                        : delta > 0 ? <span style={{ color: '#22c55e', fontWeight: 600 }}>↑ +{delta}</span>
+                                        : delta < 0 ? <span style={{ color: '#ef4444', fontWeight: 600 }}>↓ {delta}</span>
+                                        : <span style={{ color: S.muted }}>→</span>}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -535,17 +604,27 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                         <thead>
                           <tr style={{ background: S.bg }}>
-                            {['Domain', 'Est. Monthly Traffic', 'Keyword Overlap'].map(h => (
+                            {['Domain', 'Est. Traffic', 'KW Overlap', 'Domain Rank', 'Ref. Domains'].map(h => (
                               <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
+                          {/* Prospect comparison row */}
+                          <tr style={{ background: 'rgba(100,75,255,0.08)', borderBottom: `1px solid ${S.border}` }}>
+                            <td style={{ padding: '10px 14px', color: S.purple, fontWeight: 600 }}>You ({storeDomain})</td>
+                            <td style={{ padding: '10px 14px', color: S.muted }}>—</td>
+                            <td style={{ padding: '10px 14px', color: S.muted }}>—</td>
+                            <td style={{ padding: '10px 14px', color: backlinksSummary?.rank != null ? S.white : S.muted, fontWeight: backlinksSummary?.rank != null ? 600 : 400 }}>{backlinksSummary?.rank != null ? Math.round(backlinksSummary.rank) : '—'}</td>
+                            <td style={{ padding: '10px 14px', color: S.muted }}>{backlinksSummary?.referring_domains?.toLocaleString() ?? '—'}</td>
+                          </tr>
                           {dfsCompetitors.slice(0, 5).map((comp: any, i: number) => (
                             <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                               <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
                               <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(comp.full_domain_metrics?.organic?.etv ?? comp.avg_position ?? 0)}</td>
                               <td style={{ padding: '10px 14px', color: S.muted }}>{comp.intersections?.toLocaleString() ?? '-'}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted }}>{comp.backlink_rank != null ? Math.round(comp.backlink_rank) : '-'}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted }}>{comp.referring_domains_bl?.toLocaleString() ?? '-'}</td>
                             </tr>
                           ))}
                         </tbody>
