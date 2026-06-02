@@ -78,6 +78,28 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
     setRescanning(true)
     setError('')
     try {
+      // Step 1: Fetch CrUX from browser - avoids Vercel US network blocking AU sites
+      const psKey = process.env.NEXT_PUBLIC_PAGESPEED_API_KEY
+      if (psKey) {
+        try {
+          const psUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(prospect.store_url)}&strategy=DESKTOP&fields=loadingExperience&key=${psKey}`
+          const psRes = await fetch(psUrl)
+          if (psRes.ok) {
+            const psData = await psRes.json()
+            if (psData?.loadingExperience) {
+              await fetch('/api/audit/pagespeed-save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prospect_id: prospect.id, loading_experience: psData.loadingExperience }),
+              })
+            }
+          }
+        } catch {
+          // CrUX fetch failed - rescan continues without it
+        }
+      }
+
+      // Step 2: Trigger full server-side rescan (lighthouse + dataforseo + crawl + AI)
       const res = await fetch('/api/audit/admin/rescan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,7 +107,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
       })
       const data = await res.json()
       if (!data.success) setError(data.error || 'Rescan failed')
-      else alert('Rescan complete. AI commentary has been regenerated.')
+      else alert('Rescan started. Data will update in the background.')
     } catch {
       setError('Network error')
     } finally {

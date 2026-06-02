@@ -91,56 +91,46 @@ export async function POST(req: NextRequest) {
   const encoded = encodeURIComponent(store_url)
   const base = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed`
 
-  let crux: any = null
+  // CrUX is now fetched client-side by the browser (pagespeed-save route).
+  // Server only fetches lighthouse data. Read existing CrUX from DB to preserve it.
+  const { data: existingCache } = await supabaseAdmin
+    .from('audit_data_cache')
+    .select('pagespeed_mobile')
+    .eq('prospect_id', prospect_id)
+    .single()
+  const existingCrux = existingCache?.pagespeed_mobile?.crux ?? null
+
   let mobileLighthouse: any = null
   let desktopLighthouse: any = null
-  let siteUnreachable = false
 
-  // Fetch 1: CrUX only - 10s timeout. If this times out, site is blocking Vercel - skip lighthouse.
+  // Fetch 1: full mobile lighthouse
   try {
-    const cruxUrl = `${base}?url=${encoded}&strategy=DESKTOP&fields=loadingExperience&locale=en-AU&key=${apiKey}`
-    const cruxData = await fetchWithTimeout(cruxUrl, 10000)
-    crux = extractCrux(cruxData)
-    console.log('[pagespeed] crux available:', crux !== null, 'overall:', crux?.overall_category ?? 'none')
+    const mobileData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=mobile&key=${apiKey}`, 45000)
+    mobileLighthouse = extractLighthouse(mobileData)
+    console.log('[pagespeed] mobile lighthouse score:', mobileLighthouse?.performance_score ?? 'null')
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.error(`[pagespeed] site unreachable from Vercel - skipping all pagespeed checks`)
-      siteUnreachable = true
+      console.error(`[pagespeed] mobile lighthouse timed out for ${domain}`)
     } else {
-      console.error('[pagespeed] CrUX fetch failed:', err.message)
+      console.error('[pagespeed] mobile lighthouse failed:', err.message)
     }
   }
 
-  if (!siteUnreachable) {
-    // Fetch 2: full mobile lighthouse (slow, can timeout)
-    try {
-      const mobileData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=mobile&key=${apiKey}`, 45000)
-      mobileLighthouse = extractLighthouse(mobileData)
-      console.log('[pagespeed] mobile lighthouse score:', mobileLighthouse?.performance_score ?? 'null')
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        console.error(`[pagespeed] mobile lighthouse timed out for ${domain} - store may be slow`)
-      } else {
-        console.error('[pagespeed] mobile lighthouse failed:', err.message)
-      }
-    }
-
-    // Fetch 3: full desktop lighthouse (slow, can timeout)
-    try {
-      const desktopData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=desktop&key=${apiKey}`, 45000)
-      desktopLighthouse = extractLighthouse(desktopData)
-      console.log('[pagespeed] desktop lighthouse score:', desktopLighthouse?.performance_score ?? 'null')
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        console.error(`[pagespeed] desktop lighthouse timed out for ${domain} - store may be slow`)
-      } else {
-        console.error('[pagespeed] desktop lighthouse failed:', err.message)
-      }
+  // Fetch 2: full desktop lighthouse
+  try {
+    const desktopData = await fetchWithTimeout(`${base}?url=${encoded}&strategy=desktop&key=${apiKey}`, 45000)
+    desktopLighthouse = extractLighthouse(desktopData)
+    console.log('[pagespeed] desktop lighthouse score:', desktopLighthouse?.performance_score ?? 'null')
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      console.error(`[pagespeed] desktop lighthouse timed out for ${domain}`)
+    } else {
+      console.error('[pagespeed] desktop lighthouse failed:', err.message)
     }
   }
 
-  // mobile = CrUX + mobile lighthouse; desktop = desktop lighthouse only
-  const mobileMetrics = buildMetrics(crux, mobileLighthouse)
+  // Preserve CrUX set by browser (pagespeed-save) + add new lighthouse data
+  const mobileMetrics = buildMetrics(existingCrux, mobileLighthouse)
   const desktopMetrics = buildMetrics(null, desktopLighthouse)
 
   console.log('[pagespeed] writing to DB - mobile:', !!mobileMetrics, 'desktop:', !!desktopMetrics)
