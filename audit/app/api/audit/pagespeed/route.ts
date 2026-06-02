@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 60
+export const preferredRegion = 'syd1'
 
 function extractCrux(data: any) {
   const metrics = data.loadingExperience?.metrics

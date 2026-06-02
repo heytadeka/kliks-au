@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 60
+export const preferredRegion = 'syd1'
 
 const DATAFORSEO_BASE = 'https://api.dataforseo.com/v3'
 
