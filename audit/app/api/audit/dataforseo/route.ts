@@ -56,7 +56,28 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo] keywords count:', keywords.length)
   } catch (e: any) { console.error('[dataforseo] keywords failed:', e.message) }
 
-  const JUNK_DOMAINS = ['facebook', 'youtube', 'instagram', 'twitter', 'pinterest', 'amazon', 'ebay', 'etsy', 'google', 'tiktok', 'reddit', 'wikipedia']
+  const JUNK_DOMAINS = [
+    // Social & big platforms
+    'facebook', 'youtube', 'instagram', 'twitter', 'pinterest', 'tiktok', 'reddit', 'linkedin',
+    // Marketplaces
+    'amazon', 'ebay', 'etsy', 'google',
+    // Reference
+    'wikipedia',
+    // Review & directory sites
+    'yelp', 'tripadvisor', 'eatability', 'dimmi', 'opentable', 'broadsheet', 'timeout', 'truelocal', 'yellowpages', 'whitepages',
+    // Food delivery
+    'ubereats', 'doordash', 'menulog', 'zomato',
+    // Travel & accommodation
+    'booking', 'airbnb', 'expedia',
+    // Classifieds & jobs
+    'gumtree', 'seek', 'indeed', 'glassdoor',
+    // Health & government
+    'healthdirect',
+    // News & media
+    'abc.net', 'smh.com', 'theage.com', 'news.com',
+    // Comparison sites
+    'choice.com', 'canstar', 'finder.com', 'comparethemarket',
+  ]
 
   try {
     const res = await dfsPost('/dataforseo_labs/google/competitors_domain/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 10 }])
