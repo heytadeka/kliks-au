@@ -97,7 +97,9 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
       if (psKey) {
         try {
           const encoded = encodeURIComponent(prospect.store_url)
-          const base = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encoded}&key=${psKey}`
+          // Request all four categories explicitly - PSI only returns performance by default
+          const cats = 'category=performance&category=seo&category=accessibility&category=best-practices'
+          const base = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encoded}&${cats}&key=${psKey}`
 
           const [mobileData, desktopData] = await Promise.all([
             fetchPsi(`${base}&strategy=MOBILE`),

@@ -91,7 +91,12 @@ export async function POST(req: NextRequest) {
   const mobileMetrics = buildMetrics(mobileCrux, mobileLh)
   const desktopMetrics = buildMetrics(null, desktopLh)
 
-  console.log('[pagespeed-save] mobile perf:', mobileLh?.performance_score ?? 'null', 'crux:', mobileCrux?.overall_category ?? 'null')
+  console.log('[pagespeed-save] raw scores:', {
+    performance: mobile?.lighthouseResult?.categories?.performance?.score,
+    seo: mobile?.lighthouseResult?.categories?.seo?.score,
+    accessibility: mobile?.lighthouseResult?.categories?.accessibility?.score,
+  })
+  console.log('[pagespeed-save] mobile perf:', mobileLh?.performance_score ?? 'null', 'seo:', mobileLh?.seo_score ?? 'null', 'a11y:', mobileLh?.accessibility_score ?? 'null', 'crux:', mobileCrux?.overall_category ?? 'null')
   console.log('[pagespeed-save] desktop perf:', desktopLh?.performance_score ?? 'null')
 
   const updateData: Record<string, any> = {
