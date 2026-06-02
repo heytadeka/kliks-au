@@ -206,19 +206,27 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
         <div style={{ marginBottom: 64 }}>
           <SectionLabel>AUDIT SCORES</SectionLabel>
           <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 6 }}>Audit Scores</h2>
-          <p style={{ color: S.muted, fontSize: 13, marginBottom: 24 }}>Scores based on CrUX field data &amp; industry benchmarks.</p>
+          <p style={{ color: S.muted, fontSize: 13, marginBottom: 24 }}>Scores based on Lighthouse analysis &amp; industry benchmarks.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             {(() => {
-              const val = ps?.lcp ? msToS(ps.lcp) : '--'
-              const cat = ps?.crux_lcp_category ?? null
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = !ps?.lcp ? 'neutral' : cat === 'FAST' ? 'good' : cat === 'SLOW' ? 'poor' : ps.lcp ? getStatus(ps.lcp / 1000, [2.5, 4]) : 'neutral'
-              return <MetricCard key="lcp" label="LCP" value={val} unit={ps?.lcp ? 's' : undefined} status={st} />
+              const val = ps?.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="mob" label="Mobile Performance" value={val != null ? val : '--'} unit="/100" status={st} />
             })()}
             {(() => {
-              const val = ps?.cls != null ? ps.cls.toFixed(3) : '--'
-              const cat = ps?.crux_cls_category ?? null
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = ps?.cls == null ? 'neutral' : cat === 'FAST' ? 'good' : cat === 'SLOW' ? 'poor' : getStatus(ps.cls, [0.1, 0.25])
-              return <MetricCard key="cls" label="CLS" value={val} status={st} />
+              const val = psDesktop?.performance_score != null && psDesktop.performance_score > 0 ? Math.round(psDesktop.performance_score) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="desk" label="Desktop Performance" value={val != null ? val : '--'} unit="/100" status={st} />
+            })()}
+            {(() => {
+              const val = ps?.seo_score != null && ps.seo_score > 0 ? Math.round(ps.seo_score) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="seo" label="SEO Score" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} />
+            })()}
+            {(() => {
+              const val = ps?.accessibility_score != null && ps.accessibility_score > 0 ? Math.round(ps.accessibility_score) : null
+              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
+              return <MetricCard key="a11y" label="Accessibility" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} />
             })()}
             {(() => {
               const passed = cro?.summary?.passed
@@ -226,12 +234,6 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               const val = passed != null ? `${passed}/${total}` : '--'
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = passed == null ? 'neutral' : passed >= 16 ? 'good' : passed >= 10 ? 'needs-work' : 'poor'
               return <MetricCard key="cro-score" label="CRO Score" value={val} status={st} />
-            })()}
-            {(() => {
-              const cat = ps?.crux_overall ?? null
-              const val = cat ?? '--'
-              const st: 'good' | 'needs-work' | 'poor' | 'neutral' = cat === 'FAST' ? 'good' : cat === 'AVERAGE' ? 'needs-work' : cat === 'SLOW' ? 'poor' : 'neutral'
-              return <MetricCard key="overall" label="Overall Speed" value={val} status={st} />
             })()}
             {(() => {
               const total = cro?.summary?.total ?? 20
@@ -275,20 +277,14 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             {ps ? (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
-                  <MetricCard label="Mobile Performance" value={ps.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : '--'} unit="/100" status={ps.performance_score >= 90 ? 'good' : ps.performance_score >= 50 ? 'needs-work' : 'poor'} />
                   <MetricCard label="LCP" value={ps.lcp ? msToS(ps.lcp) : '-'} unit="s" status={ps.lcp ? getStatus(ps.lcp / 1000, [2.5, 4]) : 'neutral'} description="Largest Contentful Paint — how fast your main content loads" target="<2.5s" />
                   <MetricCard label="FCP" value={ps.fcp ? msToS(ps.fcp) : '-'} unit="s" status={ps.fcp ? getStatus(ps.fcp / 1000, [1.8, 3]) : 'neutral'} description="First Contentful Paint — when the first element appears" target="<1.8s" />
+                  <MetricCard label="CLS" value={ps.cls != null ? ps.cls.toFixed(3) : '-'} status={ps.cls != null ? getStatus(ps.cls, [0.1, 0.25]) : 'neutral'} description="Cumulative Layout Shift — how much the page jumps around" target="<0.1" />
                   <MetricCard label="TBT" value={ps.tbt ? Math.round(ps.tbt) : '-'} unit="ms" status={ps.tbt ? getStatus(ps.tbt, [200, 600]) : 'neutral'} description="Total Blocking Time — how long the page is unresponsive" target="<200ms" />
-                  <MetricCard label="CLS" value={ps.cls ? ps.cls.toFixed(3) : '-'} status={ps.cls !== undefined ? getStatus(ps.cls, [0.1, 0.25]) : 'neutral'} description="Cumulative Layout Shift — how much the page jumps around" target="<0.1" />
                   <MetricCard label="Speed Index" value={ps.speed_index ? msToS(ps.speed_index) : '-'} unit="s" status={ps.speed_index ? getStatus(ps.speed_index / 1000, [3.4, 5.8]) : 'neutral'} description="How quickly content is visually complete" target="<3.4s" />
+                  <MetricCard label="TTI" value={ps.tti ? msToS(ps.tti) : '-'} unit="s" status={ps.tti ? getStatus(ps.tti / 1000, [3.8, 7.3]) : 'neutral'} description="Time to Interactive — when the page is fully usable" target="<3.8s" />
                 </div>
 
-                {psDesktop && (
-                  <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <span style={{ color: S.muted, fontSize: 14 }}>Desktop Performance</span>
-                    <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 22, fontWeight: 700, color: psDesktop.performance_score >= 90 ? '#22c55e' : psDesktop.performance_score >= 50 ? S.orange : '#ef4444' }}>{psDesktop.performance_score}/100</span>
-                  </div>
-                )}
 
                 {ps.lcp && ps.lcp / 1000 > 2.5 && (
                   <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24 }}>

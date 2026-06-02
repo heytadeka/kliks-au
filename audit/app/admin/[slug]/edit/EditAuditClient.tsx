@@ -26,6 +26,19 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 6,
 }
 
+async function fetchPsi(url: string): Promise<any> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 60000)
+  try {
+    const res = await fetch(url, { signal: controller.signal })
+    return res.ok ? res.json() : null
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export default function EditAuditClient({ prospect, content }: { prospect: any; content: any }) {
   const router = useRouter()
   const [form, setForm] = useState({
@@ -78,28 +91,32 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
     setRescanning(true)
     setError('')
     try {
-      // Step 1: Fetch CrUX from browser - avoids Vercel US network blocking AU sites
+      // Step 1: Fetch full lighthouse + CrUX from browser in parallel.
+      // Running from the browser avoids Vercel US servers being blocked by AU-hosted stores.
       const psKey = process.env.NEXT_PUBLIC_PAGESPEED_API_KEY
       if (psKey) {
         try {
-          const psUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(prospect.store_url)}&strategy=DESKTOP&fields=loadingExperience&key=${psKey}`
-          const psRes = await fetch(psUrl)
-          if (psRes.ok) {
-            const psData = await psRes.json()
-            if (psData?.loadingExperience) {
-              await fetch('/api/audit/pagespeed-save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prospect_id: prospect.id, loading_experience: psData.loadingExperience }),
-              })
-            }
+          const encoded = encodeURIComponent(prospect.store_url)
+          const base = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encoded}&key=${psKey}`
+
+          const [mobileData, desktopData] = await Promise.all([
+            fetchPsi(`${base}&strategy=MOBILE`),
+            fetchPsi(`${base}&strategy=DESKTOP`),
+          ])
+
+          if (mobileData || desktopData) {
+            await fetch('/api/audit/pagespeed-save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prospect_id: prospect.id, mobile: mobileData, desktop: desktopData }),
+            })
           }
         } catch {
-          // CrUX fetch failed - rescan continues without it
+          // PSI fetch failed - rescan continues without updated pagespeed data
         }
       }
 
-      // Step 2: Trigger full server-side rescan (lighthouse + dataforseo + crawl + AI)
+      // Step 2: Trigger server-side rescan (dataforseo + crawl + AI commentary)
       const res = await fetch('/api/audit/admin/rescan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

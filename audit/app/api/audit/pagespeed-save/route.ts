@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { cookies } from 'next/headers'
 
-// Accepts pre-fetched CrUX data from the browser and merges it into pagespeed_mobile.
-// Called client-side from the admin UI so the PSI API call runs in the browser,
+// Accepts full PSI results (lighthouse + CrUX) fetched from the browser.
+// Called client-side from the admin UI so PSI runs in the browser,
 // not from Vercel's US servers which are blocked by AU-hosted stores.
 
 function extractCrux(loadingExperience: any) {
@@ -27,59 +27,89 @@ function extractCrux(loadingExperience: any) {
   }
 }
 
+function extractLighthouse(data: any) {
+  const cats = data?.lighthouseResult?.categories
+  const audits = data?.lighthouseResult?.audits
+  if (!cats && !audits) return null
+  return {
+    performance_score: Math.round((cats?.performance?.score ?? 0) * 100),
+    seo_score: Math.round((cats?.seo?.score ?? 0) * 100),
+    accessibility_score: Math.round((cats?.accessibility?.score ?? 0) * 100),
+    lcp: audits?.['largest-contentful-paint']?.numericValue ?? null,
+    fcp: audits?.['first-contentful-paint']?.numericValue ?? null,
+    cls: audits?.['cumulative-layout-shift']?.numericValue ?? null,
+    tbt: audits?.['total-blocking-time']?.numericValue ?? null,
+    speed_index: audits?.['speed-index']?.numericValue ?? null,
+    tti: audits?.['interactive']?.numericValue ?? null,
+  }
+}
+
+function buildMetrics(crux: any, lh: any) {
+  if (!crux && !lh) return null
+  return {
+    // Lighthouse scores
+    performance_score: lh?.performance_score ?? null,
+    seo_score: lh?.seo_score ?? null,
+    accessibility_score: lh?.accessibility_score ?? null,
+    // CrUX primary for lcp/fcp/cls, lighthouse fallback
+    lcp: crux?.lcp ?? lh?.lcp ?? null,
+    fcp: crux?.fcp ?? lh?.fcp ?? null,
+    cls: crux?.cls ?? lh?.cls ?? null,
+    // Lighthouse only
+    tbt: lh?.tbt ?? null,
+    speed_index: lh?.speed_index ?? null,
+    tti: lh?.tti ?? null,
+    // CrUX fields
+    crux_available: crux !== null,
+    crux_overall: crux?.overall_category ?? null,
+    crux_inp: crux?.inp ?? null,
+    crux_ttfb: crux?.ttfb ?? null,
+    crux_fid: crux?.fid ?? null,
+    crux_lcp_category: crux?.lcp_category ?? null,
+    crux_fcp_category: crux?.fcp_category ?? null,
+    crux_cls_category: crux?.cls_category ?? null,
+    crux: crux ?? null,
+    lighthouse: lh ?? null,
+  }
+}
+
 export async function POST(req: NextRequest) {
   const cookieStore = cookies()
   if (!cookieStore.get('audit_admin_auth')?.value) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { prospect_id, loading_experience } = await req.json()
-  if (!prospect_id || !loading_experience) {
-    return NextResponse.json({ error: 'Missing prospect_id or loading_experience' }, { status: 400 })
+  const { prospect_id, mobile, desktop } = await req.json()
+  if (!prospect_id || (!mobile && !desktop)) {
+    return NextResponse.json({ error: 'Missing prospect_id or pagespeed data' }, { status: 400 })
   }
 
-  const crux = extractCrux(loading_experience)
-  if (!crux) {
-    return NextResponse.json({ success: false, error: 'No CrUX data in loading_experience' })
+  const mobileCrux = extractCrux(mobile?.loadingExperience)
+  const mobileLh = extractLighthouse(mobile)
+  const desktopLh = extractLighthouse(desktop)
+
+  const mobileMetrics = buildMetrics(mobileCrux, mobileLh)
+  const desktopMetrics = buildMetrics(null, desktopLh)
+
+  console.log('[pagespeed-save] mobile perf:', mobileLh?.performance_score ?? 'null', 'crux:', mobileCrux?.overall_category ?? 'null')
+  console.log('[pagespeed-save] desktop perf:', desktopLh?.performance_score ?? 'null')
+
+  const updateData: Record<string, any> = {
+    prospect_id,
+    pagespeed_fetched_at: new Date().toISOString(),
   }
-
-  console.log('[pagespeed-save] crux received for prospect_id:', prospect_id, 'overall:', crux.overall_category)
-
-  // Read existing mobile metrics so we can preserve lighthouse data
-  const { data: existing } = await supabaseAdmin
-    .from('audit_data_cache')
-    .select('pagespeed_mobile')
-    .eq('prospect_id', prospect_id)
-    .single()
-
-  const existingMobile = existing?.pagespeed_mobile ?? {}
-
-  // Merge: CrUX primary for lcp/fcp/cls, preserve existing lighthouse fields
-  const merged = {
-    ...existingMobile,
-    lcp: crux.lcp ?? existingMobile.lcp ?? null,
-    fcp: crux.fcp ?? existingMobile.fcp ?? null,
-    cls: crux.cls ?? existingMobile.cls ?? null,
-    crux_available: true,
-    crux_overall: crux.overall_category,
-    crux_inp: crux.inp,
-    crux_ttfb: crux.ttfb,
-    crux_fid: crux.fid,
-    crux_lcp_category: crux.lcp_category,
-    crux_fcp_category: crux.fcp_category,
-    crux_cls_category: crux.cls_category,
-    crux,
-  }
+  if (mobileMetrics) updateData.pagespeed_mobile = mobileMetrics
+  if (desktopMetrics) updateData.pagespeed_desktop = desktopMetrics
 
   const { error: dbError } = await supabaseAdmin
     .from('audit_data_cache')
-    .upsert({ prospect_id, pagespeed_mobile: merged }, { onConflict: 'prospect_id' })
+    .upsert(updateData, { onConflict: 'prospect_id' })
 
   if (dbError) {
     console.error('[pagespeed-save] Supabase write error:', JSON.stringify(dbError))
     return NextResponse.json({ success: false, error: dbError.message }, { status: 500 })
   }
 
-  console.log('[pagespeed-save] CrUX saved successfully for prospect_id:', prospect_id)
-  return NextResponse.json({ success: true, crux_overall: crux.overall_category })
+  console.log('[pagespeed-save] saved successfully for prospect_id:', prospect_id)
+  return NextResponse.json({ success: true, crux_overall: mobileCrux?.overall_category ?? null })
 }
