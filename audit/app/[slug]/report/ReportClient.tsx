@@ -482,19 +482,41 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   {(() => {
                     const overviewCount = dfsOverview.metrics?.organic?.count ?? 0
                     const overviewEtv = dfsOverview.metrics?.organic?.etv ?? 0
-                    // Fall back to keyword data if overview metrics are zero
                     const kwCount = overviewCount > 0 ? overviewCount : dfsKeywords.length
                     const kwEtv = overviewEtv > 0 ? overviewEtv : dfsKeywords.reduce((sum: number, kw: any) => sum + (kw.keyword_data?.keyword_info?.search_volume ?? 0), 0)
+                    const refDomains = dfsOverview.metrics?.referring_domains ?? 0
                     return [
-                      { label: 'Organic Keywords', value: kwCount.toLocaleString() },
-                      { label: 'Est. Monthly Traffic', value: kwEtv.toLocaleString() },
-                      { label: 'Est. Traffic Value', value: `$${Math.round(kwEtv * 1.2).toLocaleString()}` },
-                      { label: 'Referring Domains', value: (dfsOverview.metrics?.referring_domains ?? 0).toLocaleString() },
+                      {
+                        label: 'Organic Keywords', value: kwCount.toLocaleString(),
+                        context: kwCount < 100
+                          ? 'Below average for ecommerce - most stores your size rank for 200+'
+                          : kwCount <= 500 ? 'Average organic footprint'
+                          : 'Strong organic presence',
+                      },
+                      {
+                        label: 'Est. Monthly Traffic', value: fmtNum(kwEtv),
+                        context: kwEtv < 5000
+                          ? 'Low organic traffic - significant growth opportunity'
+                          : kwEtv <= 20000 ? 'Moderate traffic - room to grow'
+                          : 'Strong organic traffic',
+                      },
+                      {
+                        label: 'Est. Traffic Value', value: `$${fmtNum(Math.round(kwEtv * 1.2))}`,
+                        context: 'What this traffic would cost in Google Ads',
+                      },
+                      {
+                        label: 'Referring Domains', value: refDomains.toLocaleString(),
+                        context: refDomains < 20
+                          ? 'Very few backlinks - authority building needed'
+                          : refDomains <= 100 ? 'Building authority - keep going'
+                          : 'Good backlink profile',
+                      },
                     ]
                   })().map(item => (
                     <div key={item.label} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px' }}>
                       <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color: S.white }}>{item.value}</div>
                       <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>{item.label}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 8, lineHeight: 1.45 }}>{item.context}</div>
                     </div>
                   ))}
                 </div>
@@ -505,15 +527,26 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     {movementSummary && (kwBuckets.winning.length > 0 || kwBuckets.close.length > 0) && (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 32 }}>
                         {[
-                          { label: 'Gaining', count: movementSummary.gaining, color: '#22c55e', icon: '↑' },
-                          { label: 'Stable', count: movementSummary.stable, color: S.muted, icon: '→' },
-                          { label: 'Losing', count: movementSummary.losing, color: '#ef4444', icon: '↓' },
-                        ].map(item => (
-                          <div key={item.label} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '18px 20px', textAlign: 'center' }}>
-                            <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 26, fontWeight: 700, color: item.color }}>{item.icon} {item.count}</div>
-                            <div style={{ fontSize: 12, color: S.muted, marginTop: 4 }}>{item.label}</div>
-                          </div>
-                        ))}
+                          { label: 'Gaining', count: movementSummary.gaining, color: '#22c55e', border: '#22c55e', icon: '↑', insight: 'Rankings improving' },
+                          { label: 'Stable', count: movementSummary.stable, color: S.muted, border: 'rgba(255,255,255,0.2)', icon: '→', insight: 'Holding position' },
+                          { label: 'Losing', count: movementSummary.losing, color: '#ef4444', border: '#ef4444', icon: '↓', insight: 'Rankings slipping - needs attention' },
+                        ].map(item => {
+                          const isProminentLosing = item.label === 'Losing' && movementSummary.losing > movementSummary.gaining
+                          return (
+                            <div key={item.label} style={{
+                              background: S.bg2,
+                              border: `1px solid ${S.border}`,
+                              borderLeft: `3px solid ${item.border}`,
+                              borderRadius: 12,
+                              padding: '18px 20px',
+                              boxShadow: isProminentLosing ? '0 0 16px rgba(239,68,68,0.1)' : undefined,
+                            }}>
+                              <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: isProminentLosing ? 32 : 26, fontWeight: 700, color: item.color }}>{item.icon} {item.count}</div>
+                              <div style={{ fontSize: 13, color: S.white, marginTop: 4, fontWeight: 600 }}>{item.label}</div>
+                              <div style={{ fontSize: 12, color: isProminentLosing ? 'rgba(239,68,68,0.7)' : 'rgba(255,255,255,0.35)', marginTop: 6, lineHeight: 1.4 }}>{item.insight}</div>
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
 

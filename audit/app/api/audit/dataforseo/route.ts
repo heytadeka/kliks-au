@@ -154,6 +154,51 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ── FIX 1: Bulk traffic estimation + relative size filter ──
+  const competitorDomainsForTraffic: string[] = competitors.map((c: any) => c.domain).filter(Boolean)
+  if (competitorDomainsForTraffic.length > 0) {
+    try {
+      const btRes = await dfsPost('/dataforseo_labs/google/bulk_traffic_estimation/live', [{
+        targets: competitorDomainsForTraffic,
+        location_code: 2036,
+        language_code: 'en',
+        item_types: ['organic'],
+      }])
+      const btItems: any[] = btRes?.tasks?.[0]?.result?.[0]?.items ?? []
+      const trafficMap = new Map<string, number>()
+      for (const item of btItems) {
+        trafficMap.set((item.target ?? '').toLowerCase(), item.metrics?.organic?.etv ?? 0)
+      }
+      // Augment each competitor with fetched traffic
+      competitors = competitors.map((c: any) => {
+        const etv = trafficMap.get((c.domain ?? '').toLowerCase()) ?? null
+        return etv != null ? { ...c, estimated_traffic: etv } : c
+      })
+      // Relative size filter: remove if competitor traffic > 100x prospect traffic
+      const prospectEtv = overview?.metrics?.organic?.etv ?? 0
+      if (prospectEtv > 0) {
+        competitors = competitors.filter((c: any) => {
+          const cEtv = c.estimated_traffic ?? trafficMap.get((c.domain ?? '').toLowerCase()) ?? 0
+          if (cEtv > prospectEtv * 100) {
+            console.log(`[dataforseo] removing oversized competitor: ${c.domain} (${Math.round(cEtv / prospectEtv)}x prospect traffic)`)
+            return false
+          }
+          return true
+        })
+      }
+      console.log('[dataforseo] competitors after size filter:', competitors.map((c: any) => c.domain))
+    } catch (e: any) {
+      console.error('[dataforseo] bulk traffic estimation failed:', e.message)
+    }
+  }
+
+  // ── FIX 2: Sort niche-discovered competitors first for better content gap analysis ──
+  competitors.sort((a: any, b: any) => {
+    if (a.niche_source && !b.niche_source) return -1
+    if (!a.niche_source && b.niche_source) return 1
+    return 0
+  })
+
   const topCompetitor = competitors[0]?.domain ?? null
   const competitorDomains: string[] = competitors.map((c: any) => c.domain).filter(Boolean)
 
