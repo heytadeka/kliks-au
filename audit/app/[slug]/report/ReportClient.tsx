@@ -85,12 +85,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const dfsContentGap: any[] = useMemo(() => cache?.dataforseo_content_gap ?? [], [cache?.dataforseo_content_gap])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const keywordTrends: any[] = useMemo(() => cache?.dataforseo_keyword_trends ?? [], [cache?.dataforseo_keyword_trends])
-  const backlinksSummary = cache?.backlinks_summary ?? null
+  // backlinksSummary removed - backlinks subscription not available
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
 
-  const storeDomain = (prospect.store_url ?? '')
-    .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const trendMap = useMemo(() => {

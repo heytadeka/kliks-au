@@ -59,14 +59,6 @@ function isJunk(domain: string) {
   return JUNK_DOMAINS.some(junk => d.includes(junk))
 }
 
-function extractBacklinks(result: any) {
-  if (!result) return null
-  return {
-    rank: result.rank ?? null,
-    referring_domains: result.referring_domains ?? null,
-    backlinks: result.backlinks ?? null,
-  }
-}
 
 export async function POST(req: NextRequest) {
   const { prospect_id, store_url, niche } = await req.json()
@@ -83,7 +75,7 @@ export async function POST(req: NextRequest) {
   let serpFeatures = null
   let contentGap: any[] = []
   let keywordTrends: any[] | null = null
-  let backlinksSummary: any = null
+  const backlinksSummary: any = null // disabled - requires separate DataForSEO subscription
 
   // ── Phase 1: overview + keywords + competitors in parallel ──
   const [overviewRes, keywordsRes, competitorsRes] = await Promise.allSettled([
@@ -200,7 +192,6 @@ export async function POST(req: NextRequest) {
   })
 
   const topCompetitor = competitors[0]?.domain ?? null
-  const competitorDomains: string[] = competitors.map((c: any) => c.domain).filter(Boolean)
 
   // Date for historical keywords: 3 months ago
   const dateFrom = new Date()
