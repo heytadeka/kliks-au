@@ -148,5 +148,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: dbError.message }, { status: 500 })
   }
   console.log('[pagespeed] write success for prospect_id:', prospect_id)
-  return NextResponse.json({ success: true, crux: !!crux, mobile: !!mobileLighthouse, desktop: !!desktopLighthouse })
+  return NextResponse.json({ success: true, crux: !!existingCrux, mobile: !!mobileLighthouse, desktop: !!desktopLighthouse })
 }
