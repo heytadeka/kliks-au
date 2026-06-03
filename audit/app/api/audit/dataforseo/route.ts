@@ -264,6 +264,56 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo] content gap count:', contentGap.length)
   }
 
+  // ── Volume enrichment for content gap keywords ──
+  // keywords_for_site returns items with search_volume = 0; fetch real AU volumes separately.
+  if (contentGap.length > 0) {
+    try {
+      const kwStrings: string[] = contentGap
+        .map((item: any) => item.keyword_data?.keyword ?? item.keyword)
+        .filter(Boolean)
+        .slice(0, 100)
+      if (kwStrings.length > 0) {
+        console.log('[dataforseo] enriching content gap volumes for', kwStrings.length, 'keywords')
+        const volRes = await dfsPost('/keywords_data/google_ads/search_volume/live', [{
+          keywords: kwStrings,
+          location_code: 2036,
+          language_code: 'en',
+        }])
+        const volItems: any[] = volRes?.tasks?.[0]?.result ?? []
+        const volMap = new Map<string, { search_volume: number; competition: number | null; cpc: number | null }>()
+        for (const item of volItems) {
+          if (item.keyword) {
+            volMap.set(item.keyword.toLowerCase(), {
+              search_volume: item.search_volume ?? 0,
+              competition: item.competition ?? null,
+              cpc: item.cpc ?? null,
+            })
+          }
+        }
+        contentGap = contentGap.map((item: any) => {
+          const kw = (item.keyword_data?.keyword ?? item.keyword ?? '').toLowerCase()
+          const enriched = volMap.get(kw)
+          if (!enriched) return item
+          return {
+            ...item,
+            keyword_data: {
+              ...(item.keyword_data ?? {}),
+              keyword_info: {
+                ...(item.keyword_data?.keyword_info ?? {}),
+                search_volume: enriched.search_volume,
+                competition: enriched.competition,
+                cpc: enriched.cpc,
+              },
+            },
+          }
+        })
+        console.log('[dataforseo] content gap volume enrichment done:', volMap.size, 'matched of', kwStrings.length)
+      }
+    } catch (e: any) {
+      console.error('[dataforseo] content gap volume enrichment failed (non-blocking):', e.message)
+    }
+  }
+
   // Backlinks disabled - requires separate DataForSEO subscription (returns 40204)
   // backlinksSummary remains null
 

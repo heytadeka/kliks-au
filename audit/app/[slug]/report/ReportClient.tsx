@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
 const S = {
   bg: '#0e0d1a',
@@ -29,12 +29,13 @@ function SectionWrap({ children, id }: { children: React.ReactNode; id?: string 
   )
 }
 
-function MetricCard({ label, value, unit, status, description, target }: { label: string; value: string | number; unit?: string; status: 'good' | 'needs-work' | 'poor' | 'neutral'; description?: string; target?: string }) {
+function MetricCard({ label, value, unit, status, description, target, benchmark }: { label: string; value: string | number; unit?: string; status: 'good' | 'needs-work' | 'poor' | 'neutral'; description?: string; target?: string; benchmark?: string }) {
   const colours = { good: '#22c55e', 'needs-work': '#f97316', poor: '#ef4444', neutral: S.purple }
   const c = colours[status]
   return (
     <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, color: c }}>{value}{unit && <span style={{ fontSize: 16, marginLeft: 4, color: S.muted }}>{unit}</span>}</span>
+      {benchmark && <span style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.38)', marginBottom: 4 }}>{benchmark}</span>}
       <span style={{ fontSize: 13, color: S.muted }}>{label}</span>
       {description && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', lineHeight: 1.45 }}>{description}</span>}
       {target && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>Target: {target}</span>}
@@ -58,6 +59,17 @@ function fmtNum(n: number): string {
   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`
   if (v >= 1_000) return `${Math.round(v / 1000)}K`
   return v.toLocaleString()
+}
+
+function fmtVol(n: number): string {
+  return Math.round(n).toLocaleString()
+}
+
+function cleanDomain(d: string): string {
+  if (!d) return '-'
+  let out = d.replace(/^https?:\/\//, '').replace(/^www\./, '')
+  if (out.length > 30) out = out.slice(0, 29) + '…'
+  return out
 }
 
 function AdamsTake({ text }: { text?: string | null }) {
@@ -141,14 +153,21 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
   const totalRevImpact = revCalc.filter(r => r.impact).reduce((sum: number, r: any) => sum + r.impact, 0)
 
-  const croGroups = useMemo(() => {
-    if (!cro?.results) return {}
+  const failedByCategory = useMemo(() => {
+    if (!cro?.results) return {} as Record<string, any[]>
     const groups: Record<string, any[]> = {}
     for (const item of cro.results) {
-      if (!groups[item.category]) groups[item.category] = []
-      groups[item.category].push(item)
+      if (!item.passed) {
+        if (!groups[item.category]) groups[item.category] = []
+        groups[item.category].push(item)
+      }
     }
     return groups
+  }, [cro])
+
+  const passedItems = useMemo(() => {
+    if (!cro?.results) return [] as any[]
+    return cro.results.filter((item: any) => item.passed)
   }, [cro])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,6 +215,27 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     return { gaining, stable, losing }
   }, [kwBuckets, trendMap, keywordTrends])
 
+  const [passedExpanded, setPassedExpanded] = useState(false)
+
+  const topCompetitor = (() => {
+    const comps = cache?.dataforseo_competitors as any[] | null
+    if (!comps || comps.length === 0) return null
+    return comps
+      .filter((c: any) => c.domain)
+      .sort((a: any, b: any) => {
+        const ta = a.estimated_traffic ?? a.full_domain_metrics?.organic?.etv ?? 0
+        const tb = b.estimated_traffic ?? b.full_domain_metrics?.organic?.etv ?? 0
+        return tb - ta
+      })[0] ?? null
+  })()
+  const topCompDomain: string | null = topCompetitor?.domain ?? null
+  const topCompTraffic: number = topCompetitor
+    ? (topCompetitor.estimated_traffic ?? topCompetitor.full_domain_metrics?.organic?.etv ?? 0)
+    : 0
+  const lcpDisplayValue: string | null =
+    (cache?.pagespeed_mobile as any)?.lighthouseResult?.audits?.['largest-contentful-paint']?.displayValue
+    ?? (ps?.lcp ? `${(ps.lcp / 1000).toFixed(1)} s` : null)
+
   const navStyle: React.CSSProperties = {
     position: 'sticky', top: 0, zIndex: 100,
     background: 'rgba(14,13,26,0.9)', backdropFilter: 'blur(12px)',
@@ -239,29 +279,29 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             {(() => {
               const val = ps?.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="mob" label="Mobile Performance" value={val != null ? val : '--'} unit="/100" status={st} />
+              return <MetricCard key="mob" label="Mobile Performance" value={val != null ? val : '--'} unit="/100" status={st} benchmark="Target: 90+ for good UX" />
             })()}
             {(() => {
               const val = psDesktop?.performance_score != null && psDesktop.performance_score > 0 ? Math.round(psDesktop.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="desk" label="Desktop Performance" value={val != null ? val : '--'} unit="/100" status={st} />
+              return <MetricCard key="desk" label="Desktop Performance" value={val != null ? val : '--'} unit="/100" status={st} benchmark="Target: 90+ for good UX" />
             })()}
             {(() => {
               const val = ps?.seo_score != null && ps.seo_score > 0 ? Math.round(ps.seo_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="seo" label="SEO Score" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} />
+              return <MetricCard key="seo" label="SEO Score" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} benchmark="Target: 90+ to rank competitively" />
             })()}
             {(() => {
               const val = ps?.accessibility_score != null && ps.accessibility_score > 0 ? Math.round(ps.accessibility_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="a11y" label="Accessibility" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} />
+              return <MetricCard key="a11y" label="Accessibility" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} benchmark="Target: 90+ recommended" />
             })()}
             {(() => {
               const passed = cro?.summary?.passed
               const total = cro?.summary?.total ?? 20
               const val = passed != null ? `${passed}/${total}` : '--'
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = passed == null ? 'neutral' : passed >= 16 ? 'good' : passed >= 10 ? 'needs-work' : 'poor'
-              return <MetricCard key="cro-score" label="CRO Score" value={val} status={st} />
+              return <MetricCard key="cro-score" label="CRO Score" value={val} status={st} benchmark="Most stores: 14-16/20" />
             })()}
             {(() => {
               const total = cro?.summary?.total ?? 20
@@ -269,31 +309,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               const pct = passed != null ? (passed / total * 100) : null
               const grade = pct == null ? '--' : pct > 85 ? 'A' : pct > 70 ? 'B' : pct > 55 ? 'C' : 'D'
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = grade === 'A' ? 'good' : grade === 'B' ? 'needs-work' : grade === 'C' || grade === 'D' ? 'poor' : 'neutral'
-              return <MetricCard key="cro-grade" label="Overall CRO" value={grade} status={st} />
+              return <MetricCard key="cro-grade" label="Overall CRO" value={grade} status={st} benchmark="Target: B or above" />
             })()}
           </div>
         </div>
-
-        {/* CRO Score Summary */}
-        {cro?.summary ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 64 }}>
-            {[
-              { label: 'CRO Score', value: `${cro.summary.passed}/20`, color: cro.summary.passed >= 16 ? '#22c55e' : cro.summary.passed >= 10 ? S.orange : '#ef4444' },
-              { label: 'Critical Issues', value: cro.summary.critical_issues, color: cro.summary.critical_issues > 0 ? '#ef4444' : '#22c55e' },
-              { label: 'Warnings', value: cro.summary.warnings, color: cro.summary.warnings > 0 ? S.orange : '#22c55e' },
-              { label: 'Opportunities', value: cro.summary.opportunities, color: S.purple },
-            ].map(item => (
-              <div key={item.label} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '20px 16px', textAlign: 'center' }}>
-                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color: item.color }}>{item.value}</div>
-                <div style={{ fontSize: 12, color: S.muted, marginTop: 4 }}>{item.label}</div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 24, marginBottom: 64, textAlign: 'center', color: S.muted }}>
-            {cro?.error ? 'CRO scan unavailable' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: S.orange, animation: 'pulse 1.5s infinite', display: 'inline-block' }} />CRO scan in progress...</span>}
-          </div>
-        )}
 
         {/* SECTION 01 - PERFORMANCE */}
         <SectionWrap id="performance">
@@ -304,6 +323,11 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
             {ps ? (
               <>
+                {topCompDomain && lcpDisplayValue && (
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
+                    {topCompDomain} is one of your top competitors in organic search. Your mobile load time is {lcpDisplayValue} - industry leaders load in under 2.5s.
+                  </p>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
                   <MetricCard label="LCP" value={ps.lcp ? msToS(ps.lcp) : '-'} unit="s" status={ps.lcp ? getStatus(ps.lcp / 1000, [2.5, 4]) : 'neutral'} description="Largest Contentful Paint — how fast your main content loads" target="<2.5s" />
                   <MetricCard label="FCP" value={ps.fcp ? msToS(ps.fcp) : '-'} unit="s" status={ps.fcp ? getStatus(ps.fcp / 1000, [1.8, 3]) : 'neutral'} description="First Contentful Paint — when the first element appears" target="<1.8s" />
@@ -348,27 +372,58 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <GhostNumber n="02" />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <SectionLabel>CONVERSION RATE OPTIMISATION</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 32 }}>CRO Checklist</h2>
+            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 8 }}>CRO Checklist</h2>
+            {cro?.summary ? (
+              <p style={{ fontSize: 13, color: '#22c55e', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 28 }}>{cro.summary.passed}/20 checks passed</p>
+            ) : (
+              <div style={{ marginBottom: 32 }} />
+            )}
+            {topCompDomain && (
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
+                Stores like {topCompDomain} typically pass 17-18 of these checks. Every failed check is a conversion opportunity being left on the table.
+              </p>
+            )}
 
             {cro?.results ? (
               <>
-                {Object.entries(croGroups).map(([category, items]) => (
+                {/* CRO summary tiles */}
+                {cro?.summary && (
+                  <>
+                    <style>{`.cro-tiles{grid-template-columns:repeat(4,1fr)}@media(max-width:639px){.cro-tiles{grid-template-columns:repeat(2,1fr)}}`}</style>
+                    <div className="cro-tiles" style={{ display: 'grid', gap: 12, marginBottom: 32 }}>
+                      {([
+                        { label: 'Passed',        value: cro.summary.passed,           bg: 'rgba(34,197,94,0.08)',  border: 'rgba(34,197,94,0.2)',  color: '#22c55e' },
+                        { label: 'Critical',      value: cro.summary.critical_issues,  bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)', color: '#ef4444' },
+                        { label: 'Warnings',      value: cro.summary.warnings,         bg: 'rgba(249,115,22,0.08)',border: 'rgba(249,115,22,0.2)',color: '#f97316' },
+                        { label: 'Opportunities', value: cro.summary.opportunities,    bg: 'rgba(99,102,241,0.08)',border: 'rgba(99,102,241,0.2)',color: '#6366f1' },
+                      ] as { label: string; value: number; bg: string; border: string; color: string }[]).map(tile => (
+                        <div key={tile.label} style={{ background: tile.bg, border: `1px solid ${tile.border}`, borderRadius: 12, padding: '16px 20px' }}>
+                          <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color: tile.color }}>{tile.value}</div>
+                          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>{tile.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Failed checks grouped by category */}
+                {Object.entries(failedByCategory).map(([category, items]) => (
                   <div key={category} style={{ marginBottom: 32 }}>
                     <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600, color: S.muted, marginBottom: 12, letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>{category}</h3>
                     {(items as any[]).map((item, i) => (
                       <div key={item.id} style={{
                         display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px',
                         background: i % 2 === 0 ? S.bg2 : S.bg,
-                        borderLeft: `3px solid ${item.passed ? '#22c55e' : item.importance === 'high' ? '#ef4444' : item.importance === 'medium' ? S.orange : S.muted}`,
+                        borderLeft: `3px solid ${item.importance === 'high' ? '#ef4444' : item.importance === 'medium' ? S.orange : S.muted}`,
                         borderRadius: 8, marginBottom: 2,
                       }}>
-                        <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{item.passed ? '✓' : '✗'}</span>
+                        <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>✗</span>
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
-                            <span style={{ fontSize: 15, color: item.passed ? S.white : S.muted }}>{item.label}</span>
+                            <span style={{ fontSize: 15, color: S.muted }}>{item.label}</span>
                             <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', padding: '2px 7px', borderRadius: 99, background: item.importance === 'high' ? 'rgba(239,68,68,0.12)' : item.importance === 'medium' ? 'rgba(249,115,22,0.12)' : 'rgba(100,75,255,0.12)', color: item.importance === 'high' ? '#ef4444' : item.importance === 'medium' ? '#f97316' : S.purple }}>{item.importance.toUpperCase()}</span>
                           </div>
-                          {!item.passed && item.fix && (
+                          {item.fix && (
                             <p style={{ fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
                               <span style={{ fontWeight: 700, color: S.orange, marginRight: 4 }}>FIX:</span>
                               <span style={{ color: 'rgba(255,100,50,0.8)' }}>{item.fix}</span>
@@ -379,6 +434,45 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     ))}
                   </div>
                 ))}
+
+                {/* Passed checks summary row */}
+                {passedItems.length > 0 && (
+                  <>
+                    <div style={{ background: S.bg2, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: passedExpanded ? 12 : 24 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ color: '#22c55e', fontSize: 11, fontWeight: 700, lineHeight: 1 }}>✓</span>
+                        </div>
+                        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>{passedItems.length} checks passed</span>
+                      </div>
+                      <button onClick={() => setPassedExpanded(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: passedExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                          <path d="M 4 6 L 9 11 L 14 6" />
+                        </svg>
+                      </button>
+                    </div>
+                    {passedExpanded && (
+                      <div style={{ opacity: 0.6, marginBottom: 24 }}>
+                        {(passedItems as any[]).map((item, i) => (
+                          <div key={item.id} style={{
+                            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px',
+                            background: i % 2 === 0 ? S.bg2 : S.bg,
+                            borderLeft: '3px solid #22c55e',
+                            borderRadius: 8, marginBottom: 2,
+                          }}>
+                            <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>✓</span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
+                                <span style={{ fontSize: 15, color: S.white }}>{item.label}</span>
+                                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', padding: '2px 7px', borderRadius: 99, background: 'rgba(100,75,255,0.12)', color: S.purple }}>{item.importance?.toUpperCase()}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <div style={{
                   borderRadius: 12, padding: 24, marginTop: 24,
@@ -482,6 +576,11 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
             {dfsOverview ? (
               <>
+                {topCompDomain && topCompTraffic > 0 && (
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
+                    {topCompDomain} receives an estimated {Math.round(topCompTraffic).toLocaleString()} monthly visitors from organic search. Closing even 20% of that gap is worth targeting.
+                  </p>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 40 }}>
                   {(() => {
                     const overviewCount = dfsOverview.metrics?.organic?.count ?? 0
@@ -565,8 +664,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                             <thead>
                               <tr style={{ background: S.bg }}>
-                                {['Keyword', 'Position', 'Monthly Volume', 'Movement'].map(h => (
-                                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                                {(['Keyword', 'Searches/mo', 'Position'] as const).map((h, idx) => (
+                                  <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -575,15 +674,14 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                                 const delta = trendMap.get(kw.keyword_data?.keyword ?? '')
                                 return (
                                   <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                                    <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword_data?.keyword}</td>
-                                    <td style={{ padding: '10px 14px', color: '#22c55e', fontWeight: 600 }}>{kw.ranked_serp_element?.serp_item?.rank_group}</td>
-                                    <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
-                                    <td style={{ padding: '10px 14px' }}>
-                                      {delta == null ? <span style={{ color: S.muted }}>—</span>
-                                        : delta > 0 ? <span style={{ color: '#22c55e', fontWeight: 600 }}>↑ +{delta}</span>
-                                        : delta < 0 ? <span style={{ color: '#ef4444', fontWeight: 600 }}>↓ {delta}</span>
-                                        : <span style={{ color: S.muted }}>→</span>}
+                                    <td style={{ padding: '10px 14px', color: S.white }}>
+                                      {kw.keyword_data?.keyword}
+                                      {delta != null && delta > 0 && <span style={{ display: 'inline-block', background: 'rgba(34,197,94,0.15)', color: '#22c55e', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>↑ +{delta}</span>}
+                                      {delta != null && delta < 0 && <span style={{ display: 'inline-block', background: 'rgba(239,68,68,0.15)', color: '#ef4444', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>↓ {delta}</span>}
+                                      {delta === 0 && <span style={{ display: 'inline-block', background: 'rgba(255,255,255,0.08)', color: S.muted, borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>→</span>}
                                     </td>
+                                    <td style={{ padding: '10px 14px', color: S.muted, textAlign: 'right' }}>{fmtVol(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
+                                    <td style={{ padding: '10px 14px', color: '#22c55e', fontWeight: 600, textAlign: 'right' }}>#{kw.ranked_serp_element?.serp_item?.rank_group}</td>
                                   </tr>
                                 )
                               })}
@@ -604,8 +702,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                             <thead>
                               <tr style={{ background: S.bg }}>
-                                {['Keyword', 'Position', 'Monthly Volume', 'Movement'].map(h => (
-                                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                                {(['Keyword', 'Searches/mo', 'Position'] as const).map((h, idx) => (
+                                  <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -614,15 +712,14 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                                 const delta = trendMap.get(kw.keyword_data?.keyword ?? '')
                                 return (
                                   <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                                    <td style={{ padding: '10px 14px', color: S.white }}>{kw.keyword_data?.keyword}</td>
-                                    <td style={{ padding: '10px 14px', color: S.orange, fontWeight: 600 }}>{kw.ranked_serp_element?.serp_item?.rank_group}</td>
-                                    <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
-                                    <td style={{ padding: '10px 14px' }}>
-                                      {delta == null ? <span style={{ color: S.muted }}>—</span>
-                                        : delta > 0 ? <span style={{ color: '#22c55e', fontWeight: 600 }}>↑ +{delta}</span>
-                                        : delta < 0 ? <span style={{ color: '#ef4444', fontWeight: 600 }}>↓ {delta}</span>
-                                        : <span style={{ color: S.muted }}>→</span>}
+                                    <td style={{ padding: '10px 14px', color: S.white }}>
+                                      {kw.keyword_data?.keyword}
+                                      {delta != null && delta > 0 && <span style={{ display: 'inline-block', background: 'rgba(34,197,94,0.15)', color: '#22c55e', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>↑ +{delta}</span>}
+                                      {delta != null && delta < 0 && <span style={{ display: 'inline-block', background: 'rgba(239,68,68,0.15)', color: '#ef4444', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>↓ {delta}</span>}
+                                      {delta === 0 && <span style={{ display: 'inline-block', background: 'rgba(255,255,255,0.08)', color: S.muted, borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>→</span>}
                                     </td>
+                                    <td style={{ padding: '10px 14px', color: S.muted, textAlign: 'right' }}>{fmtVol(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
+                                    <td style={{ padding: '10px 14px', color: S.orange, fontWeight: 600, textAlign: 'right' }}>#{kw.ranked_serp_element?.serp_item?.rank_group}</td>
                                   </tr>
                                 )
                               })}
@@ -633,6 +730,86 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     )}
                   </div>
                 )}
+
+                {/* SERP Battleground table */}
+                {(() => {
+                  const serpData = cache?.dataforseo_serp_features as any
+                  const serpItems: any[] = serpData?.items ?? []
+                  const serpTarget2: string = serpData?.target2 ?? ''
+                  if (!serpData || serpItems.length === 0) return null
+
+                  const rankColor = (r: number | null) => {
+                    if (r == null) return 'rgba(255,255,255,0.4)'
+                    if (r <= 3) return '#22c55e'
+                    if (r <= 10) return '#f97316'
+                    return 'rgba(255,255,255,0.4)'
+                  }
+
+                  const sorted = [...serpItems]
+                    .sort((a: any, b: any) => {
+                      const ar = a.first_domain_serp_element?.rank_group ?? 999
+                      const ac = a.second_domain_serp_element?.rank_group ?? 999
+                      const br = b.first_domain_serp_element?.rank_group ?? 999
+                      const bc = b.second_domain_serp_element?.rank_group ?? 999
+                      const aWin = ar < ac ? 0 : 1
+                      const bWin = br < bc ? 0 : 1
+                      if (aWin !== bWin) return aWin - bWin
+                      const aVol = a.keyword_data?.keyword_info?.search_volume ?? 0
+                      const bVol = b.keyword_data?.keyword_info?.search_volume ?? 0
+                      return bVol - aVol
+                    })
+                    .slice(0, 15)
+
+                  return (
+                    <div style={{ marginBottom: 32 }}>
+                      <div style={{ marginBottom: 8 }}>
+                        <span style={{ fontSize: 22, fontWeight: 700, color: S.white }}>Battleground</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: S.purple, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginLeft: 12 }}>HEAD TO HEAD</span>
+                      </div>
+                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
+                        Keywords where you and {serpTarget2} both show up on Google. Your position vs theirs.
+                      </p>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                          <thead>
+                            <tr style={{ background: S.bg }}>
+                              {(['Keyword', 'Searches/mo', 'Your Position', 'Their Position', 'Advantage'] as const).map((h, idx) => (
+                                <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sorted.map((item: any, i: number) => {
+                              const kw = item.keyword_data?.keyword ?? ''
+                              const vol = item.keyword_data?.keyword_info?.search_volume ?? 0
+                              const myRank: number | null = item.first_domain_serp_element?.rank_group ?? null
+                              const theirRank: number | null = item.second_domain_serp_element?.rank_group ?? null
+                              let advantage: React.ReactNode
+                              if (myRank == null || theirRank == null) {
+                                advantage = <span style={{ color: S.muted }}>-</span>
+                              } else if (myRank < theirRank) {
+                                advantage = <span style={{ color: '#22c55e', fontWeight: 600 }}>✓ You</span>
+                              } else if (myRank > theirRank) {
+                                advantage = <span style={{ color: 'rgba(255,255,255,0.35)' }}>↑ Them</span>
+                              } else {
+                                advantage = <span style={{ color: S.muted }}>=</span>
+                              }
+                              return (
+                                <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                                  <td style={{ padding: '10px 14px', color: S.white }}>{kw}</td>
+                                  <td style={{ padding: '10px 14px', color: S.muted, textAlign: 'right' }}>{vol > 0 ? fmtVol(vol) : '-'}</td>
+                                  <td style={{ padding: '10px 14px', textAlign: 'right', color: rankColor(myRank), fontWeight: 600 }}>{myRank != null ? `#${myRank}` : '-'}</td>
+                                  <td style={{ padding: '10px 14px', textAlign: 'right', color: rankColor(theirRank), fontWeight: 600 }}>{theirRank != null ? `#${theirRank}` : '-'}</td>
+                                  <td style={{ padding: '10px 14px', textAlign: 'right' }}>{advantage}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {dfsCompetitors.length > 0 && (() => {
                   const prospectEtv = dfsOverview?.metrics?.organic?.etv ?? 0
@@ -686,26 +863,55 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       <span style={{ fontSize: 11, fontWeight: 600, color: S.purple, letterSpacing: '0.08em' }}>COMPETITOR GAP</span>
                     </div>
                     <p style={{ color: S.muted, fontSize: 13, marginBottom: 14 }}>High-intent keywords your competitors rank for. You don&apos;t yet.</p>
+                    {(() => {
+                      const topGap = kwBuckets.money
+                        .filter((g: any) => (g.keyword_data?.keyword_info?.search_volume ?? 0) >= 100)
+                        .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))[0] ?? null
+                      if (!topGap) return null
+                      const kwStr = topGap.keyword_data?.keyword ?? topGap.keyword ?? ''
+                      const vol = topGap.keyword_data?.keyword_info?.search_volume ?? 0
+                      const estimatedVisitors = Math.round(vol * 0.05)
+                      return (
+                        <div style={{ background: 'rgba(255,67,21,0.08)', border: '1px solid rgba(255,67,21,0.25)', borderRadius: 16, padding: '24px 28px', marginBottom: 16 }}>
+                          <p style={{ fontSize: 17, fontWeight: 600, color: S.white, margin: 0 }}>
+                            One page targeting &ldquo;{kwStr}&rdquo; could bring {estimatedVisitors.toLocaleString()} more visitors a month.
+                          </p>
+                          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', marginTop: 6, marginBottom: 0 }}>
+                            Your competitors already rank for it ({vol.toLocaleString()} searches/month in Australia). You don&apos;t have a single page targeting it.
+                          </p>
+                        </div>
+                      )
+                    })()}
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                         <thead>
                           <tr style={{ background: S.bg }}>
-                            {['Keyword', 'Monthly Volume', 'Competitor'].map(h => (
-                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                            {(['Keyword', 'Searches/mo', 'Competition', 'CPC', 'Top Competitor'] as const).map((h, idx) => (
+                              <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {kwBuckets.money.map((gap: any, i: number) => (
+                          {kwBuckets.money.filter((gap: any) => (gap.keyword_data?.keyword_info?.search_volume ?? 0) > 0).map((gap: any, i: number) => {
+                            const cpc = gap.keyword_data?.keyword_info?.cpc
+                            return (
                             <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                               <td style={{ padding: '10px 14px', color: S.white }}>{gap.keyword_data?.keyword ?? gap.keyword}</td>
-                              <td style={{ padding: '10px 14px', color: S.muted }}>{fmtNum(gap.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
-                              <td style={{ padding: '10px 14px', color: S.muted, fontSize: 12 }}>{dfsCompetitors[0]?.domain ?? '-'}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted, textAlign: 'right' }}>{fmtVol(gap.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted, textAlign: 'right' }}>{(() => { const compVal = parseFloat(gap?.keyword_data?.keyword_info?.competition); return isNaN(compVal) ? '-' : Math.round(compVal * 100) })()}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted, textAlign: 'right' }}>{cpc != null && cpc > 0 ? `$${cpc.toFixed(2)}` : '-'}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted, fontSize: 12, textAlign: 'right' }}>{cleanDomain(dfsCompetitors[0]?.domain ?? '')}</td>
                             </tr>
-                          ))}
+                            )
+                          })}
                         </tbody>
                       </table>
                     </div>
+                    {kwBuckets.money.filter((gap: any) => (gap.keyword_data?.keyword_info?.search_volume ?? 0) > 0).length === 0 && (
+                      <div style={{ padding: 24, textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+                        Keyword volume data is still processing for this store. Check back after the next rescan.
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -852,6 +1058,11 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div style={{ position: 'relative', zIndex: 1 }}>
             <SectionLabel>BOTTOM LINE</SectionLabel>
             <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 32 }}>Revenue Opportunity Summary</h2>
+            {topCompDomain && topCompTraffic > 0 && (
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
+                Your top competitor ({topCompDomain}) pulls in an estimated {topCompTraffic.toLocaleString()} organic visitors a month. That traffic advantage compounds directly into revenue every month you wait.
+              </p>
+            )}
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
