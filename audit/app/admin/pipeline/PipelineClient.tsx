@@ -46,7 +46,8 @@ function sortByTraffic(rows: any[]): any[] {
   })
 }
 
-function emailBody(platform: string, brandName: string, prospectName: string, slug: string, email: string): string {
+function emailBody(platform: string, brandName: string, prospectName: string, slug: string, email: string | null): string {
+  const accessLine = email ? `Access code: ${email}` : `Access code: [their email address]`
   if (platform === 'squarespace') {
     return `Hey ${prospectName},
 
@@ -55,7 +56,7 @@ Pulled your site this week.
 Mobile load time is worth looking at - and there are a few conversion gaps worth knowing about.
 
 Put together what an upgrade could look like for you: kliks.com.au/audit/${slug}
-Access code: ${email}
+${accessLine}
 
 Worth 10 minutes.
 
@@ -67,7 +68,7 @@ Spent some time looking at ${brandName} this week.
 A few things worth knowing about.
 
 Put it together here: kliks.com.au/audit/${slug}
-Access code: ${email}
+${accessLine}
 
 Worth 10 minutes.
 
@@ -130,7 +131,7 @@ const inputStyle: React.CSSProperties = {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Form = { brand_name: string; prospect_name: string; prospect_email: string; niche: string; slug: string }
-type EmailDraft = { platform: string; brand_name: string; prospect_name: string; prospect_email: string; slug: string }
+type EmailDraft = { platform: string; brand_name: string; prospect_name: string; prospect_email: string | null; slug: string }
 type TrafficResult = { checked: number; flagged_new: number; flagged_domains: { domain: string; drop_pct: number; platform: string }[] }
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -251,11 +252,11 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
         return
       }
 
-      // Step 2 — mark domain as converted in pipeline
+      // Step 2 — mark domain as converted in pipeline, store slug + brand_name for View Email
       await fetch('/api/pipeline/mark-converted', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: createDomain.domain }),
+        body: JSON.stringify({ domain: createDomain.domain, slug: form.slug, brand_name: form.brand_name }),
       })
 
       // Step 3 — show email draft, close create form
@@ -472,7 +473,23 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
                               </button>
                             )}
                             {isConverted ? (
-                              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Audit Created</span>
+                              <>
+                                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Audit Created</span>
+                                {(row.audit_slug || row.audit_brand_name) && (
+                                  <button
+                                    onClick={() => setEmailDraft({
+                                      platform: row.platform ?? 'shopify',
+                                      brand_name: row.audit_brand_name ?? prefillBrandName(row.domain),
+                                      prospect_name: '',
+                                      prospect_email: null,
+                                      slug: row.audit_slug ?? slugify(prefillBrandName(row.domain)),
+                                    })}
+                                    style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', borderRadius: 20, padding: '6px 14px', fontSize: 13, cursor: 'pointer' }}
+                                  >
+                                    View Email
+                                  </button>
+                                )}
+                              </>
                             ) : (
                               <button onClick={() => openCreateModal(row)}
                                 style={{ background: 'rgba(255,67,21,0.12)', border: 'none', color: S.orange, borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
