@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "crons": [
+    {
+      "path": "/api/pipeline/check-traffic",
+      "schedule": "0 23 * * 0"
+    }
+  ],
   "builds": [
     { "src": "audit/package.json", "use": "@vercel/next", "config": { "distDir": ".next" } },
     { "src": "*.html", "use": "@vercel/static" }
