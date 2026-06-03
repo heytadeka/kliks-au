@@ -314,13 +314,24 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 </div>
 
 
-                {ps.lcp && ps.lcp / 1000 > 2.5 && (
-                  <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>WHAT THIS COSTS YOU</span>
-                    <p style={{ color: S.white, lineHeight: 1.7, marginBottom: 8 }}>Every second of load delay costs roughly 7% in conversions. At a $150 average order, slow load times are a direct revenue leak.</p>
-                    <p style={{ color: S.muted, fontSize: 13 }}>Based on Google research and industry conversion benchmarks.</p>
-                  </div>
-                )}
+                {ps.lcp && ps.lcp / 1000 > 2.5 && (() => {
+                  const lcpS = ps.lcp / 1000
+                  const traffic = dfsOverview?.metrics?.organic?.etv ?? 500
+                  const aov = 150
+                  const cr = 0.015
+                  // Each second over 2.5s costs ~7% in conversions
+                  const monthlyRevLoss = Math.round((lcpS - 2.5) * 0.07 * traffic * cr * aov)
+                  return (
+                    <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>WHAT THIS COSTS YOU</span>
+                      <p style={{ color: S.white, lineHeight: 1.7, marginBottom: 8, fontSize: 16 }}>
+                        At <strong>{lcpS.toFixed(2)}s</strong> load time, you&apos;re estimated to be losing{' '}
+                        <strong style={{ color: S.orange }}>${monthlyRevLoss.toLocaleString()}/month</strong> in revenue to slow page speed alone.
+                      </p>
+                      <p style={{ color: S.muted, fontSize: 13 }}>Based on 7% conversion loss per second over 2.5s, {traffic.toLocaleString()} monthly visitors, 1.5% baseline CR, $150 AOV.</p>
+                    </div>
+                  )
+                })()}
 
                 <AdamsTake text={content?.ai_performance_commentary} />
               </>
@@ -623,6 +634,22 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   </div>
                 )}
 
+                {dfsCompetitors.length > 0 && (() => {
+                  const prospectEtv = dfsOverview?.metrics?.organic?.etv ?? 0
+                  const competitorTotalEtv = dfsCompetitors.slice(0, 5).reduce((sum: number, c: any) => sum + (c.estimated_traffic ?? c.full_domain_metrics?.organic?.etv ?? 0), 0)
+                  const gap = competitorTotalEtv - prospectEtv
+                  return gap > 1000 ? (
+                    <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24, marginBottom: 24 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>COMPETITOR TRAFFIC GAP</span>
+                      <p style={{ color: S.white, lineHeight: 1.7, fontSize: 16 }}>
+                        Your top competitors combined receive{' '}
+                        <strong style={{ color: S.orange }}>{fmtNum(gap)} more monthly visitors</strong> than you.
+                        {' '}That&apos;s {fmtNum(gap)} potential customers seeing a competitor first.
+                      </p>
+                    </div>
+                  ) : null
+                })()}
+
                 {dfsCompetitors.length > 0 && (
                   <div style={{ marginBottom: 40 }}>
                     <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Top Competitors</h3>
@@ -755,6 +782,35 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
                 {[...Array(4)].map((_, i) => <div key={i} style={{ height: 88, borderRadius: 12, background: 'rgba(100,75,255,0.08)', animation: 'pulse 1.5s ease-in-out infinite' }} />)}
+              </div>
+            )}
+          </div>
+        </SectionWrap>
+
+        {/* PRIORITY ACTION LIST */}
+        <SectionWrap id="priorities">
+          <GhostNumber n="06" />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <SectionLabel>PRIORITY ACTIONS</SectionLabel>
+            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 8 }}>Your Top 3 Fixes This Month.</h2>
+            <p style={{ color: S.muted, fontSize: 15, marginBottom: 32 }}>Based on your actual data. Highest impact first.</p>
+
+            {content?.ai_priority_list?.priorities ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {(content.ai_priority_list.priorities as any[]).map((p: any) => (
+                  <div key={p.number} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderLeft: `3px solid ${S.purple}`, borderRadius: 12, padding: 28, display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: S.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 700, color: '#fff' }}>{p.number}</div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, marginBottom: 8, color: S.white }}>{p.title}</h3>
+                      <p style={{ fontSize: 15, color: '#22c55e', fontWeight: 600, marginBottom: 10, lineHeight: 1.5 }}>{p.impact}</p>
+                      <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6 }}><span style={{ color: S.white, fontWeight: 600 }}>This week:</span> {p.next_step}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 32, textAlign: 'center' }}>
+                <p style={{ color: S.muted, fontSize: 14 }}>Run a data scan to generate your priority action list.</p>
               </div>
             )}
           </div>

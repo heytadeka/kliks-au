@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
   const dfsOverview = cache.dataforseo_overview
   const dfsCompetitors: any[] = cache.dataforseo_competitors ?? []
   const dfsContentGap: any[] = cache.dataforseo_content_gap ?? []
+  const dfsKeywords: any[] = cache.dataforseo_keywords ?? []
 
   const lcpS = ps?.lcp ? (ps.lcp / 1000).toFixed(2) : 'N/A'
   const lcpStatus = ps?.lcp
@@ -153,6 +154,106 @@ Respond with only valid JSON. No markdown. No explanation.`
     }
 
     console.log('[commentary] saved successfully for prospect_id:', prospect_id)
+
+    // ── Priority action list (second Anthropic call) ──
+    // Required Supabase column: ALTER TABLE audit_content ADD COLUMN ai_priority_list JSONB;
+    try {
+      const topCompetitor = dfsCompetitors[0]?.domain ?? 'N/A'
+      const topCompetitorTraffic = dfsCompetitors[0]?.estimated_traffic ?? dfsCompetitors[0]?.full_domain_metrics?.organic?.etv ?? 0
+      const moneyKeywords = dfsContentGap.slice(0, 3).map((g: any) => {
+        const kw = g.keyword_data?.keyword ?? g.keyword ?? 'unknown'
+        const vol = (g.keyword_data?.keyword_info?.search_volume ?? 0).toLocaleString()
+        return `${kw} (${vol}/mo)`
+      })
+      if (moneyKeywords.length === 0) {
+        // Fall back to ranked keywords not in top 5
+        dfsKeywords.filter((k: any) => {
+          const pos = k.ranked_serp_element?.serp_item?.rank_group
+          return pos >= 6 && pos <= 15
+        }).slice(0, 3).forEach((k: any) => {
+          const kw = k.keyword_data?.keyword ?? 'unknown'
+          const vol = (k.keyword_data?.keyword_info?.search_volume ?? 0).toLocaleString()
+          moneyKeywords.push(`${kw} (${vol}/mo)`)
+        })
+      }
+      const failedCroTop3 = (cro?.results ?? [])
+        .filter((c: any) => !c.passed && c.importance === 'high')
+        .slice(0, 3)
+        .map((c: any) => c.label)
+
+      const prioritySystemPrompt = `You are Adam Nagy, founder of Kliks Digital, a Shopify growth agency. You have just analysed a Shopify store and have real data. Your job is to produce a brutally honest, specific priority action list for this store owner.
+
+Rules:
+- Exactly 3 priorities, no more, no less
+- Each priority must reference their actual data
+- Lead with the highest revenue impact item first
+- Be specific: name the actual keyword, actual score, actual number - not generic advice
+- Each priority has: a title (max 6 words), an impact statement (what fixing it is worth in $ or % or visitors), and a next step (one sentence, what to do this week)
+- Sound like a founder giving honest advice, not an agency pitch
+- Never use em dashes
+- Never use bullet points in the next step
+- Tone: direct, calm, specific`
+
+      const priorityUserPrompt = `Store: ${prospect.brand_name}
+Mobile Performance: ${ps?.performance_score ?? 'N/A'}/100
+LCP: ${ps?.lcp ? (ps.lcp / 1000).toFixed(2) : 'N/A'}s (target: 2.5s)
+TBT: ${ps?.tbt ? Math.round(ps.tbt) : 'N/A'}ms (target: 200ms)
+CRO Score: ${cro?.summary?.passed ?? 'N/A'}/${cro?.summary?.total ?? 20} checks passed
+Top CRO failures: ${failedCroTop3.length > 0 ? failedCroTop3.join(', ') : 'None'}
+Organic keywords: ${organicKeywords.toLocaleString()}
+Monthly traffic: ${monthlyTraffic.toLocaleString()}
+Top competitor: ${topCompetitor} with ${topCompetitorTraffic.toLocaleString()} monthly visits
+Keyword gaps (top 3): ${moneyKeywords.length > 0 ? moneyKeywords.join(', ') : 'None available'}
+SEO score: ${ps?.seo_score ?? 'N/A'}/100
+Accessibility: ${ps?.accessibility_score ?? 'N/A'}/100
+
+Generate exactly 3 priorities as JSON only, no other text:
+{
+  "priorities": [
+    {
+      "number": 1,
+      "title": "short punchy title",
+      "impact": "specific impact statement with numbers",
+      "next_step": "one specific action to take this week"
+    }
+  ]
+}`
+
+      console.log('[commentary] calling Anthropic for priority list:', prospect.brand_name)
+      const priorityRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.ANTHROPIC_API_KEY!,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: prioritySystemPrompt,
+          messages: [{ role: 'user', content: priorityUserPrompt }],
+        }),
+      })
+
+      if (priorityRes.ok) {
+        const priorityApiData = await priorityRes.json()
+        const priorityRaw: string = priorityApiData.content?.[0]?.text ?? ''
+        const priorityCleaned = priorityRaw.replace(/^```json\n?/i, '').replace(/\n?```$/i, '').trim()
+        const priorityParsed = JSON.parse(priorityCleaned)
+
+        await supabaseAdmin
+          .from('audit_content')
+          .update({ ai_priority_list: priorityParsed })
+          .eq('prospect_id', prospect_id)
+
+        console.log('[commentary] priority list saved for prospect_id:', prospect_id)
+      } else {
+        console.error('[commentary] priority list API error:', priorityRes.status)
+      }
+    } catch (priorityErr: any) {
+      console.error('[commentary] priority list generation failed (non-fatal):', priorityErr.message)
+    }
+
     return NextResponse.json({ success: true, sections: Object.keys(parsed) })
 
   } catch (err: any) {
