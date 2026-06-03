@@ -29,11 +29,8 @@ async function runTrafficCheck() {
   }
 
   if (!activeDomains || activeDomains.length === 0) {
-    console.log('[check-traffic] no active domains to check')
     return { checked: 0, flagged_new: 0, flagged_domains: [] }
   }
-
-  console.log('[check-traffic] active domains:', activeDomains.length)
 
   // Step 2 — DataForSEO bulk traffic estimation (batches of 1000)
   const auth = Buffer.from(
@@ -65,7 +62,6 @@ async function runTrafficCheck() {
         return { error: `DataForSEO error: ${res.status}`, checked: 0 }
       }
       const items: any[] = json?.tasks?.[0]?.result?.[0]?.items ?? []
-      console.log('[check-traffic] batch', Math.floor(i / 1000) + 1, '— items returned:', items.length)
       for (const item of items) {
         const key = (item.target ?? '').toLowerCase().replace(/^www\./, '')
         trafficMap.set(key, item.metrics?.organic?.etv ?? 0)
@@ -102,8 +98,8 @@ async function runTrafficCheck() {
     const isNewlyFlagged = shouldFlag && !wasAlreadyFlagged
 
     const updatePayload: Record<string, any> = {
-      traffic_previous: prevTraffic,
-      traffic_current: newTraffic,
+      traffic_previous: Math.round(prevTraffic ?? 0),
+      traffic_current: Math.round(newTraffic),
       traffic_checked_at: now,
       traffic_drop_pct: dropPct,
       flagged: shouldFlag,
@@ -132,8 +128,6 @@ async function runTrafficCheck() {
       })
     }
   }
-
-  console.log('[check-traffic] newly flagged:', newlyFlagged.length)
 
   // Steps 4+5 — Send alert email if any newly flagged
   if (newlyFlagged.length > 0) {
@@ -169,8 +163,7 @@ async function runTrafficCheck() {
           message,
         }),
       })
-      const emailJson = await emailRes.json()
-      console.log('[check-traffic] email sent:', emailJson?.success ? 'ok' : 'failed', emailJson?.message)
+      await emailRes.json()
     } catch (e: any) {
       console.error('[check-traffic] email send failed (non-blocking):', e.message)
     }
