@@ -97,6 +97,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const dfsContentGap: any[] = useMemo(() => cache?.dataforseo_content_gap ?? [], [cache?.dataforseo_content_gap])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const keywordTrends: any[] = useMemo(() => cache?.dataforseo_keyword_trends ?? [], [cache?.dataforseo_keyword_trends])
+  const seoFindings = content?.seo_findings as any[] | null
   // backlinksSummary removed - backlinks subscription not available
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
@@ -618,6 +619,41 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     </div>
                   ))}
                 </div>
+
+                {/* SEO Findings */}
+                {seoFindings && seoFindings.length > 0 && (() => {
+                  const severityColour = (s: string) => s === 'CRITICAL' ? '#ef4444' : s === 'WARNING' ? '#f97316' : '#22c55e'
+                  const severityBadgeBg = (s: string) => s === 'CRITICAL' ? 'rgba(239,68,68,0.15)' : s === 'WARNING' ? 'rgba(249,115,22,0.15)' : 'rgba(34,197,94,0.15)'
+                  return (
+                    <div style={{ marginBottom: 40 }}>
+                      <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 16, marginTop: 40 }}>SEO Findings</p>
+                      {seoFindings.map((f: any, i: number) => {
+                        const col = severityColour(f.severity)
+                        return (
+                          <div key={i} style={{ background: S.bg2, borderRadius: 12, padding: '18px 20px 18px 24px', marginBottom: 10, position: 'relative', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: col }} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                              <span style={{ fontSize: 15, fontWeight: 600, color: S.white }}>{f.title}</span>
+                              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 20, background: severityBadgeBg(f.severity), color: col }}>{f.severity}</span>
+                            </div>
+                            {f.detail && (
+                              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 6, lineHeight: 1.5 }}>
+                                <span style={{ color: col, fontWeight: 600, fontSize: 11, letterSpacing: '0.06em', marginRight: 8 }}>DETAIL</span>
+                                {f.detail}
+                              </p>
+                            )}
+                            {f.fix && (
+                              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 0, lineHeight: 1.5 }}>
+                                <span style={{ color: S.orange, fontWeight: 600, fontSize: 11, letterSpacing: '0.06em', marginRight: 8 }}>FIX</span>
+                                {f.fix}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
 
                 {(kwBuckets.winning.length > 0 || kwBuckets.close.length > 0 || kwBuckets.money.length > 0) && (
                   <div style={{ marginBottom: 40 }}>

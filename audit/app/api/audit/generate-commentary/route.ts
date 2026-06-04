@@ -65,6 +65,38 @@ export async function POST(req: NextRequest) {
       }).join(', ')
     : 'None available'
 
+  // Extra SEO context for seo_findings generation
+  const keywordTrends: any[] = cache.dataforseo_keyword_trends ?? []
+  const closeKeywords = dfsKeywords
+    .filter((k: any) => {
+      const pos = k.ranked_serp_element?.serp_item?.rank_group
+      const vol = k.keyword_data?.keyword_info?.search_volume ?? 0
+      return pos >= 6 && pos <= 15 && vol >= 100
+    })
+    .slice(0, 5)
+    .map((k: any) => {
+      const kw = k.keyword_data?.keyword ?? 'unknown'
+      const pos = k.ranked_serp_element?.serp_item?.rank_group
+      const vol = (k.keyword_data?.keyword_info?.search_volume ?? 0).toLocaleString()
+      return `${kw} (pos ${pos}, ${vol}/mo)`
+    })
+  const trendMap = new Map<string, number>()
+  for (const t of keywordTrends) {
+    if (t.keyword && t.delta != null) trendMap.set(t.keyword, t.delta)
+  }
+  let gaining = 0, stable = 0, losing = 0
+  for (const kw of dfsKeywords) {
+    const kwStr = kw.keyword_data?.keyword ?? ''
+    const delta = trendMap.get(kwStr)
+    if (delta == null) { stable++; continue }
+    if (delta > 0) gaining++
+    else if (delta < 0) losing++
+    else stable++
+  }
+  const topCompetitorDomain = dfsCompetitors[0]?.domain ?? null
+  const topCompetitorTrafficRaw = dfsCompetitors[0]?.estimated_traffic ?? dfsCompetitors[0]?.full_domain_metrics?.organic?.etv ?? 0
+  const trafficGap = topCompetitorTrafficRaw > monthlyTraffic ? Math.round(topCompetitorTrafficRaw - monthlyTraffic) : 0
+
   const userPrompt = `Generate commentary for ${prospect.brand_name} (${prospect.store_url}), a ${prospect.niche} store.
 
 PERFORMANCE DATA:
@@ -82,20 +114,39 @@ Warnings: ${failedMedChecks.length > 0 ? failedMedChecks.join(', ') : 'None'}
 Passed: ${passedChecks.slice(0, 8).join(', ')}${passedChecks.length > 8 ? '...' : ''}
 
 SEO DATA:
-Organic Keywords: ${organicKeywords.toLocaleString()}
+Organic Keywords: ${organicKeywords.toLocaleString()} (benchmark: 200+ for stores this size)
 Est Monthly Traffic: ${monthlyTraffic.toLocaleString()}
-Est Traffic Value: $${(monthlyTraffic * 1.2).toLocaleString()}
+Est Traffic Value: $${Math.round(monthlyTraffic * 1.2).toLocaleString()}
 Top Competitors: ${competitorDomains}
+Top Competitor Traffic Gap: ${topCompetitorDomain ? `${topCompetitorDomain} gets ~${topCompetitorTrafficRaw.toLocaleString()} visits/mo, gap of ${trafficGap.toLocaleString()}` : 'N/A'}
 Content Gap Opportunities: ${topGapKeywords}
+Close Keywords (pos 6-15, high volume): ${closeKeywords.length > 0 ? closeKeywords.join(', ') : 'None'}
+Keyword Movement: ${keywordTrends.length > 0 ? `${gaining} gaining, ${stable} stable, ${losing} losing` : 'Trend data not available'}
 
-Generate exactly these 5 sections as JSON:
+Generate exactly these 6 keys as JSON:
 {
   "performance": "3-5 sentences about their speed scores in plain English. Reference their actual LCP and what it costs them in conversions. Specific, not generic.",
   "cro": "3-5 sentences about their CRO score and what the critical issues mean for their revenue. Focus on the 2-3 most important failed checks.",
   "seo": "3-5 sentences about their organic search presence. If numbers are low, say so directly and explain what that means for paid ad dependency.",
   "opportunity": "3-5 sentences identifying the single highest leverage move for this specific store. Be direct and specific. This is the most important section.",
-  "closing": "2-3 sentences. Not a pitch. What should they do with what they just read. End with something that makes them want to book a call."
+  "closing": "2-3 sentences. Not a pitch. What should they do with what they just read. End with something that makes them want to book a call.",
+  "seo_findings": [
+    {
+      "title": "Short finding name, 3-6 words",
+      "severity": "CRITICAL or OPPORTUNITY or WARNING",
+      "detail": "One sentence with specific data, e.g. you rank for only 50 keywords while similar stores average 200+",
+      "fix": "One specific action sentence, e.g. publish 3 collection pages targeting your highest-volume unranked keywords"
+    }
+  ]
 }
+
+Rules for seo_findings:
+- Generate between 3 and 6 findings
+- Each finding must be based on the actual data provided, not generic advice
+- Never use em dashes - use commas or hyphens only
+- Write in plain English a store owner understands
+- Be specific: reference actual numbers from the data
+- Severity: CRITICAL for traffic declining or major visibility gap, OPPORTUNITY for untapped keywords or quick wins, WARNING for things at risk or below benchmark
 
 Respond with only valid JSON. No markdown. No explanation.`
 
@@ -112,7 +163,7 @@ Respond with only valid JSON. No markdown. No explanation.`
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
+        max_tokens: 3000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       }),
@@ -137,6 +188,16 @@ Respond with only valid JSON. No markdown. No explanation.`
       return NextResponse.json({ success: false, error: 'Failed to parse AI response as JSON' }, { status: 500 })
     }
 
+    // Extract seo_findings non-fatally
+    let seoFindings: any[] | null = null
+    try {
+      if (Array.isArray(parsed.seo_findings) && parsed.seo_findings.length > 0) {
+        seoFindings = parsed.seo_findings
+      }
+    } catch {
+      console.error('[commentary] seo_findings extraction failed (non-fatal)')
+    }
+
     const { error: dbError } = await supabaseAdmin
       .from('audit_content')
       .update({
@@ -145,6 +206,7 @@ Respond with only valid JSON. No markdown. No explanation.`
         ai_seo_commentary: parsed.seo ?? null,
         ai_opportunity_commentary: parsed.opportunity ?? null,
         ai_closing_commentary: parsed.closing ?? null,
+        seo_findings: seoFindings,
       })
       .eq('prospect_id', prospect_id)
 
