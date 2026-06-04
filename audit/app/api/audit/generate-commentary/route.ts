@@ -149,6 +149,7 @@ Rules for seo_findings:
 - Write in plain English a store owner understands
 - Be specific: reference actual numbers from the data
 - Severity: CRITICAL for traffic declining or major visibility gap, OPPORTUNITY for untapped keywords or quick wins, WARNING for things at risk or below benchmark
+- IMPORTANT: Never title a finding "Zero Organic Visibility" or similar if organicKeywords > 0. If the store ranks for any keywords, frame the finding around the gap vs benchmark instead - for example "Below Average Keyword Footprint" or "Limited Search Visibility". Only use zero-based language if organicKeywords is literally 0.
 
 Respond with only valid JSON. No markdown. No explanation.`
 
