@@ -262,7 +262,12 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             <span style={{ color: S.muted, fontSize: 13 }}>{createdDate}</span>
           </div>
           <h1 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 8 }}>{prospect.brand_name}</h1>
-          <a href={prospect.store_url} target="_blank" style={{ color: S.muted, fontSize: 14, textDecoration: 'none' }}>{prospect.store_url}</a>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', marginTop: '8px', marginBottom: '0', letterSpacing: '0.02em' }}>
+            Domain: {(prospect.store_url ?? '').replace(/^https?:\/\//, '')}
+            &nbsp;·&nbsp;Platform: Shopify
+            {prospect.created_at && <>&nbsp;·&nbsp;Audit Date: {new Date(prospect.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}</>}
+          </p>
+          <a href={prospect.store_url} target="_blank" style={{ color: S.muted, fontSize: 14, textDecoration: 'none', display: 'block', marginTop: 12 }}>{prospect.store_url}</a>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 20 }}>
             {[`Niche: ${prospect.niche}`, `Created: ${createdDate}`, 'Confidential'].map(t => (
               <span key={t} style={{ background: 'rgba(100,75,255,0.08)', border: `1px solid ${S.border}`, borderRadius: 99, padding: '4px 14px', fontSize: 13, color: S.muted }}>{t}</span>
@@ -1073,15 +1078,29 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   </tr>
                 </thead>
                 <tbody>
-                  {revCalc.map((row, i) => (
-                    <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                      <td style={{ padding: '12px 16px', color: S.white }}>{row.initiative}</td>
-                      <td style={{ padding: '12px 16px', color: S.muted }}>{row.confidence}</td>
-                      <td style={{ padding: '12px 16px', color: row.impact ? S.white : S.muted }}>{row.impact ? `$${Math.round(row.impact).toLocaleString()}/yr` : row.note}</td>
-                    </tr>
-                  ))}
+                  {revCalc.map((row, i) => {
+                    const init: string = row.initiative ?? ''
+                    let pillBg: string, pillColor: string, pillBorder: string, pillLabel: string
+                    if (init === 'Mobile Performance' || init === 'CRO Improvements') {
+                      pillLabel = 'Verified data'; pillBg = 'rgba(34,197,94,0.12)'; pillColor = '#22c55e'; pillBorder = '1px solid rgba(34,197,94,0.25)'
+                    } else if (init === 'SEO Content Gap') {
+                      pillLabel = 'Estimated'; pillBg = 'rgba(249,115,22,0.12)'; pillColor = '#f97316'; pillBorder = '1px solid rgba(249,115,22,0.25)'
+                    } else {
+                      pillLabel = 'Industry benchmark'; pillBg = 'rgba(100,75,255,0.12)'; pillColor = '#a78bfa'; pillBorder = '1px solid rgba(100,75,255,0.25)'
+                    }
+                    return (
+                      <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                        <td style={{ padding: '12px 16px', color: S.white }}>{row.initiative}</td>
+                        <td style={{ padding: '12px 16px', width: 160 }}>
+                          <span style={{ background: pillBg, color: pillColor, border: pillBorder, borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 500, display: 'inline-block' }}>{pillLabel}</span>
+                        </td>
+                        <td style={{ padding: '12px 16px', color: row.impact ? S.white : S.muted }}>{row.impact ? `$${Math.round(row.impact).toLocaleString()}/yr` : row.note}</td>
+                      </tr>
+                    )
+                  })}
                   <tr style={{ background: S.bg, borderTop: `2px solid ${S.border}` }}>
-                    <td colSpan={2} style={{ padding: '12px 16px', fontFamily: '"Clash Display", sans-serif', fontWeight: 700, color: S.orange }}>Total Estimated Annual Opportunity</td>
+                    <td style={{ padding: '12px 16px', fontFamily: '"Clash Display", sans-serif', fontWeight: 700, color: S.orange }}>Total Estimated Annual Opportunity</td>
+                    <td style={{ padding: '12px 16px', color: S.muted }}>-</td>
                     <td style={{ padding: '12px 16px', fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 700, color: S.orange }}>${Math.round(totalRevImpact).toLocaleString()}/yr estimated</td>
                   </tr>
                 </tbody>
