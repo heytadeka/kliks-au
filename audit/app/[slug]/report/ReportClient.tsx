@@ -1196,7 +1196,26 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               </p>
             )}
 
-            <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 20, padding: 48, textAlign: 'center' }}>
+            {/* Recent Build */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 48, marginTop: 48, textAlign: 'center' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Recent Build</p>
+              <a
+                href="https://pupcases.com.au"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '20px 32px', textDecoration: 'none', transition: 'border-color 0.2s ease' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)')}
+              >
+                <img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: S.white, margin: 0 }}>pupcases.com.au</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 0 }}>Shopify store — designed &amp; built by Kliks</p>
+                </div>
+              </a>
+            </div>
+
+            <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 20, padding: 48, textAlign: 'center', marginTop: 48 }}>
               <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 12 }}>Book a call with Adam.</h2>
               <p style={{ color: S.muted, fontSize: 17, marginBottom: 32 }}>30 minutes. No pitch. Just a plan.</p>
               <a href={prospect.cta_link || '/book'} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.orange, color: '#fff', borderRadius: 100, padding: '18px 48px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 18, textDecoration: 'none', transition: 'background 0.2s' }}>Book your call</a>
