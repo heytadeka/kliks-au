@@ -1065,7 +1065,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 32 }}>Revenue Opportunity Summary</h2>
             {topCompDomain && topCompTraffic > 0 && (
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
-                Your top competitor ({topCompDomain}) pulls in an estimated {topCompTraffic.toLocaleString()} organic visitors a month. That traffic advantage compounds directly into revenue every month you wait.
+                Your top competitor ({topCompDomain}) pulls in an estimated {Math.round(topCompTraffic).toLocaleString()} organic visitors a month. That traffic advantage compounds directly into revenue every month you wait.
               </p>
             )}
             <div style={{ overflowX: 'auto' }}>
