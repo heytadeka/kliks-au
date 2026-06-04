@@ -138,16 +138,6 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
       results.push({ initiative: 'SEO Content Gap', confidence: 'Medium', impact: seoImpact, note: null })
     }
 
-    const oldAd = metaAds?.oldest_active_date
-      ? Math.floor((Date.now() - new Date(metaAds.oldest_active_date).getTime()) / (1000 * 60 * 60 * 24))
-      : 0
-    results.push({
-      initiative: 'Creative Refresh',
-      confidence: 'Qualitative',
-      impact: null,
-      note: oldAd > 90 ? 'Creative fatigue risk detected - rising CPMs likely.' : 'No immediate flag detected.',
-    })
-
     return results
   }, [ps, cro, dfsOverview, dfsGaps, metaAds])
 
