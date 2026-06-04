@@ -50,7 +50,9 @@ export async function POST(req: NextRequest) {
   const failedMedChecks = cro?.results?.filter((c: any) => !c.passed && c.importance === 'medium').map((c: any) => c.label) ?? []
   const passedChecks = cro?.results?.filter((c: any) => c.passed).map((c: any) => c.label) ?? []
 
-  const organicKeywords = dfsOverview?.metrics?.organic?.count ?? 0
+  const overviewCount = dfsOverview?.metrics?.organic?.count ?? 0
+  const keywordsArrayCount = Array.isArray(dfsKeywords) ? dfsKeywords.length : 0
+  const organicKeywords = Math.max(overviewCount, keywordsArrayCount)
   const monthlyTraffic = dfsOverview?.metrics?.organic?.etv ?? 0
 
   const competitorDomains = dfsCompetitors.length > 0
