@@ -81,11 +81,15 @@ function emailSubject(platform: string, brandName: string): string {
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
-function AdminNav({ active }: { active: 'audits' | 'pipeline' }) {
+function AdminNav({ active }: { active: 'audits' | 'pipeline' | 'outreach' }) {
+  const pill = (href: string, label: string, key: typeof active) => (
+    <a key={key} href={href} style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none', background: active === key ? 'rgba(255,67,21,0.15)' : 'transparent', color: active === key ? S.orange : 'rgba(255,255,255,0.5)' }}>{label}</a>
+  )
   return (
     <div style={{ background: S.bg2, borderBottom: '1px solid rgba(100,75,255,0.15)', height: 48, padding: '0 32px', display: 'flex', alignItems: 'center', gap: 8 }}>
-      <a href="/audit/admin/dashboard" style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none', background: active === 'audits' ? 'rgba(255,67,21,0.15)' : 'transparent', color: active === 'audits' ? S.orange : 'rgba(255,255,255,0.5)' }}>Audits</a>
-      <a href="/audit/admin/pipeline" style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none', background: active === 'pipeline' ? 'rgba(255,67,21,0.15)' : 'transparent', color: active === 'pipeline' ? S.orange : 'rgba(255,255,255,0.5)' }}>Pipeline</a>
+      {pill('/audit/admin/dashboard', 'Audits', 'audits')}
+      {pill('/audit/admin/pipeline', 'Pipeline', 'pipeline')}
+      {pill('/audit/admin/outreach', 'Outreach', 'outreach')}
     </div>
   )
 }

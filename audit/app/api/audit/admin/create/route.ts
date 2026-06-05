@@ -39,6 +39,22 @@ export async function POST(req: NextRequest) {
   await supabaseAdmin.from('audit_content').insert({ prospect_id: prospect.id })
   await supabaseAdmin.from('audit_data_cache').insert({ prospect_id: prospect.id })
 
+  // Auto-create outreach_log row (non-fatal)
+  try {
+    const domain = store_url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
+    await supabaseAdmin.from('outreach_log').insert({
+      prospect_id: prospect.id,
+      domain,
+      brand_name,
+      prospect_name,
+      prospect_email,
+      audit_slug: slug,
+      status: 'audit_created',
+    })
+  } catch (e: any) {
+    console.error('[create] outreach_log insert failed (non-fatal):', e.message)
+  }
+
   // Phase 2: fire all jobs in background without awaiting - return to browser immediately
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://kliks.com.au'
   const h = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }

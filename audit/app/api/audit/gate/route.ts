@@ -23,13 +23,33 @@ export async function POST(req: NextRequest) {
   }
 
   // Update access tracking
+  const newAccessCount = (prospect.access_count ?? 0) + 1
+  const nowIso = new Date().toISOString()
   await supabaseAdmin
     .from('prospects')
-    .update({
-      last_accessed_at: new Date().toISOString(),
-      access_count: (prospect.access_count ?? 0) + 1,
-    })
+    .update({ last_accessed_at: nowIso, access_count: newAccessCount })
     .eq('id', prospect.id)
+
+  // Sync open data to outreach_log (non-fatal)
+  try {
+    const { data: outreachRow } = await supabaseAdmin
+      .from('outreach_log')
+      .select('first_opened_at, status')
+      .eq('prospect_id', prospect.id)
+      .single()
+    if (outreachRow) {
+      const outreachUpdate: Record<string, any> = {
+        open_count: newAccessCount,
+        last_opened_at: nowIso,
+        updated_at: nowIso,
+      }
+      if (!outreachRow.first_opened_at) outreachUpdate.first_opened_at = nowIso
+      if (outreachRow.status === 'email_sent') outreachUpdate.status = 'opened'
+      await supabaseAdmin.from('outreach_log').update(outreachUpdate).eq('prospect_id', prospect.id)
+    }
+  } catch (e: any) {
+    console.error('[gate] outreach_log sync failed (non-fatal):', e.message)
+  }
 
   const response = NextResponse.json({
     success: true,
