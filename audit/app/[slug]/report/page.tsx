@@ -5,9 +5,12 @@ import ReportClient from './ReportClient'
 
 export default async function ReportPage({ params }: { params: { slug: string } }) {
   const cookieStore = cookies()
-  const authCookie = cookieStore.get(`audit_${params.slug}_auth`)
-  if (authCookie?.value !== 'true') {
-    redirect(`/${params.slug}`)
+  const isAdmin = !!cookieStore.get('audit_admin_auth')?.value
+  if (!isAdmin) {
+    const authCookie = cookieStore.get(`audit_${params.slug}_auth`)
+    if (authCookie?.value !== 'true') {
+      redirect(`/${params.slug}`)
+    }
   }
 
   const { data: prospect } = await supabaseAdmin
