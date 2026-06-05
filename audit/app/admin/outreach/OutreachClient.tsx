@@ -1,5 +1,6 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 const S = {
   bg: '#0e0d1a',
@@ -81,6 +82,16 @@ function dueDateColor(d: string | null | undefined): string {
   return S.muted
 }
 
+function slugify(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-')
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', background: '#0e0d1a', border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 8, padding: '10px 14px', color: '#ffffff', fontFamily: 'Satoshi, sans-serif',
+  fontSize: 14, outline: 'none', boxSizing: 'border-box',
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function AdminNav({ active }: { active: 'audits' | 'pipeline' | 'outreach' }) {
@@ -111,11 +122,57 @@ function StatTile({ label, value, color }: { label: string; value: number; color
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+type NewForm = { brand_name: string; store_url: string; prospect_name: string; prospect_email: string; niche: string; slug: string }
+
 export default function OutreachClient({ initialRows }: { initialRows: any[] }) {
+  const router = useRouter()
   const [rows, setRows] = useState<any[]>(initialRows)
   const [notesMap, setNotesMap] = useState<Record<string, string>>(
     Object.fromEntries(initialRows.map(r => [r.id, r.notes ?? '']))
   )
+
+  // New outreach form state
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState<NewForm>({ brand_name: '', store_url: '', prospect_name: '', prospect_email: '', niche: '', slug: '' })
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState('')
+
+  // Keep slug in sync with brand name
+  useEffect(() => {
+    setForm(prev => ({ ...prev, slug: slugify(prev.brand_name) }))
+  }, [form.brand_name])
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    setCreating(true)
+    setCreateError('')
+    try {
+      const res = await fetch('/api/audit/admin/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brand_name: form.brand_name,
+          slug: form.slug,
+          store_url: form.store_url.startsWith('http') ? form.store_url : `https://${form.store_url}`,
+          prospect_name: form.prospect_name,
+          prospect_email: form.prospect_email,
+          niche: form.niche,
+          cta_link: 'https://kliks.com.au/book',
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setCreateError(data.error ?? 'Creation failed.')
+        return
+      }
+      setShowForm(false)
+      setForm({ brand_name: '', store_url: '', prospect_name: '', prospect_email: '', niche: '', slug: '' })
+      // Refresh server data so the new outreach_log row appears
+      router.refresh()
+    } finally {
+      setCreating(false)
+    }
+  }
 
   async function handleLogout() {
     await fetch('/api/audit/admin/auth', { method: 'DELETE' })
@@ -158,7 +215,59 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
       <AdminNav active="outreach" />
 
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 24px' }}>
-        <h1 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, letterSpacing: '0.01em', marginBottom: 32 }}>Outreach</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
+          <h1 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, letterSpacing: '0.01em', margin: 0 }}>Outreach</h1>
+          <button onClick={() => { setShowForm(v => !v); setCreateError('') }}
+            style={{ background: S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '12px 28px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>
+            + New Outreach
+          </button>
+        </div>
+
+        {/* New Outreach form */}
+        {showForm && (
+          <div style={{ background: S.bg2, border: '1px solid rgba(100,75,255,0.2)', borderRadius: 16, padding: 32, marginBottom: 32 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, color: S.white, margin: 0 }}>New Outreach</h2>
+              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
+            </div>
+            <form onSubmit={handleCreate}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>BRAND NAME</label>
+                  <input required value={form.brand_name} onChange={e => setForm(p => ({ ...p, brand_name: e.target.value }))} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>STORE URL</label>
+                  <input required value={form.store_url} onChange={e => setForm(p => ({ ...p, store_url: e.target.value }))} placeholder="https://store.com.au" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>PROSPECT NAME</label>
+                  <input required value={form.prospect_name} onChange={e => setForm(p => ({ ...p, prospect_name: e.target.value }))} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>PROSPECT EMAIL</label>
+                  <input required type="email" value={form.prospect_email} onChange={e => setForm(p => ({ ...p, prospect_email: e.target.value }))} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>NICHE</label>
+                  <input value={form.niche} onChange={e => setForm(p => ({ ...p, niche: e.target.value }))} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>SLUG</label>
+                  <input required value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))} style={inputStyle} />
+                </div>
+              </div>
+              {createError && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 16 }}>{createError}</p>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <button type="submit" disabled={creating}
+                  style={{ background: creating ? S.orangeDark : S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '12px 28px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 15, cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.7 : 1 }}>
+                  {creating ? 'Creating...' : 'Create Audit & Track'}
+                </button>
+                <button type="button" onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Follow-up due alert */}
         {dueSoon.length > 0 && (
