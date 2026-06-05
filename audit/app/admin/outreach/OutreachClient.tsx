@@ -19,6 +19,7 @@ const STATUS_LABELS: Record<string, string> = {
   audit_created: 'Audit Created',
   email_sent: 'Email Sent',
   opened: 'Opened',
+  no_response: 'No Response',
   responded: 'Responded',
   call_booked: 'Call Booked',
   proposal_sent: 'Proposal Sent',
@@ -31,6 +32,7 @@ const STATUS_BG: Record<string, string> = {
   audit_created: 'rgba(255,255,255,0.05)',
   email_sent: 'rgba(99,102,241,0.15)',
   opened: 'rgba(249,115,22,0.15)',
+  no_response: 'rgba(239,68,68,0.1)',
   responded: 'rgba(59,130,246,0.15)',
   call_booked: 'rgba(34,197,94,0.15)',
   proposal_sent: 'rgba(34,197,94,0.2)',
@@ -43,6 +45,7 @@ const STATUS_COLOR: Record<string, string> = {
   audit_created: 'rgba(255,255,255,0.5)',
   email_sent: '#818cf8',
   opened: '#f97316',
+  no_response: '#f87171',
   responded: '#60a5fa',
   call_booked: '#22c55e',
   proposal_sent: '#22c55e',
@@ -80,6 +83,17 @@ function dueDateColor(d: string | null | undefined): string {
   if (ms < 0) return '#ef4444'
   if (ms < 86_400_000) return '#f97316'
   return S.muted
+}
+
+const toInputDate = (d: Date) => d.toISOString().split('T')[0]
+const addDays = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return toInputDate(d) }
+
+function autoFollowUp(status: string): string | null {
+  if (status === 'email_sent') return addDays(3)
+  if (status === 'no_response') return addDays(4)
+  if (status === 'opened') return addDays(2)
+  if (['responded', 'won', 'lost', 'not_a_fit'].includes(status)) return null
+  return undefined as any // undefined = don't change
 }
 
 function slugify(s: string): string {
@@ -130,6 +144,9 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
   const [notesMap, setNotesMap] = useState<Record<string, string>>(
     Object.fromEntries(initialRows.map(r => [r.id, r.notes ?? '']))
   )
+  const [followUpMap, setFollowUpMap] = useState<Record<string, string>>(
+    Object.fromEntries(initialRows.map(r => [r.id, toDateInput(r.follow_up_due_at)]))
+  )
 
   // New outreach form state
   const [showForm, setShowForm] = useState(false)
@@ -177,6 +194,16 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
   async function handleLogout() {
     await fetch('/api/audit/admin/auth', { method: 'DELETE' })
     window.location.href = '/audit/admin'
+  }
+
+  async function handleStatusChange(id: string, newStatus: string) {
+    const suggested = autoFollowUp(newStatus)
+    const payload: Record<string, any> = { status: newStatus }
+    if (suggested !== undefined) {
+      payload.follow_up_due_at = suggested // null clears, string sets
+      setFollowUpMap(prev => ({ ...prev, [id]: suggested ?? '' }))
+    }
+    await updateRow(id, payload)
   }
 
   const updateRow = useCallback(async (id: string, payload: Record<string, any>) => {
@@ -339,7 +366,7 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
                       <td style={{ padding: '12px 14px', minWidth: 150 }}>
                         <select
                           value={row.status}
-                          onChange={e => updateRow(row.id, { status: e.target.value })}
+                          onChange={e => handleStatusChange(row.id, e.target.value)}
                           style={{
                             background: STATUS_BG[row.status] ?? STATUS_BG.audit_created,
                             color: STATUS_COLOR[row.status] ?? S.muted,
@@ -380,8 +407,11 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
                       <td style={{ padding: '12px 14px', minWidth: 140 }}>
                         <input
                           type="date"
-                          defaultValue={toDateInput(row.follow_up_due_at)}
-                          onChange={e => updateRow(row.id, { follow_up_due_at: e.target.value || null })}
+                          value={followUpMap[row.id] ?? ''}
+                          onChange={e => {
+                            setFollowUpMap(prev => ({ ...prev, [row.id]: e.target.value }))
+                            updateRow(row.id, { follow_up_due_at: e.target.value || null })
+                          }}
                           style={{
                             background: 'rgba(255,255,255,0.04)',
                             border: '1px solid rgba(255,255,255,0.1)',
