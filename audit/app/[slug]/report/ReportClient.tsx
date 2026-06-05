@@ -1142,13 +1142,15 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div style={{ position: 'relative', zIndex: 1 }}>
             <SectionLabel>APPENDIX</SectionLabel>
             <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 32 }}>Data Confidence Summary</h2>
+            <style>{`.conf-action{display:table-cell}@media(max-width:640px){.conf-action{display:none}}`}</style>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ background: S.bg }}>
-                    {['Metric', 'Status', 'Source', 'Action Required'].map(h => (
+                    {(['Metric', 'Status', 'Source'] as const).map(h => (
                       <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                     ))}
+                    <th className="conf-action" style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>Action Required</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1175,7 +1177,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 99, background: row.status === 'Verified' ? 'rgba(34,197,94,0.12)' : 'rgba(255,67,21,0.12)', color: row.status === 'Verified' ? '#22c55e' : S.orange }}>{row.status}</span>
                       </td>
                       <td style={{ padding: '10px 14px', color: S.muted }}>{row.source}</td>
-                      <td style={{ padding: '10px 14px', color: S.muted }}>{row.action}</td>
+                      <td className="conf-action" style={{ padding: '10px 14px', color: S.muted }}>{row.action}</td>
                     </tr>
                   ))}
                 </tbody>
