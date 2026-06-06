@@ -317,6 +317,38 @@ export async function POST(req: NextRequest) {
   // Backlinks disabled - requires separate DataForSEO subscription (returns 40204)
   // backlinksSummary remains null
 
+  // ── GMB lookup (non-blocking) ──
+  let gmbData: Record<string, any> = { found: false }
+  try {
+    const { data: prospect } = await supabaseAdmin
+      .from('prospects')
+      .select('brand_name')
+      .eq('id', prospect_id)
+      .single()
+    const brandName = prospect?.brand_name ?? domain
+    const gmbRes = await dfsPost('/business_data/google/my_business_info/live', [{
+      keyword: brandName,
+      location_name: 'Australia',
+      language_code: 'en',
+    }])
+    const gmbResult = gmbRes?.tasks?.[0]?.result?.[0]?.items?.[0] ?? null
+    if (gmbResult) {
+      gmbData = {
+        found: true,
+        rating: gmbResult.rating?.value ?? null,
+        review_count: gmbResult.rating?.votes_count ?? null,
+        category: gmbResult.category ?? null,
+        address: gmbResult.address ?? null,
+        phone: gmbResult.phone ?? null,
+        is_claimed: gmbResult.is_claimed ?? null,
+        place_id: gmbResult.place_id ?? null,
+      }
+    }
+    console.log('[dataforseo] gmb:', gmbData.found ? `found (${gmbData.rating}★, ${gmbData.review_count} reviews)` : 'not found')
+  } catch (e: any) {
+    console.error('[dataforseo] gmb lookup failed (non-fatal):', e.message)
+  }
+
   const { error: dbError } = await supabaseAdmin
     .from('audit_data_cache')
     .upsert({
@@ -327,11 +359,9 @@ export async function POST(req: NextRequest) {
       dataforseo_competitors: competitors.length > 0 ? competitors : [],
       dataforseo_serp_features: serpFeatures,
       dataforseo_content_gap: contentGap.length > 0 ? contentGap : null,
-      // New columns - must be added to audit_data_cache in Supabase dashboard:
-      //   dataforseo_keyword_trends  JSONB
-      //   backlinks_summary          JSONB
       dataforseo_keyword_trends: keywordTrends && keywordTrends.length > 0 ? keywordTrends : null,
       backlinks_summary: backlinksSummary,
+      gmb_data: gmbData,
     }, { onConflict: 'prospect_id' })
 
   if (dbError) console.error('[dataforseo] Supabase write error:', JSON.stringify(dbError))

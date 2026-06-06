@@ -98,6 +98,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const keywordTrends: any[] = useMemo(() => cache?.dataforseo_keyword_trends ?? [], [cache?.dataforseo_keyword_trends])
   const seoFindings = content?.seo_findings as any[] | null
+  const gmbData = cache?.gmb_data as any
   // backlinksSummary removed - backlinks subscription not available
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
@@ -491,6 +492,87 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             )}
           </div>
         </SectionWrap>
+
+        {/* GOOGLE BUSINESS PROFILE */}
+        {gmbData && (
+          <SectionWrap id="gmb">
+            <GhostNumber n="03" />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <SectionLabel>LOCAL PRESENCE</SectionLabel>
+              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 28 }}>Google Business Profile</h2>
+
+              {gmbData.found ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {/* Left — profile stats */}
+                  <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
+                    <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 48, fontWeight: 700, color: S.white, lineHeight: 1 }}>
+                      {gmbData.rating != null ? gmbData.rating.toFixed(1) : '—'}
+                    </div>
+                    {gmbData.rating != null && (
+                      <div style={{ fontSize: 20, margin: '8px 0', letterSpacing: 2 }}>
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <span key={i} style={{ color: S.orange }}>{i < Math.round(gmbData.rating) ? '★' : '☆'}</span>
+                        ))}
+                      </div>
+                    )}
+                    <p style={{ color: S.muted, fontSize: 14, margin: '6px 0 16px' }}>
+                      {gmbData.review_count != null ? `${gmbData.review_count.toLocaleString()} Google reviews` : 'No reviews data'}
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {gmbData.category && (
+                        <span style={{ background: 'rgba(100,75,255,0.12)', color: S.purple, borderRadius: 99, padding: '3px 12px', fontSize: 12, fontWeight: 600, alignSelf: 'flex-start' }}>
+                          {gmbData.category}
+                        </span>
+                      )}
+                      {gmbData.address && (
+                        <p style={{ color: S.muted, fontSize: 13, margin: 0 }}>{gmbData.address}</p>
+                      )}
+                      <div>
+                        {gmbData.is_claimed
+                          ? <span style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e', borderRadius: 99, padding: '3px 12px', fontSize: 11, fontWeight: 600 }}>✓ Verified</span>
+                          : <span style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444', borderRadius: 99, padding: '3px 12px', fontSize: 11, fontWeight: 600 }}>! Unclaimed</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right — benchmark context */}
+                  <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <p style={{ color: S.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+                      Stores with 4.5+ stars convert 28% better than those below 4.0.{' '}
+                      {gmbData.rating != null
+                        ? <>Your rating of <strong style={{ color: S.white }}>{gmbData.rating.toFixed(1)}</strong> puts you {gmbData.rating >= 4.0 ? 'above' : 'below'} the ecommerce average.</>
+                        : 'Connect your Google account for precise conversion benchmarks.'
+                      }
+                    </p>
+                    {gmbData.review_count != null && gmbData.review_count < 50 && (
+                      <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.15)', borderLeft: `3px solid ${S.orange}`, borderRadius: 8, padding: '12px 16px' }}>
+                        <p style={{ color: S.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                          Fewer than 50 reviews limits your local search visibility. Most category leaders have 100+.
+                        </p>
+                      </div>
+                    )}
+                    {gmbData.review_count != null && gmbData.review_count >= 100 && (
+                      <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.15)', borderLeft: '3px solid #22c55e', borderRadius: 8, padding: '12px 16px' }}>
+                        <p style={{ color: S.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                          Strong review count. This is a trust signal worth highlighting in your ads.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24 }}>
+                  <p style={{ color: S.white, lineHeight: 1.7, fontSize: 16, margin: 0 }}>
+                    No Google Business Profile detected for <strong>{prospect.brand_name}</strong>.{' '}
+                    This means you&apos;re invisible in local search and Google Maps.{' '}
+                    Setting up a free profile could add significant local visibility.
+                  </p>
+                </div>
+              )}
+            </div>
+          </SectionWrap>
+        )}
 
         {/* SECTION 03 - ADS */}
         <SectionWrap id="ads">
