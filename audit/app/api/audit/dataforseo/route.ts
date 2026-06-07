@@ -10,6 +10,20 @@ export const preferredRegion = 'syd1'
 
 const DATAFORSEO_BASE = 'https://api.dataforseo.com/v3'
 
+function getLocationCode(location: string | null | undefined): number {
+  if (!location) return 2036 // Default: Australia
+  const l = location.toLowerCase()
+  if (l.includes('sydney') || l.includes('nsw') || l.includes('new south wales')) return 21167
+  if (l.includes('melbourne') || l.includes('vic') || l.includes('victoria')) return 21182
+  if (l.includes('brisbane') || l.includes('qld') || l.includes('queensland')) return 21139
+  if (l.includes('perth') || l.includes('wa') || l.includes('western australia')) return 21188
+  if (l.includes('adelaide') || l.includes('sa') || l.includes('south australia')) return 21136
+  if (l.includes('canberra') || l.includes('act')) return 21124
+  if (l.includes('hobart') || l.includes('tas') || l.includes('tasmania')) return 21172
+  if (l.includes('darwin') || l.includes('nt') || l.includes('northern territory')) return 21128
+  return 2036 // Fallback: Australia
+}
+
 async function dfsPost(path: string, body: any[]) {
   const auth = Buffer.from(`${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`).toString('base64')
   const url = `${DATAFORSEO_BASE}${path}`
@@ -82,7 +96,7 @@ export async function POST(req: NextRequest) {
   const [overviewRes, keywordsRes, prospectRes] = await Promise.allSettled([
     dfsPost('/dataforseo_labs/google/domain_rank_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }]),
     dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 50, order_by: ['ranked_serp_element.serp_item.rank_group,asc'] }]),
-    supabaseAdmin.from('prospects').select('brand_name').eq('id', prospect_id).single(),
+    supabaseAdmin.from('prospects').select('brand_name, location').eq('id', prospect_id).single(),
   ])
 
   if (overviewRes.status === 'fulfilled') {
@@ -99,8 +113,11 @@ export async function POST(req: NextRequest) {
     console.error('[dataforseo] keywords failed:', (keywordsRes as PromiseRejectedResult).reason?.message)
   }
 
-  // Resolve brand name — used for branded keyword filtering + GMB lookup
-  const brandNameRaw: string = (prospectRes.status === 'fulfilled' ? prospectRes.value?.data?.brand_name : null) ?? domain
+  // Resolve brand name + location from prospect record
+  const prospectData = prospectRes.status === 'fulfilled' ? prospectRes.value?.data : null
+  const brandNameRaw: string = prospectData?.brand_name ?? domain
+  const locationCode = getLocationCode(prospectData?.location ?? null)
+  console.log('[dataforseo] location:', prospectData?.location ?? 'none', '→ code:', locationCode)
   const brandNameClean = brandNameRaw
     .toLowerCase()
     .replace(/\.com\.au$/, '')
@@ -123,7 +140,7 @@ export async function POST(req: NextRequest) {
       console.log('[dataforseo] SERP competitors using', topKwStrings.length, 'keywords')
       const serpCompRes = await dfsPost('/dataforseo_labs/google/serp_competitors/live', [{
         keywords: topKwStrings,
-        location_code: 2036,
+        location_code: locationCode,
         language_code: 'en',
         limit: 10,
       }])
@@ -190,7 +207,7 @@ export async function POST(req: NextRequest) {
     try {
       const btRes = await dfsPost('/dataforseo_labs/google/bulk_traffic_estimation/live', [{
         targets: competitorDomainsForTraffic,
-        location_code: 2036,
+        location_code: locationCode,
         language_code: 'en',
         item_types: ['organic'],
       }])

@@ -134,7 +134,7 @@ const inputStyle: React.CSSProperties = {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Form = { brand_name: string; prospect_name: string; prospect_email: string; niche: string; slug: string }
+type Form = { brand_name: string; prospect_name: string; prospect_email: string; niche: string; location: string; slug: string }
 type EmailDraft = { platform: string; brand_name: string; prospect_name: string; prospect_email: string | null; slug: string }
 type TrafficResult = { checked: number; flagged_new: number; flagged_domains: { domain: string; drop_pct: number; platform: string }[] }
 
@@ -154,7 +154,7 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
 
   // Create audit modal
   const [createDomain, setCreateDomain] = useState<any | null>(null)
-  const [form, setForm] = useState<Form>({ brand_name: '', prospect_name: '', prospect_email: '', niche: '', slug: '' })
+  const [form, setForm] = useState<Form>({ brand_name: '', prospect_name: '', prospect_email: '', niche: '', location: '', slug: '' })
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
@@ -218,6 +218,7 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
       prospect_name: '',
       prospect_email: '',
       niche: row.niche ?? '',
+      location: '',
       slug: slugify(brandName),
     })
     setCreateError('')
@@ -247,6 +248,7 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
           prospect_name: form.prospect_name,
           prospect_email: form.prospect_email,
           niche: form.niche,
+          location: form.location || null,
           cta_link: 'https://kliks.com.au/book',
         }),
       })
@@ -367,7 +369,7 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
           <div style={{ background: S.bg2, border: '1px solid rgba(100,75,255,0.2)', borderRadius: 16, padding: 32, marginBottom: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, color: S.white }}>
-                Create Audit — <span style={{ color: S.muted, fontFamily: 'monospace', fontSize: 15 }}>{createDomain.domain}</span>
+                Create Audit - <span style={{ color: S.muted, fontFamily: 'monospace', fontSize: 15 }}>{createDomain.domain}</span>
               </h2>
               <button onClick={closeAll} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer', padding: 0 }}>Cancel</button>
             </div>
@@ -388,6 +390,10 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>NICHE</label>
                   <input required value={form.niche} onChange={e => setForm(p => ({ ...p, niche: e.target.value }))} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>LOCATION</label>
+                  <input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="e.g. Sydney NSW" style={inputStyle} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>SLUG</label>
@@ -436,7 +442,7 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
         {/* Domain table */}
         <div>
           <p style={{ fontSize: 13, color: S.muted, marginBottom: 20 }}>
-            {domains.length} domain{domains.length !== 1 ? 's' : ''} monitored — {shopifyCount} Shopify, {squarespaceCount} Squarespace
+            {domains.length} domain{domains.length !== 1 ? 's' : ''} monitored - {shopifyCount} Shopify, {squarespaceCount} Squarespace
           </p>
           {domains.length === 0 ? (
             <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 48, textAlign: 'center' }}>

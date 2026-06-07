@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link } = body
+  const { brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location } = body
 
   // Guard: check for duplicate slug before inserting
   const { data: existing } = await supabaseAdmin
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   const { data: prospect, error: prospectError } = await supabaseAdmin
     .from('prospects')
-    .insert({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link: cta_link || '/book' })
+    .insert({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link: cta_link || '/book', location: location || null })
     .select()
     .single()
 

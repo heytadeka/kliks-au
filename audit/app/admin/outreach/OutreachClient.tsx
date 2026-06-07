@@ -61,7 +61,7 @@ const LOST_REASONS = ['Price', 'Timing', 'No response', 'Went elsewhere', 'Not a
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtDate(d: string | null | undefined): string {
-  if (!d) return '—'
+  if (!d) return '-'
   return new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
 }
 
@@ -299,11 +299,11 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
 
   const draft1Subject = followUpModal ? `re: your ${followUpModal.brand_name} audit` : ''
   const draft1Body = followUpModal
-    ? `Hey ${followUpModal.prospect_name},\n\nJust checking this didn't get buried.\n\nPut together a few things worth knowing about ${followUpModal.brand_name}: kliks.com.au/audit/${followUpModal.audit_slug}\nAccess code: ${followUpModal.prospect_email}\n\nWorth a look.\n\nAdam`
+    ? `Hey ${followUpModal.prospect_name || 'there'},\n\nJust checking this didn't get buried.\n\nPut together a few things worth knowing about ${followUpModal.brand_name}: kliks.com.au/audit/${followUpModal.audit_slug}\nAccess code: ${followUpModal.prospect_email}\n\nWorth a look.\n\nAdam`
     : ''
   const draft2Subject = 'closing this out'
   const draft2Body = followUpModal
-    ? `Hey ${followUpModal.prospect_name},\n\nGoing to close out the ${followUpModal.brand_name} audit on my end.\n\nIf the timing wasn't right, no worries at all. Happy to revisit whenever it makes sense.\n\nAdam`
+    ? `Hey ${followUpModal.prospect_name || 'there'},\n\nGoing to close out the ${followUpModal.brand_name} audit on my end.\n\nIf the timing wasn't right, no worries at all. Happy to revisit whenever it makes sense.\n\nAdam`
     : ''
 
   return (
@@ -595,7 +595,7 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
                       {/* Opens */}
                       <td style={{ padding: '12px 14px', minWidth: 100 }}>
                         <div style={{ color: openColor, fontWeight: openCount >= 3 ? 600 : 400 }}>
-                          {openCount > 0 ? `👁 ${openCount}` : '—'}
+                          {openCount > 0 ? `👁 ${openCount}` : '-'}
                         </div>
                         {row.last_opened_at && (
                           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>

@@ -43,6 +43,7 @@ interface FormData {
   prospect_name: string
   prospect_email: string
   niche: string
+  location: string
   cta_link: string
 }
 
@@ -63,6 +64,7 @@ export default function NewAuditPage() {
     prospect_name: '',
     prospect_email: '',
     niche: '',
+    location: '',
     cta_link: '',
   })
 
@@ -133,7 +135,7 @@ export default function NewAuditPage() {
       const res = await fetch('/api/audit/admin/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(normalised),
+        body: JSON.stringify({ ...normalised, location: form.location || null }),
       })
       const data = await res.json()
       if (data.success) {
@@ -311,6 +313,11 @@ Kliks`
                   ? <p style={{ ...helperStyle, color: '#ef4444', marginTop: 6 }}>{nicheError}</p>
                   : <p style={helperStyle}>Be specific - the more detail, the better your competitor and keyword analysis.</p>
                 }
+              </div>
+              <div>
+                <label style={labelStyle}>Location</label>
+                <input value={form.location} onChange={set('location')} placeholder="e.g. Sydney NSW" style={inputStyle} />
+                <p style={helperStyle}>Used to find local competitors. City and state is enough.</p>
               </div>
               <div>
                 <label style={labelStyle}>CTA Link</label>

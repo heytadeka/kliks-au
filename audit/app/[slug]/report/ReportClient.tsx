@@ -326,12 +326,12 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   </p>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
-                  <MetricCard label="LCP" value={ps.lcp ? msToS(ps.lcp) : '-'} unit="s" status={ps.lcp ? getStatus(ps.lcp / 1000, [2.5, 4]) : 'neutral'} description="Largest Contentful Paint — how fast your main content loads" target="<2.5s" />
-                  <MetricCard label="FCP" value={ps.fcp ? msToS(ps.fcp) : '-'} unit="s" status={ps.fcp ? getStatus(ps.fcp / 1000, [1.8, 3]) : 'neutral'} description="First Contentful Paint — when the first element appears" target="<1.8s" />
-                  <MetricCard label="CLS" value={ps.cls != null ? ps.cls.toFixed(3) : '-'} status={ps.cls != null ? getStatus(ps.cls, [0.1, 0.25]) : 'neutral'} description="Cumulative Layout Shift — how much the page jumps around" target="<0.1" />
-                  <MetricCard label="TBT" value={ps.tbt ? Math.round(ps.tbt) : '-'} unit="ms" status={ps.tbt ? getStatus(ps.tbt, [200, 600]) : 'neutral'} description="Total Blocking Time — how long the page is unresponsive" target="<200ms" />
+                  <MetricCard label="LCP" value={ps.lcp ? msToS(ps.lcp) : '-'} unit="s" status={ps.lcp ? getStatus(ps.lcp / 1000, [2.5, 4]) : 'neutral'} description="Largest Contentful Paint - how fast your main content loads" target="<2.5s" />
+                  <MetricCard label="FCP" value={ps.fcp ? msToS(ps.fcp) : '-'} unit="s" status={ps.fcp ? getStatus(ps.fcp / 1000, [1.8, 3]) : 'neutral'} description="First Contentful Paint - when the first element appears" target="<1.8s" />
+                  <MetricCard label="CLS" value={ps.cls != null ? ps.cls.toFixed(3) : '-'} status={ps.cls != null ? getStatus(ps.cls, [0.1, 0.25]) : 'neutral'} description="Cumulative Layout Shift - how much the page jumps around" target="<0.1" />
+                  <MetricCard label="TBT" value={ps.tbt ? Math.round(ps.tbt) : '-'} unit="ms" status={ps.tbt ? getStatus(ps.tbt, [200, 600]) : 'neutral'} description="Total Blocking Time - how long the page is unresponsive" target="<200ms" />
                   <MetricCard label="Speed Index" value={ps.speed_index ? msToS(ps.speed_index) : '-'} unit="s" status={ps.speed_index ? getStatus(ps.speed_index / 1000, [3.4, 5.8]) : 'neutral'} description="How quickly content is visually complete" target="<3.4s" />
-                  <MetricCard label="TTI" value={ps.tti ? msToS(ps.tti) : '-'} unit="s" status={ps.tti ? getStatus(ps.tti / 1000, [3.8, 7.3]) : 'neutral'} description="Time to Interactive — when the page is fully usable" target="<3.8s" />
+                  <MetricCard label="TTI" value={ps.tti ? msToS(ps.tti) : '-'} unit="s" status={ps.tti ? getStatus(ps.tti / 1000, [3.8, 7.3]) : 'neutral'} description="Time to Interactive - when the page is fully usable" target="<3.8s" />
                 </div>
 
 
@@ -506,7 +506,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   {/* Left — profile stats */}
                   <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
                     <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 48, fontWeight: 700, color: S.white, lineHeight: 1 }}>
-                      {gmbData.rating != null ? gmbData.rating.toFixed(1) : '—'}
+                      {gmbData.rating != null ? gmbData.rating.toFixed(1) : '-'}
                     </div>
                     {gmbData.rating != null && (
                       <div style={{ fontSize: 20, margin: '8px 0', letterSpacing: 2 }}>
@@ -960,7 +960,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             return (
                               <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                                 <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
-                                <td style={{ padding: '10px 14px', color: S.muted }}>{etv > 0 ? fmtNum(etv) : '—'}</td>
+                                <td style={{ padding: '10px 14px', color: S.muted }}>{etv > 0 ? fmtNum(etv) : '-'}</td>
                                 <td style={{ padding: '10px 14px', color: S.muted }}>{avgPos}</td>
                                 <td style={{ padding: '10px 14px', color: S.muted }}>{vis}</td>
                                 <td style={{ padding: '10px 14px', color: S.muted }}>{comp.intersections?.toLocaleString() ?? '-'}</td>
@@ -1298,7 +1298,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 <img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
                 <div style={{ textAlign: 'left' }}>
                   <p style={{ fontSize: 14, fontWeight: 500, color: S.white, margin: 0 }}>pupcases.com.au</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 0 }}>Shopify store — designed &amp; built by Kliks</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 0 }}>Shopify store - designed &amp; built by Kliks</p>
                 </div>
               </a>
             </div>

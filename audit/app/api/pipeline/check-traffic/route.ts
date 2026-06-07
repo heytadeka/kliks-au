@@ -136,7 +136,7 @@ async function runTrafficCheck() {
         const pct = Math.round(d.drop_pct)
         const wasStr = fmtK(d.prev_traffic)
         const nowStr = fmtK(d.new_traffic)
-        return `- ${d.domain} — dropped ${pct}% (was ${wasStr}, now ${nowStr})\n  Platform: ${d.platform ?? 'unknown'}\n  Niche: ${d.niche ?? 'unknown'}`
+        return `- ${d.domain} - dropped ${pct}% (was ${wasStr}, now ${nowStr})\n  Platform: ${d.platform ?? 'unknown'}\n  Niche: ${d.niche ?? 'unknown'}`
       })
       .join('\n\n')
 
@@ -148,7 +148,7 @@ async function runTrafficCheck() {
       '',
       `Go to pipeline: ${PIPELINE_URL}`,
       '',
-      '— Kliks Pipeline',
+      '- Kliks Pipeline',
     ].join('\n')
 
     try {
@@ -157,7 +157,7 @@ async function runTrafficCheck() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_key: WEB3FORMS_KEY,
-          subject: `Pipeline Alert — ${count} store${count === 1 ? '' : 's'} flagged`,
+          subject: `Pipeline Alert - ${count} store${count === 1 ? '' : 's'} flagged`,
           from_name: 'Kliks Pipeline',
           email: ALERT_EMAIL,
           message,
