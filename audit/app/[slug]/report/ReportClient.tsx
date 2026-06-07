@@ -947,7 +947,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                         <thead>
                           <tr style={{ background: S.bg }}>
-                            {['Domain', 'Est. Traffic', 'KW Overlap'].map(h => (
+                            {['Domain', 'Est. Traffic', 'Avg Position', 'Visibility', 'KW Overlap'].map(h => (
                               <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                             ))}
                           </tr>
@@ -955,10 +955,14 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         <tbody>
                           {dfsCompetitors.slice(0, 5).map((comp: any, i: number) => {
                             const etv = comp.estimated_traffic ?? comp.full_domain_metrics?.organic?.etv ?? 0
+                            const avgPos = comp.avg_position != null ? `#${comp.avg_position.toFixed(1)}` : '-'
+                            const vis = comp.visibility != null ? `${(comp.visibility * 100).toFixed(1)}%` : '-'
                             return (
                               <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                                 <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
                                 <td style={{ padding: '10px 14px', color: S.muted }}>{etv > 0 ? fmtNum(etv) : '—'}</td>
+                                <td style={{ padding: '10px 14px', color: S.muted }}>{avgPos}</td>
+                                <td style={{ padding: '10px 14px', color: S.muted }}>{vis}</td>
                                 <td style={{ padding: '10px 14px', color: S.muted }}>{comp.intersections?.toLocaleString() ?? '-'}</td>
                               </tr>
                             )

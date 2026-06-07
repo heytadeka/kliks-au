@@ -40,8 +40,9 @@ const JUNK_DOMAINS = [
   'wikipedia',
   // Review & directory sites
   'yelp', 'tripadvisor', 'eatability', 'dimmi', 'opentable', 'broadsheet', 'timeout', 'truelocal', 'yellowpages', 'whitepages',
+  'happycow', 'urbanspoon', 'goodfood', 'concrete-playground',
   // Food delivery
-  'ubereats', 'doordash', 'menulog', 'zomato',
+  'ubereats', 'doordash', 'menulog', 'zomato', 'deliveroo',
   // Travel & accommodation
   'booking', 'airbnb', 'expedia',
   // Classifieds & jobs
@@ -77,11 +78,11 @@ export async function POST(req: NextRequest) {
   let keywordTrends: any[] | null = null
   const backlinksSummary: any = null // disabled - requires separate DataForSEO subscription
 
-  // ── Phase 1: overview + keywords + competitors in parallel ──
-  const [overviewRes, keywordsRes, competitorsRes] = await Promise.allSettled([
+  // ── Phase 1: overview + keywords + brand name in parallel ──
+  const [overviewRes, keywordsRes, prospectRes] = await Promise.allSettled([
     dfsPost('/dataforseo_labs/google/domain_rank_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }]),
     dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 50, order_by: ['ranked_serp_element.serp_item.rank_group,asc'] }]),
-    dfsPost('/dataforseo_labs/google/competitors_domain/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 10 }]),
+    supabaseAdmin.from('prospects').select('brand_name').eq('id', prospect_id).single(),
   ])
 
   if (overviewRes.status === 'fulfilled') {
@@ -98,23 +99,60 @@ export async function POST(req: NextRequest) {
     console.error('[dataforseo] keywords failed:', (keywordsRes as PromiseRejectedResult).reason?.message)
   }
 
-  if (competitorsRes.status === 'fulfilled') {
-    const raw: any[] = competitorsRes.value?.tasks?.[0]?.result?.[0]?.items ?? []
-    raw.forEach((c: any) => {
-      const etv = c.full_domain_metrics?.organic?.etv ?? 0
-      console.log(`[dataforseo] competitor candidate: ${c.domain} etv=${Math.round(etv)}`)
-    })
-    competitors = raw.filter((c: any) => {
-      const d = (c.domain ?? '').toLowerCase()
-      const etv = c.full_domain_metrics?.organic?.etv ?? 0
-      return !isJunk(d) && etv <= 50_000_000 && d !== domain.toLowerCase()
-    }).slice(0, 5)
-    console.log('[dataforseo] competitors after filter:', competitors.map((c: any) => c.domain))
+  // Resolve brand name — used for branded keyword filtering + GMB lookup
+  const brandNameRaw: string = (prospectRes.status === 'fulfilled' ? prospectRes.value?.data?.brand_name : null) ?? domain
+  const brandNameClean = brandNameRaw
+    .toLowerCase()
+    .replace(/\.com\.au$/, '')
+    .replace(/\.com$/, '')
+    .replace(/\.au$/, '')
+    .trim()
+  console.log('[dataforseo] brand name for filtering:', brandNameClean)
+
+  // ── SERP Competitors (primary competitor discovery) ──
+  const topKwStrings = [...keywords]
+    .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
+    .map((item: any) => item.keyword_data?.keyword)
+    .filter((kw: string | undefined): kw is string => !!kw && !kw.toLowerCase().includes(brandNameClean))
+    .slice(0, 10)
+
+  console.log('[dataforseo] non-branded keywords for SERP competitors:', topKwStrings.length)
+
+  if (topKwStrings.length >= 3) {
+    try {
+      console.log('[dataforseo] SERP competitors using', topKwStrings.length, 'keywords')
+      const serpCompRes = await dfsPost('/dataforseo_labs/google/serp_competitors/live', [{
+        keywords: topKwStrings,
+        location_code: 2036,
+        language_code: 'en',
+        limit: 10,
+      }])
+      const serpCompItems: any[] = serpCompRes?.tasks?.[0]?.result?.[0]?.items ?? []
+      competitors = serpCompItems
+        .filter((item: any) => {
+          const d = (item.domain ?? '').toLowerCase()
+          return d !== domain.toLowerCase() && !isJunk(d) && (item.keywords_count ?? 0) >= 2
+        })
+        .sort((a: any, b: any) => (b.etv ?? 0) - (a.etv ?? 0))
+        .slice(0, 6)
+        .map((item: any) => ({
+          domain: item.domain,
+          intersections: item.keywords_count,
+          estimated_traffic: item.etv,
+          avg_position: item.avg_position,
+          visibility: item.visibility,
+          full_domain_metrics: null,
+          serp_source: true,
+        }))
+      console.log('[dataforseo] serp competitors after filter:', competitors.map((c: any) => c.domain))
+    } catch (e: any) {
+      console.error('[dataforseo] serp competitors failed:', e.message)
+    }
   } else {
-    console.error('[dataforseo] competitors failed:', (competitorsRes as PromiseRejectedResult).reason?.message)
+    console.log('[dataforseo] insufficient non-branded keywords (' + topKwStrings.length + '), skipping SERP competitors')
   }
 
-  // ── UPGRADE 4: Niche-based SERP competitor discovery if < 3 clean competitors ──
+  // ── Niche-based SERP fallback if < 3 clean competitors ──
   if (competitors.length < 3 && niche && niche.length >= 15) {
     try {
       console.log('[dataforseo] < 3 competitors, trying niche SERP search:', niche.slice(0, 60))
@@ -184,11 +222,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── FIX 2: Sort niche-discovered competitors first for better content gap analysis ──
+  // Sort: serp_source items first (by traffic desc), niche fallback items last
   competitors.sort((a: any, b: any) => {
-    if (a.niche_source && !b.niche_source) return -1
-    if (!a.niche_source && b.niche_source) return 1
-    return 0
+    if (a.serp_source && !b.serp_source) return -1
+    if (!a.serp_source && b.serp_source) return 1
+    return (b.estimated_traffic ?? 0) - (a.estimated_traffic ?? 0)
   })
 
   const topCompetitor = competitors[0]?.domain ?? null
@@ -320,14 +358,8 @@ export async function POST(req: NextRequest) {
   // ── GMB lookup (non-blocking) ──
   let gmbData: Record<string, any> = { found: false }
   try {
-    const { data: prospect } = await supabaseAdmin
-      .from('prospects')
-      .select('brand_name')
-      .eq('id', prospect_id)
-      .single()
-    const brandName = prospect?.brand_name ?? domain
     const gmbRes = await dfsPost('/business_data/google/my_business_info/live', [{
-      keyword: brandName,
+      keyword: brandNameRaw,
       location_name: 'Australia',
       language_code: 'en',
     }])

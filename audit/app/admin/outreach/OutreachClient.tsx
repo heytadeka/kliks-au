@@ -13,7 +13,7 @@ const S = {
   purple: '#644bff',
 }
 
-// ─── Status config ───────────────────────────────────────────────────────────
+// ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, string> = {
   audit_created: 'Audit Created',
@@ -56,7 +56,9 @@ const STATUS_COLOR: Record<string, string> = {
 
 const CLOSED = ['won', 'lost', 'not_a_fit']
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+const LOST_REASONS = ['Price', 'Timing', 'No response', 'Went elsewhere', 'Not a fit', 'Other']
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtDate(d: string | null | undefined): string {
   if (!d) return '—'
@@ -85,15 +87,22 @@ function dueDateColor(d: string | null | undefined): string {
   return S.muted
 }
 
+function daysOverdue(dateStr: string): number {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dateStr.split('T')[0] + 'T00:00:00')
+  return Math.floor((today.getTime() - due.getTime()) / 86_400_000)
+}
+
 const toInputDate = (d: Date) => d.toISOString().split('T')[0]
 const addDays = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return toInputDate(d) }
 
-function autoFollowUp(status: string): string | null {
+function autoFollowUp(status: string): string | null | undefined {
   if (status === 'email_sent') return addDays(3)
   if (status === 'no_response') return addDays(4)
   if (status === 'opened') return addDays(2)
   if (['responded', 'won', 'lost', 'not_a_fit'].includes(status)) return null
-  return undefined as any // undefined = don't change
+  return undefined // don't change
 }
 
 function slugify(s: string): string {
@@ -104,6 +113,17 @@ const inputStyle: React.CSSProperties = {
   width: '100%', background: '#0e0d1a', border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: 8, padding: '10px 14px', color: '#ffffff', fontFamily: 'Satoshi, sans-serif',
   fontSize: 14, outline: 'none', boxSizing: 'border-box',
+}
+
+const modalOverlayStyle: React.CSSProperties = {
+  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 50,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px',
+}
+
+const modalCardStyle: React.CSSProperties = {
+  background: '#1a1828', border: '1px solid rgba(100,75,255,0.2)',
+  borderRadius: 12, padding: '24px 28px', width: '100%', maxWidth: 560, position: 'relative',
+  overflowY: 'auto', maxHeight: '90vh',
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -125,7 +145,7 @@ function AdminNav({ active }: { active: 'audits' | 'pipeline' | 'outreach' }) {
   )
 }
 
-function StatTile({ label, value, color }: { label: string; value: number; color: string }) {
+function StatTile({ label, value, color }: { label: string; value: string | number; color: string }) {
   return (
     <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '20px 24px' }}>
       <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color }}>{value}</div>
@@ -153,6 +173,14 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
   const [form, setForm] = useState<NewForm>({ brand_name: '', store_url: '', prospect_name: '', prospect_email: '', niche: '', slug: '' })
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+
+  // Follow-up email modal
+  const [followUpModal, setFollowUpModal] = useState<any | null>(null)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+
+  // Won / Lost prompt modal
+  const [wonLostModal, setWonLostModal] = useState<{ id: string; type: 'won' | 'lost'; prevStatus: string } | null>(null)
+  const [wonLostValue, setWonLostValue] = useState('')
 
   // Keep slug in sync with brand name
   useEffect(() => {
@@ -184,7 +212,6 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
       }
       setShowForm(false)
       setForm({ brand_name: '', store_url: '', prospect_name: '', prospect_email: '', niche: '', slug: '' })
-      // Refresh server data so the new outreach_log row appears
       router.refresh()
     } finally {
       setCreating(false)
@@ -197,13 +224,44 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
   }
 
   async function handleStatusChange(id: string, newStatus: string) {
+    // Intercept won / lost to show prompt before saving
+    if (newStatus === 'won' || newStatus === 'lost') {
+      const current = rows.find(r => r.id === id)
+      setWonLostModal({ id, type: newStatus, prevStatus: current?.status ?? '' })
+      setWonLostValue('')
+      return
+    }
     const suggested = autoFollowUp(newStatus)
     const payload: Record<string, any> = { status: newStatus }
     if (suggested !== undefined) {
-      payload.follow_up_due_at = suggested // null clears, string sets
+      payload.follow_up_due_at = suggested
       setFollowUpMap(prev => ({ ...prev, [id]: suggested ?? '' }))
     }
     await updateRow(id, payload)
+  }
+
+  async function handleWonLostSave(skip = false) {
+    if (!wonLostModal) return
+    const { id, type } = wonLostModal
+    const payload: Record<string, any> = { status: type }
+    if (!skip && wonLostValue.trim()) {
+      if (type === 'won') payload.deal_value = parseFloat(wonLostValue)
+      if (type === 'lost') payload.lost_reason = wonLostValue
+    }
+    // Clear follow-up date for terminal statuses
+    const followUpDate = autoFollowUp(type)
+    if (followUpDate !== undefined) {
+      payload.follow_up_due_at = followUpDate
+      setFollowUpMap(prev => ({ ...prev, [id]: followUpDate ?? '' }))
+    }
+    await updateRow(id, payload)
+    setWonLostModal(null)
+  }
+
+  function handleCopy(key: string, text: string) {
+    navigator.clipboard.writeText(text)
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 2000)
   }
 
   const updateRow = useCallback(async (id: string, payload: Record<string, any>) => {
@@ -218,22 +276,151 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
     }
   }, [])
 
-  // Stats
+  // ── Stats ────────────────────────────────────────────────────────────────────
+
   const total = rows.length
   const opened = rows.filter(r => (r.open_count ?? 0) > 0).length
   const responded = rows.filter(r => ['responded', 'call_booked', 'proposal_sent', 'won'].includes(r.status)).length
-  const won = rows.filter(r => r.status === 'won').length
+  const wonRows = rows.filter(r => r.status === 'won')
+  const wonCount = wonRows.length
+  const revenueWon = wonRows.reduce((sum, r) => sum + (r.deal_value ?? 0), 0)
+  const closeRate = total > 0 ? Math.round((wonCount / total) * 100) : 0
+  const avgDealSize = wonCount > 0 ? Math.round(revenueWon / wonCount) : null
 
-  // Follow-up due
-  const tomorrow = new Date(Date.now() + 86_400_000)
-  const dueSoon = rows.filter(r =>
-    r.follow_up_due_at &&
-    new Date(r.follow_up_due_at) <= tomorrow &&
-    !CLOSED.includes(r.status)
-  )
+  // ── Overdue rows (strictly past today, date comparison only) ─────────────────
+
+  const todayStr = new Date().toISOString().split('T')[0]
+  const overdueRows = rows.filter(r => {
+    if (!r.follow_up_due_at || CLOSED.includes(r.status)) return false
+    return r.follow_up_due_at.split('T')[0] < todayStr
+  })
+
+  // ── Follow-up email drafts ───────────────────────────────────────────────────
+
+  const draft1Subject = followUpModal ? `re: your ${followUpModal.brand_name} audit` : ''
+  const draft1Body = followUpModal
+    ? `Hey ${followUpModal.prospect_name},\n\nJust checking this didn't get buried.\n\nPut together a few things worth knowing about ${followUpModal.brand_name}: kliks.com.au/audit/${followUpModal.audit_slug}\nAccess code: ${followUpModal.prospect_email}\n\nWorth a look.\n\nAdam`
+    : ''
+  const draft2Subject = 'closing this out'
+  const draft2Body = followUpModal
+    ? `Hey ${followUpModal.prospect_name},\n\nGoing to close out the ${followUpModal.brand_name} audit on my end.\n\nIf the timing wasn't right, no worries at all. Happy to revisit whenever it makes sense.\n\nAdam`
+    : ''
 
   return (
     <div style={{ minHeight: '100vh', background: S.bg, color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
+
+      {/* ── Follow-up Email Modal ─────────────────────────────────────────────── */}
+      {followUpModal && (
+        <div style={modalOverlayStyle} onClick={() => setFollowUpModal(null)}>
+          <div style={{ ...modalCardStyle, maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, margin: 0 }}>
+                Follow-up Emails - {followUpModal.brand_name}
+              </h2>
+              <button onClick={() => setFollowUpModal(null)}
+                style={{ background: 'none', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: 4 }}>
+                ×
+              </button>
+            </div>
+
+            {/* Draft 1 */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Follow-up 1</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>Subject: {draft1Subject}</div>
+              <pre style={{ background: '#0e0d1a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px', fontSize: 14, lineHeight: 1.8, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'Satoshi, sans-serif' }}>
+                {draft1Body}
+              </pre>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button onClick={() => handleCopy('d1-subject', draft1Subject)}
+                  style={{ background: copiedKey === 'd1-subject' ? S.orangeDark : 'rgba(255,67,21,0.12)', border: '1px solid rgba(255,67,21,0.3)', color: S.orange, borderRadius: 100, padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  {copiedKey === 'd1-subject' ? 'Copied' : 'Copy Subject'}
+                </button>
+                <button onClick={() => handleCopy('d1-body', draft1Body)}
+                  style={{ background: copiedKey === 'd1-body' ? S.orangeDark : S.orange, border: 'none', color: '#fff', borderRadius: 100, padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  {copiedKey === 'd1-body' ? 'Copied' : 'Copy Email'}
+                </button>
+              </div>
+            </div>
+
+            {/* Draft 2 */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Breakup</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>Subject: {draft2Subject}</div>
+              <pre style={{ background: '#0e0d1a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px', fontSize: 14, lineHeight: 1.8, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'Satoshi, sans-serif' }}>
+                {draft2Body}
+              </pre>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button onClick={() => handleCopy('d2-subject', draft2Subject)}
+                  style={{ background: copiedKey === 'd2-subject' ? S.orangeDark : 'rgba(255,67,21,0.12)', border: '1px solid rgba(255,67,21,0.3)', color: S.orange, borderRadius: 100, padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  {copiedKey === 'd2-subject' ? 'Copied' : 'Copy Subject'}
+                </button>
+                <button onClick={() => handleCopy('d2-body', draft2Body)}
+                  style={{ background: copiedKey === 'd2-body' ? S.orangeDark : S.orange, border: 'none', color: '#fff', borderRadius: 100, padding: '5px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                  {copiedKey === 'd2-body' ? 'Copied' : 'Copy Email'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Won / Lost Modal ──────────────────────────────────────────────────── */}
+      {wonLostModal && (
+        <div style={modalOverlayStyle} onClick={() => setWonLostModal(null)}>
+          <div style={{ ...modalCardStyle, maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: S.white, margin: 0 }}>
+                {wonLostModal.type === 'won' ? 'Deal value?' : 'Reason for losing?'}
+              </h2>
+              <button onClick={() => setWonLostModal(null)}
+                style={{ background: 'none', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: 4 }}>
+                ×
+              </button>
+            </div>
+
+            {wonLostModal.type === 'won' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+                <input
+                  type="number"
+                  placeholder="e.g. 3500"
+                  value={wonLostValue}
+                  onChange={e => setWonLostValue(e.target.value)}
+                  style={{ ...inputStyle, width: 'auto', flex: 1 }}
+                  autoFocus
+                />
+                <span style={{ color: S.muted, fontSize: 14, whiteSpace: 'nowrap' }}>AUD</span>
+              </div>
+            ) : (
+              <div style={{ marginBottom: 24 }}>
+                <select
+                  value={wonLostValue}
+                  onChange={e => setWonLostValue(e.target.value)}
+                  style={{ ...inputStyle, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties}
+                  autoFocus
+                >
+                  <option value="">Select a reason...</option>
+                  {LOST_REASONS.map(r => (
+                    <option key={r} value={r} style={{ background: S.bg2 }}>{r}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <button onClick={() => handleWonLostSave(false)}
+                style={{ background: S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                Save
+              </button>
+              <button onClick={() => handleWonLostSave(true)}
+                style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top nav */}
       <nav style={{ background: 'rgba(14,13,26,0.95)', borderBottom: `1px solid ${S.border}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
         <a href="/" style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, color: S.white, textDecoration: 'none' }}>KLIKS<span style={{ color: S.orange }}>.</span></a>
@@ -296,52 +483,71 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
           </div>
         )}
 
-        {/* Follow-up due alert */}
-        {dueSoon.length > 0 && (
+        {/* ── Follow-up Due Alert (overdue only, strictly past today) ─────────── */}
+        {overdueRows.length > 0 && (
           <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '16px 20px', marginBottom: 32 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', marginBottom: 12 }}>● Follow-up Due</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {dueSoon.map(r => (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 14, color: S.white, fontWeight: 500, minWidth: 160 }}>{r.brand_name}</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: STATUS_BG[r.status] ?? STATUS_BG.audit_created, color: STATUS_COLOR[r.status] ?? S.muted }}>
-                    {STATUS_LABELS[r.status] ?? r.status}
-                  </span>
-                  <span style={{ fontSize: 12, color: S.muted }}>Due: {fmtDate(r.follow_up_due_at)}</span>
-                  {!['email_sent', 'opened', 'responded', 'call_booked', 'proposal_sent', 'won'].includes(r.status) && (
-                    <button onClick={() => updateRow(r.id, { status: 'email_sent' })}
-                      style={{ background: 'rgba(99,102,241,0.15)', border: 'none', color: '#818cf8', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
-                      Mark Sent
-                    </button>
-                  )}
-                  {['email_sent', 'opened'].includes(r.status) && (
-                    <button onClick={() => updateRow(r.id, { status: 'responded' })}
-                      style={{ background: 'rgba(59,130,246,0.15)', border: 'none', color: '#60a5fa', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
-                      Mark Responded
-                    </button>
-                  )}
-                </div>
-              ))}
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', marginBottom: 12 }}>Follow-up Overdue</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {overdueRows.map(r => {
+                const days = daysOverdue(r.follow_up_due_at)
+                return (
+                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <span
+                      onClick={() => document.getElementById(`outreach-row-${r.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                      style={{ fontSize: 14, color: S.white, fontWeight: 500, minWidth: 160, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(255,255,255,0.2)', textUnderlineOffset: 3 }}
+                    >
+                      {r.brand_name}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: STATUS_BG[r.status] ?? STATUS_BG.audit_created, color: STATUS_COLOR[r.status] ?? S.muted }}>
+                      {STATUS_LABELS[r.status] ?? r.status}
+                    </span>
+                    <span style={{ fontSize: 13, color: '#ef4444' }}>
+                      {days === 1 ? '1 day overdue' : `${days} days overdue`}
+                    </span>
+                    {['audit_created', 'email_sent'].includes(r.status) && (
+                      <button
+                        onClick={() => updateRow(r.id, { status: 'email_sent' })}
+                        style={{ background: 'rgba(99,102,241,0.15)', border: 'none', color: '#818cf8', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
+                        Mark Sent
+                      </button>
+                    )}
+                    {['opened', 'no_response'].includes(r.status) && (
+                      <button
+                        onClick={() => updateRow(r.id, { status: 'no_response', follow_up_due_at: addDays(4) })}
+                        style={{ background: 'rgba(239,68,68,0.15)', border: 'none', color: '#f87171', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
+                        Follow Up Sent
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
 
-        {/* Stats */}
+        {/* ── Stats: Revenue row ───────────────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
+          <StatTile label="Revenue Won" value={`$${revenueWon.toLocaleString()}`} color="#22c55e" />
+          <StatTile label="Close Rate" value={`${closeRate}%`} color={S.purple} />
+          <StatTile label="Avg Deal Size" value={avgDealSize !== null ? `$${avgDealSize.toLocaleString()}` : '-'} color={S.orange} />
+        </div>
+
+        {/* ── Stats: Activity row ──────────────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 40 }}>
           <StatTile label="Total Outreach" value={total} color={S.purple} />
           <StatTile label="Opened" value={opened} color={S.orange} />
           <StatTile label="Responded" value={responded} color="#6366f1" />
-          <StatTile label="Won" value={won} color="#22c55e" />
+          <StatTile label="Won" value={wonCount} color="#22c55e" />
         </div>
 
-        {/* Table */}
+        {/* ── Table ────────────────────────────────────────────────────────────── */}
         {rows.length === 0 ? (
           <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 48, textAlign: 'center' }}>
             <p style={{ color: S.muted, fontSize: 14 }}>No outreach yet. Create audits from the Pipeline tab to start tracking.</p>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 1100 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 1200 }}>
               <thead>
                 <tr style={{ background: S.bg }}>
                   {['Brand', 'Status', 'Opens', 'Sent', 'Follow-up', 'Notes', 'Actions'].map(h => (
@@ -354,7 +560,7 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
                   const openCount = row.open_count ?? 0
                   const openColor = openCount >= 3 ? S.orange : S.muted
                   return (
-                    <tr key={row.id} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                    <tr key={row.id} id={`outreach-row-${row.id}`} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
 
                       {/* Brand */}
                       <td style={{ padding: '12px 14px', minWidth: 160 }}>
@@ -452,16 +658,26 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
 
                       {/* Actions */}
                       <td style={{ padding: '12px 14px' }}>
-                        {row.audit_slug && (
-                          <a
-                            href={`/audit/${row.audit_slug}/report`}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: S.muted, borderRadius: 6, padding: '4px 10px', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}
-                          >
-                            View Audit
-                          </a>
-                        )}
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {row.audit_slug && (
+                            <a
+                              href={`/audit/${row.audit_slug}/report`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: S.muted, borderRadius: 6, padding: '4px 10px', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                            >
+                              View Audit
+                            </a>
+                          )}
+                          {row.audit_slug && (
+                            <button
+                              onClick={() => setFollowUpModal(row)}
+                              style={{ background: 'rgba(255,67,21,0.1)', border: '1px solid rgba(255,67,21,0.25)', color: S.orange, borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}
+                            >
+                              Follow-up
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
