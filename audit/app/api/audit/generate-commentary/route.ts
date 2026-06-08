@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
   const organicKeywords = Math.max(overviewCount, keywordsArrayCount)
   const monthlyTraffic = dfsOverview?.metrics?.organic?.etv ?? 0
 
+  const backlinksUnavailable = !cache.backlinks_summary || Object.keys(cache.backlinks_summary ?? {}).length === 0
+
   const competitorDomains = dfsCompetitors.length > 0
     ? dfsCompetitors.slice(0, 5).map((c: any) => c.domain).filter(Boolean).join(', ')
     : 'None found'
@@ -124,6 +126,7 @@ Top Competitor Traffic Gap: ${topCompetitorDomain ? `${topCompetitorDomain} gets
 Content Gap Opportunities: ${topGapKeywords}
 Close Keywords (pos 6-15, high volume): ${closeKeywords.length > 0 ? closeKeywords.join(', ') : 'None'}
 Keyword Movement: ${keywordTrends.length > 0 ? `${gaining} gaining, ${stable} stable, ${losing} losing` : 'Trend data not available'}
+Referring Domains: ${backlinksUnavailable ? 'null (backlinks subscription inactive - do not comment on backlink count)' : (dfsOverview?.metrics?.referring_domains ?? 0).toLocaleString()}
 
 Generate exactly these 6 keys as JSON:
 {

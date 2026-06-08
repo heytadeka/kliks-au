@@ -54,7 +54,7 @@ const JUNK_DOMAINS = [
   'wikipedia',
   // Review & directory sites
   'yelp', 'tripadvisor', 'eatability', 'dimmi', 'opentable', 'broadsheet', 'timeout', 'truelocal', 'yellowpages', 'whitepages',
-  'happycow', 'urbanspoon', 'goodfood', 'concrete-playground',
+  'happycow', 'urbanspoon', 'goodfood', 'concrete-playground', 'localsearch', 'storetodoor',
   // Food delivery
   'ubereats', 'doordash', 'menulog', 'zomato', 'deliveroo',
   // Travel & accommodation
@@ -207,7 +207,7 @@ export async function POST(req: NextRequest) {
     try {
       const btRes = await dfsPost('/dataforseo_labs/google/bulk_traffic_estimation/live', [{
         targets: competitorDomainsForTraffic,
-        location_code: locationCode,
+        location_code: 2036, // country-level only — city codes not supported by this endpoint
         language_code: 'en',
         item_types: ['organic'],
       }])

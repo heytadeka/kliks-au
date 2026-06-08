@@ -99,7 +99,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const keywordTrends: any[] = useMemo(() => cache?.dataforseo_keyword_trends ?? [], [cache?.dataforseo_keyword_trends])
   const seoFindings = content?.seo_findings as any[] | null
   const gmbData = cache?.gmb_data as any
-  // backlinksSummary removed - backlinks subscription not available
+  const backlinksSummary = cache?.backlinks_summary
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
 
@@ -666,6 +666,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     const kwCount = overviewCount > 0 ? overviewCount : dfsKeywords.length
                     const kwEtv = overviewEtv > 0 ? overviewEtv : dfsKeywords.reduce((sum: number, kw: any) => sum + (kw.keyword_data?.keyword_info?.search_volume ?? 0), 0)
                     const refDomains = dfsOverview.metrics?.referring_domains ?? 0
+                    const backlinksUnavailable = !backlinksSummary || Object.keys(backlinksSummary).length === 0
                     return [
                       {
                         label: 'Organic Keywords', value: kwCount.toLocaleString(),
@@ -686,11 +687,14 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         context: 'What this traffic would cost in Google Ads',
                       },
                       {
-                        label: 'Referring Domains', value: refDomains.toLocaleString(),
-                        context: refDomains < 20
-                          ? 'Very few backlinks - authority building needed'
-                          : refDomains <= 100 ? 'Building authority - keep going'
-                          : 'Good backlink profile',
+                        label: 'Referring Domains',
+                        value: backlinksUnavailable ? '-' : refDomains.toLocaleString(),
+                        context: backlinksUnavailable
+                          ? 'Backlink data unavailable'
+                          : refDomains < 20
+                            ? 'Very few backlinks - authority building needed'
+                            : refDomains <= 100 ? 'Building authority - keep going'
+                            : 'Good backlink profile',
                       },
                     ]
                   })().map(item => (
