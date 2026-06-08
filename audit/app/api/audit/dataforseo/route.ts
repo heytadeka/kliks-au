@@ -145,22 +145,34 @@ export async function POST(req: NextRequest) {
         limit: 10,
       }])
       const serpCompItems: any[] = serpCompRes?.tasks?.[0]?.result?.[0]?.items ?? []
+      console.log('[dataforseo] serp competitors raw count:', serpCompItems.length)
+      if (serpCompItems[0]) {
+        const s = serpCompItems[0]
+        console.log('[dataforseo] serp competitor sample fields:', JSON.stringify({
+          domain: s.domain, avg_position: s.avg_position, visibility: s.visibility,
+          keywords_count: s.keywords_count, intersections: s.intersections, etv: s.etv,
+        }))
+      }
       competitors = serpCompItems
         .filter((item: any) => {
           const d = (item.domain ?? '').toLowerCase()
-          return d !== domain.toLowerCase() && !isJunk(d) && (item.keywords_count ?? 0) >= 2
+          const kwCount = item.keywords_count ?? item.intersections ?? 0
+          return d !== domain.toLowerCase() && !isJunk(d) && kwCount >= 2
         })
         .sort((a: any, b: any) => (b.etv ?? 0) - (a.etv ?? 0))
         .slice(0, 6)
         .map((item: any) => ({
           domain: item.domain,
-          intersections: item.keywords_count,
-          estimated_traffic: item.etv,
-          avg_position: item.avg_position,
-          visibility: item.visibility,
+          intersections: item.keywords_count ?? item.intersections ?? null,
+          estimated_traffic: item.etv ?? null,
+          avg_position: item.avg_position ?? null,
+          visibility: item.visibility ?? null,
           full_domain_metrics: null,
           serp_source: true,
         }))
+      if (competitors[0]) {
+        console.log('[dataforseo] serp competitor mapped sample:', JSON.stringify(competitors[0]))
+      }
       console.log('[dataforseo] serp competitors after filter:', competitors.map((c: any) => c.domain))
     } catch (e: any) {
       console.error('[dataforseo] serp competitors failed:', e.message)
