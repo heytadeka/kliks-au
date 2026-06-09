@@ -60,23 +60,17 @@ export async function POST(req: NextRequest) {
   const h = { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! }
   const pid = prospect.id
 
-  // Chain: data jobs first, then commentary. waitUntil keeps function alive until done.
+  // Fire all background jobs independently.
+  // dataforseo-core handles: overview, keywords, SERP competitors, content gap (~25-30s)
+  // dataforseo-enrichment handles: keyword trends, GMB, then fires commentary when done (~15-20s)
+  // Each dataforseo route fetches the prospect record itself — only prospect_id needed.
   console.log('[create] firing background jobs for prospect_id:', pid, 'base:', base)
-  waitUntil(
-    Promise.allSettled([
-      fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
-      fetch(`${base}/api/audit/crawl`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }),
-      fetch(`${base}/api/audit/dataforseo`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url, niche }) }),
-      fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, niche, store_url }) }),
-      fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, brand_name, store_url }) }),
-    ]).then(() =>
-      fetch(`${base}/api/audit/generate-commentary`, {
-        method: 'POST',
-        headers: h,
-        body: JSON.stringify({ prospect_id: pid }),
-      })
-    ).catch((e: any) => console.error('[create] background jobs failed:', e.message))
-  )
+  waitUntil(fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }))
+  waitUntil(fetch(`${base}/api/audit/crawl`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }))
+  waitUntil(fetch(`${base}/api/audit/dataforseo-core`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
+  waitUntil(fetch(`${base}/api/audit/dataforseo-enrichment`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
+  waitUntil(fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, niche, store_url }) }))
+  waitUntil(fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, brand_name, store_url }) }))
 
   return NextResponse.json({ success: true, prospect_id: prospect.id, slug: prospect.slug, brand_name })
 }
