@@ -58,8 +58,9 @@ export async function POST(req: NextRequest) {
   dateFrom.setMonth(dateFrom.getMonth() - 3)
   const dateFromStr = dateFrom.toISOString().split('T')[0]
 
-  // ── Phase 1 (parallel): current keywords + historical keywords + GMB ──
-  const [currentKwRes, histRes, gmbRes] = await Promise.allSettled([
+  // ── Phase 1 (parallel): current keywords + historical keywords ──
+  // GMB is NOT included here — it can hang indefinitely and has its own timeout below
+  const [currentKwRes, histRes] = await Promise.allSettled([
     dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{
       target: domain,
       location_code: 2036,
@@ -75,11 +76,6 @@ export async function POST(req: NextRequest) {
       order_by: ['ranked_serp_element.serp_item.rank_group,asc'],
       historical_serp_mode: true,
       date_from: dateFromStr,
-    }]),
-    dfsPost('/business_data/google/my_business_info/live', [{
-      keyword: brandNameRaw ?? domain,
-      location_name: 'Australia',
-      language_code: 'en',
     }]),
   ])
 
@@ -118,28 +114,37 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo-enrichment] historical keywords not available (plan/endpoint):', (histRes as PromiseRejectedResult).reason?.message)
   }
 
-  // Process GMB
-  if (gmbRes.status === 'fulfilled' && gmbRes.value) {
-    try {
-      const gmbResult = gmbRes.value?.tasks?.[0]?.result?.[0]?.items?.[0] ?? null
-      if (gmbResult) {
-        gmbData = {
-          found: true,
-          rating: gmbResult.rating?.value ?? null,
-          review_count: gmbResult.rating?.votes_count ?? null,
-          category: gmbResult.category ?? null,
-          address: gmbResult.address ?? null,
-          phone: gmbResult.phone ?? null,
-          is_claimed: gmbResult.is_claimed ?? null,
-          place_id: gmbResult.place_id ?? null,
-        }
+  // ── GMB lookup with 10s hard timeout (non-blocking on failure) ──
+  try {
+    const auth = Buffer.from(`${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`).toString('base64')
+    const gmbController = new AbortController()
+    const gmbTimeout = setTimeout(() => gmbController.abort(), 10_000)
+    const gmbFetch = await fetch(`${DATAFORSEO_BASE}/business_data/google/my_business_info/live`, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([{ keyword: brandNameRaw ?? domain, location_name: 'Australia', language_code: 'en' }]),
+      signal: gmbController.signal,
+    })
+    clearTimeout(gmbTimeout)
+    const gmbJson = await gmbFetch.json()
+    const gmbResult = gmbJson?.tasks?.[0]?.result?.[0]?.items?.[0] ?? null
+    if (gmbResult) {
+      gmbData = {
+        found: true,
+        rating: gmbResult.rating?.value ?? null,
+        review_count: gmbResult.rating?.votes_count ?? null,
+        category: gmbResult.category ?? null,
+        address: gmbResult.address ?? null,
+        phone: gmbResult.phone ?? null,
+        is_claimed: gmbResult.is_claimed ?? null,
+        place_id: gmbResult.place_id ?? null,
       }
-      console.log('[dataforseo-enrichment] gmb:', gmbData.found ? `found (${gmbData.rating}★, ${gmbData.review_count} reviews)` : 'not found')
-    } catch (e: any) {
-      console.error('[dataforseo-enrichment] gmb processing failed:', e.message)
     }
-  } else if (gmbRes.status === 'rejected') {
-    console.error('[dataforseo-enrichment] gmb lookup failed:', (gmbRes as PromiseRejectedResult).reason?.message)
+    console.log('[dataforseo-enrichment] gmb:', gmbData.found ? `found (${gmbData.rating}★, ${gmbData.review_count} reviews)` : 'not found')
+  } catch (e: any) {
+    const isTimeout = e.name === 'AbortError'
+    console.log('[dataforseo-enrichment] gmb: ' + (isTimeout ? 'timed out after 10s, skipping' : `failed - ${e.message}`))
+    // gmbData stays { found: false } — continue to write + commentary regardless
   }
 
   // ── Write enrichment data to cache ──

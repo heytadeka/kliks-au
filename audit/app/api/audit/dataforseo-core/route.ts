@@ -144,9 +144,7 @@ export async function POST(req: NextRequest) {
       console.log('[dataforseo-core] SERP competitors using', topKwStrings.length, 'keywords')
       const serpCompRes = await dfsPost('/dataforseo_labs/google/serp_competitors/live', [{
         keywords: topKwStrings,
-        // location_code not supported by this endpoint — omitted intentionally
-        language_code: 'en',
-        limit: 10,
+        // No location or other params — endpoint only accepts keywords
       }])
       const serpCompItems: any[] = serpCompRes?.tasks?.[0]?.result?.[0]?.items ?? []
       console.log('[dataforseo-core] serp competitors raw count:', serpCompItems.length)
