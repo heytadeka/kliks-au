@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
     const gmbFetch = await fetch(`${DATAFORSEO_BASE}/business_data/google/my_business_info/live`, {
       method: 'POST',
       headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify([{ keyword: brandNameRaw ?? domain, location_name: 'Australia', language_code: 'en' }]),
+      body: JSON.stringify([{ keyword: brandNameRaw ?? domain, location_code: 2036, language_code: 'en' }]),
       signal: gmbController.signal,
     })
     clearTimeout(gmbTimeout)
