@@ -36,13 +36,13 @@ export async function POST(req: NextRequest) {
   // Fetch prospect record
   const { data: prospect } = await supabaseAdmin
     .from('prospects')
-    .select('store_url, brand_name, niche, location')
+    .select('store_url, brand_name')
     .eq('id', prospect_id)
     .single()
 
   if (!prospect) return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
 
-  const { store_url, brand_name: brandNameRaw, niche, location } = prospect
+  const { store_url, brand_name: brandNameRaw } = prospect
   const domain = store_url
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
