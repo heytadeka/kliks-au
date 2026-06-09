@@ -29,7 +29,9 @@ async function dfsPost(path: string, body: any[]) {
 }
 
 export async function POST(req: NextRequest) {
-  const { prospect_id } = await req.json()
+  const body = await req.json()
+  const { prospect_id } = body
+  console.log('[dataforseo-enrichment] route hit — prospect_id:', prospect_id ?? 'missing')
 
   if (!prospect_id) return NextResponse.json({ error: 'Missing prospect_id' }, { status: 400 })
 
