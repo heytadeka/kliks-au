@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       console.log('[dataforseo] SERP competitors using', topKwStrings.length, 'keywords')
       const serpCompRes = await dfsPost('/dataforseo_labs/google/serp_competitors/live', [{
         keywords: topKwStrings,
-        location_code: locationCode,
+        // location_code not supported by this endpoint — omitted intentionally
         language_code: 'en',
         limit: 10,
       }])
