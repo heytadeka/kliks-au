@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   try {
     const auth = Buffer.from(`${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`).toString('base64')
     const gmbController = new AbortController()
-    const gmbTimeout = setTimeout(() => gmbController.abort(), 10_000)
+    const gmbTimeout = setTimeout(() => gmbController.abort(), 25_000)
     const gmbFetch = await fetch(`${DATAFORSEO_BASE}/business_data/google/my_business_info/live`, {
       method: 'POST',
       headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' },
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo-enrichment] gmb:', gmbData.found ? `found (${gmbData.rating}★, ${gmbData.review_count} reviews)` : 'not found')
   } catch (e: any) {
     const isTimeout = e.name === 'AbortError'
-    console.log('[dataforseo-enrichment] gmb: ' + (isTimeout ? 'timed out after 10s, skipping' : `failed - ${e.message}`))
+    console.log('[dataforseo-enrichment] gmb: ' + (isTimeout ? 'timed out after 25s, skipping' : `failed - ${e.message}`))
     // gmbData stays { found: false } — continue to write + commentary regardless
   }
 

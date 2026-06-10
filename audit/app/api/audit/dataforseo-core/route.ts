@@ -156,11 +156,13 @@ export async function POST(req: NextRequest) {
           keywords_count: s.keywords_count, intersections: s.intersections, etv: s.etv,
         }))
       }
+      const normalise = (d: string) => d.toLowerCase().replace(/^www\./, '')
+      const normalisedDomain = normalise(domain)
       competitors = serpCompItems
         .filter((item: any) => {
-          const d = (item.domain ?? '').toLowerCase()
+          const d = normalise(item.domain ?? '')
           const kwCount = item.keywords_count ?? item.intersections ?? 0
-          return d !== domain.toLowerCase() && !isJunk(d) && kwCount >= 2
+          return d !== normalisedDomain && !isJunk(d) && kwCount >= 2
         })
         .sort((a: any, b: any) => (b.etv ?? 0) - (a.etv ?? 0))
         .slice(0, 6)
@@ -196,15 +198,15 @@ export async function POST(req: NextRequest) {
         os: 'windows',
       }])
       const serpItems: any[] = serpRes?.tasks?.[0]?.result?.[0]?.items ?? []
-      const existingDomains = new Set(competitors.map((c: any) => (c.domain ?? '').toLowerCase()))
-      existingDomains.add(domain.toLowerCase())
+      const existingDomains = new Set(competitors.map((c: any) => normalise(c.domain ?? '')))
+      existingDomains.add(normalisedDomain)
       const supplementary: any[] = []
       for (const item of serpItems) {
         if (competitors.length + supplementary.length >= 5) break
         if (item.type !== 'organic') continue
-        const d = (item.domain ?? '').toLowerCase()
-        if (!d || isJunk(d) || existingDomains.has(d)) continue
-        existingDomains.add(d)
+        const dn = normalise(item.domain ?? '')
+        if (!dn || isJunk(dn) || existingDomains.has(dn)) continue
+        existingDomains.add(dn)
         supplementary.push({ domain: item.domain, niche_source: true })
       }
       if (supplementary.length > 0) {

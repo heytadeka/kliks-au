@@ -900,7 +900,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                           {dfsCompetitors.slice(0, 5).map((comp: any, i: number) => {
                             const etv = comp.estimated_traffic ?? comp.full_domain_metrics?.organic?.etv ?? 0
                             const avgPos = comp.avg_position != null ? `#${comp.avg_position.toFixed(1)}` : '-'
-                            const vis = comp.visibility != null ? `${(comp.visibility * 100).toFixed(1)}%` : '-'
+                            const vis = comp.visibility != null ? comp.visibility.toFixed(1) : '-'
                             return (
                               <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                                 <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
