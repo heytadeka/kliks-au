@@ -17,13 +17,13 @@ export async function POST(req: NextRequest) {
   // Fetch prospect record
   const { data: prospect } = await supabaseAdmin
     .from('prospects')
-    .select('store_url')
+    .select('store_url, brand_name')
     .eq('id', prospect_id)
     .single()
 
   if (!prospect) return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
 
-  const { store_url } = prospect
+  const { store_url, brand_name: brandNameRaw } = prospect
   const domain = store_url
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
 
   let gmbData: Record<string, any> = { found: false }
 
-  console.log('[dataforseo-enrichment] gmb keyword:', domain)
+  const gmbKeyword = brandNameRaw ?? domain
+  console.log('[dataforseo-enrichment] gmb keyword:', gmbKeyword)
 
   // ── GMB lookup with 10s hard timeout (non-blocking on failure) ──
   try {
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     const gmbFetch = await fetch(`${DATAFORSEO_BASE}/business_data/google/my_business_info/live`, {
       method: 'POST',
       headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify([{ keyword: domain, location_code: 2036, language_code: 'en' }]),
+      body: JSON.stringify([{ keyword: gmbKeyword, location_code: 2036, language_code: 'en' }]),
       signal: gmbController.signal,
     })
     clearTimeout(gmbTimeout)
