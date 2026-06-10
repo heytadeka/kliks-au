@@ -142,6 +142,7 @@ export async function POST(req: NextRequest) {
   if (topKwStrings.length >= 3) {
     try {
       console.log('[dataforseo-core] SERP competitors using', topKwStrings.length, 'keywords')
+      console.log('[dataforseo-core] serp_competitors request body:', JSON.stringify([{ keywords: topKwStrings }]))
       const serpCompRes = await dfsPost('/dataforseo_labs/google/serp_competitors/live', [{
         keywords: topKwStrings,
         // No location or other params — endpoint only accepts keywords
