@@ -90,6 +90,9 @@ export async function POST(req: NextRequest) {
     .replace(/^www\./, '')
     .replace(/\/$/, '')
 
+  const normalise = (d: string) => d.toLowerCase().replace(/^www\./, '')
+  const normalisedDomain = normalise(domain)
+
   console.log('[dataforseo-core] prospect_id:', prospect_id, 'domain:', domain, 'niche:', niche?.slice(0, 60))
 
   let overview = null
@@ -156,8 +159,6 @@ export async function POST(req: NextRequest) {
           keywords_count: s.keywords_count, intersections: s.intersections, etv: s.etv,
         }))
       }
-      const normalise = (d: string) => d.toLowerCase().replace(/^www\./, '')
-      const normalisedDomain = normalise(domain)
       competitors = serpCompItems
         .filter((item: any) => {
           const d = normalise(item.domain ?? '')
