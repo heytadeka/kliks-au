@@ -52,69 +52,7 @@ export async function POST(req: NextRequest) {
 
   console.log('[dataforseo-enrichment] prospect_id:', prospect_id, 'domain:', domain)
 
-  let keywordTrends: any[] | null = null
   let gmbData: Record<string, any> = { found: false }
-
-  // Date for historical: 3 months ago
-  const dateFrom = new Date()
-  dateFrom.setMonth(dateFrom.getMonth() - 3)
-  const dateFromStr = dateFrom.toISOString().split('T')[0]
-
-  // ── Phase 1 (parallel): current keywords + historical keywords ──
-  // GMB is NOT included here — it can hang indefinitely and has its own timeout below
-  const [currentKwRes, histRes] = await Promise.allSettled([
-    dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{
-      target: domain,
-      location_code: 2036,
-      language_code: 'en',
-      limit: 50,
-      order_by: ['ranked_serp_element.serp_item.rank_group,asc'],
-    }]),
-    dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{
-      target: domain,
-      location_code: 2036,
-      language_code: 'en',
-      limit: 50,
-      order_by: ['ranked_serp_element.serp_item.rank_group,asc'],
-      historical_serp_mode: true,
-      date_from: dateFromStr,
-    }]),
-  ])
-
-  // Process keyword trends
-  let keywords: any[] = []
-  if (currentKwRes.status === 'fulfilled') {
-    keywords = currentKwRes.value?.tasks?.[0]?.result?.[0]?.items ?? []
-    console.log('[dataforseo-enrichment] current keywords count:', keywords.length)
-  } else {
-    console.error('[dataforseo-enrichment] current keywords failed:', (currentKwRes as PromiseRejectedResult).reason?.message)
-  }
-
-  if (histRes.status === 'fulfilled' && histRes.value) {
-    try {
-      const histItems: any[] = histRes.value?.tasks?.[0]?.result?.[0]?.items ?? []
-      console.log('[dataforseo-enrichment] historical keywords count:', histItems.length)
-      const histMap = new Map<string, number>()
-      for (const item of histItems) {
-        const kw = item.keyword_data?.keyword
-        const pos = item.ranked_serp_element?.serp_item?.rank_group
-        if (kw && pos != null) histMap.set(kw, pos)
-      }
-      keywordTrends = keywords.map((item: any) => {
-        const kw = item.keyword_data?.keyword
-        const currentPos = item.ranked_serp_element?.serp_item?.rank_group ?? null
-        const prevPos = kw ? (histMap.get(kw) ?? null) : null
-        // delta > 0 = gained positions (lower number is better), delta < 0 = lost positions
-        const delta = (prevPos != null && currentPos != null) ? prevPos - currentPos : null
-        return { keyword: kw, current_pos: currentPos, prev_pos: prevPos, delta }
-      })
-      console.log('[dataforseo-enrichment] trends computed:', keywordTrends.length)
-    } catch (e: any) {
-      console.error('[dataforseo-enrichment] trends processing failed:', e.message)
-    }
-  } else if (histRes.status === 'rejected') {
-    console.log('[dataforseo-enrichment] historical keywords not available (plan/endpoint):', (histRes as PromiseRejectedResult).reason?.message)
-  }
 
   // ── GMB lookup with 10s hard timeout (non-blocking on failure) ──
   try {
@@ -154,7 +92,6 @@ export async function POST(req: NextRequest) {
     .from('audit_data_cache')
     .upsert({
       prospect_id,
-      dataforseo_keyword_trends: keywordTrends && keywordTrends.length > 0 ? keywordTrends : null,
       gmb_data: gmbData,
     }, { onConflict: 'prospect_id' })
 
@@ -181,7 +118,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    trends: keywordTrends?.length ?? 0,
     gmb: gmbData.found,
   })
 }
