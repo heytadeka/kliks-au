@@ -96,22 +96,12 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const dfsContentGap: any[] = useMemo(() => cache?.dataforseo_content_gap ?? [], [cache?.dataforseo_content_gap])
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const keywordTrends: any[] = useMemo(() => cache?.dataforseo_keyword_trends ?? [], [cache?.dataforseo_keyword_trends])
   const seoFindings = content?.seo_findings as any[] | null
   const gmbData = cache?.gmb_data as any
   const backlinksSummary = cache?.backlinks_summary
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
 
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const trendMap = useMemo(() => {
-    const map = new Map<string, number | null>()
-    for (const t of keywordTrends) {
-      if (t.keyword && t.delta != null) map.set(t.keyword, t.delta)
-    }
-    return map
-  }, [keywordTrends])
 
   const createdDate = new Date(prospect.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -191,21 +181,6 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
       .slice(0, 10)
     return { winning, close, money }
   }, [dfsKeywords, dfsContentGap, dfsGaps])
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const movementSummary = useMemo(() => {
-    if (keywordTrends.length === 0) return null
-    let gaining = 0, stable = 0, losing = 0
-    for (const kw of [...kwBuckets.winning, ...kwBuckets.close]) {
-      const kwStr = kw.keyword_data?.keyword ?? ''
-      const delta = trendMap.get(kwStr)
-      if (delta == null) { stable++; continue }
-      if (delta > 0) gaining++
-      else if (delta < 0) losing++
-      else stable++
-    }
-    return { gaining, stable, losing }
-  }, [kwBuckets, trendMap, keywordTrends])
 
   const [passedExpanded, setPassedExpanded] = useState(false)
 
@@ -743,33 +718,6 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
                 {(kwBuckets.winning.length > 0 || kwBuckets.close.length > 0 || kwBuckets.money.length > 0) && (
                   <div style={{ marginBottom: 40 }}>
-                    {/* Keyword movement summary */}
-                    {movementSummary && (kwBuckets.winning.length > 0 || kwBuckets.close.length > 0) && (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 32 }}>
-                        {[
-                          { label: 'Gaining', count: movementSummary.gaining, color: '#22c55e', border: '#22c55e', icon: '↑', insight: 'Rankings improving' },
-                          { label: 'Stable', count: movementSummary.stable, color: S.muted, border: 'rgba(255,255,255,0.2)', icon: '→', insight: 'Holding position' },
-                          { label: 'Losing', count: movementSummary.losing, color: '#ef4444', border: '#ef4444', icon: '↓', insight: 'Rankings slipping - needs attention' },
-                        ].map(item => {
-                          const isProminentLosing = item.label === 'Losing' && movementSummary.losing > movementSummary.gaining
-                          return (
-                            <div key={item.label} style={{
-                              background: S.bg2,
-                              border: `1px solid ${S.border}`,
-                              borderLeft: `3px solid ${item.border}`,
-                              borderRadius: 12,
-                              padding: '18px 20px',
-                              boxShadow: isProminentLosing ? '0 0 16px rgba(239,68,68,0.1)' : undefined,
-                            }}>
-                              <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: isProminentLosing ? 32 : 26, fontWeight: 700, color: item.color }}>{item.icon} {item.count}</div>
-                              <div style={{ fontSize: 13, color: S.white, marginTop: 4, fontWeight: 600 }}>{item.label}</div>
-                              <div style={{ fontSize: 12, color: isProminentLosing ? 'rgba(239,68,68,0.7)' : 'rgba(255,255,255,0.35)', marginTop: 6, lineHeight: 1.4 }}>{item.insight}</div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
                     {kwBuckets.winning.length > 0 && (
                       <div style={{ marginBottom: 32 }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
@@ -788,14 +736,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             </thead>
                             <tbody>
                               {kwBuckets.winning.map((kw: any, i: number) => {
-                                const delta = trendMap.get(kw.keyword_data?.keyword ?? '')
                                 return (
                                   <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                                     <td style={{ padding: '10px 14px', color: S.white }}>
                                       {kw.keyword_data?.keyword}
-                                      {delta != null && delta > 0 && <span style={{ display: 'inline-block', background: 'rgba(34,197,94,0.15)', color: '#22c55e', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>↑ +{delta}</span>}
-                                      {delta != null && delta < 0 && <span style={{ display: 'inline-block', background: 'rgba(239,68,68,0.15)', color: '#ef4444', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>↓ {delta}</span>}
-                                      {delta === 0 && <span style={{ display: 'inline-block', background: 'rgba(255,255,255,0.08)', color: S.muted, borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>→</span>}
                                     </td>
                                     <td style={{ padding: '10px 14px', color: S.muted, textAlign: 'right' }}>{fmtVol(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
                                     <td style={{ padding: '10px 14px', color: '#22c55e', fontWeight: 600, textAlign: 'right' }}>#{kw.ranked_serp_element?.serp_item?.rank_group}</td>
@@ -826,14 +770,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             </thead>
                             <tbody>
                               {kwBuckets.close.map((kw: any, i: number) => {
-                                const delta = trendMap.get(kw.keyword_data?.keyword ?? '')
                                 return (
                                   <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                                     <td style={{ padding: '10px 14px', color: S.white }}>
                                       {kw.keyword_data?.keyword}
-                                      {delta != null && delta > 0 && <span style={{ display: 'inline-block', background: 'rgba(34,197,94,0.15)', color: '#22c55e', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>↑ +{delta}</span>}
-                                      {delta != null && delta < 0 && <span style={{ display: 'inline-block', background: 'rgba(239,68,68,0.15)', color: '#ef4444', borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>↓ {delta}</span>}
-                                      {delta === 0 && <span style={{ display: 'inline-block', background: 'rgba(255,255,255,0.08)', color: S.muted, borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 500, marginLeft: 8 }}>→</span>}
                                     </td>
                                     <td style={{ padding: '10px 14px', color: S.muted, textAlign: 'right' }}>{fmtVol(kw.keyword_data?.keyword_info?.search_volume ?? 0)}</td>
                                     <td style={{ padding: '10px 14px', color: S.orange, fontWeight: 600, textAlign: 'right' }}>#{kw.ranked_serp_element?.serp_item?.rank_group}</td>
