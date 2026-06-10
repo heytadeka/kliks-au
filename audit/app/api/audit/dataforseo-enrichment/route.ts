@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
     })
     clearTimeout(gmbTimeout)
     const gmbJson = await gmbFetch.json()
+    console.log('[dataforseo-enrichment] gmb raw status:', gmbJson?.tasks?.[0]?.status_code, gmbJson?.tasks?.[0]?.status_message)
+    console.log('[dataforseo-enrichment] gmb result count:', gmbJson?.tasks?.[0]?.result?.length ?? 0)
     const gmbResult = gmbJson?.tasks?.[0]?.result?.[0]?.items?.[0] ?? null
     if (gmbResult) {
       gmbData = {
