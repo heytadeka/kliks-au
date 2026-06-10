@@ -7,27 +7,6 @@ export const preferredRegion = 'syd1'
 
 const DATAFORSEO_BASE = 'https://api.dataforseo.com/v3'
 
-async function dfsPost(path: string, body: any[]) {
-  const auth = Buffer.from(`${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`).toString('base64')
-  const url = `${DATAFORSEO_BASE}${path}`
-  console.log('[dataforseo-enrichment] POST', url)
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const json = await res.json()
-  if (!res.ok) {
-    console.error('[dataforseo-enrichment] HTTP error', res.status, JSON.stringify(json))
-    throw new Error(`DataForSEO error: ${res.status}`)
-  }
-  const taskStatus = json?.tasks?.[0]?.status_code
-  if (taskStatus && taskStatus !== 20000) {
-    console.error('[dataforseo-enrichment] task error', taskStatus, json?.tasks?.[0]?.status_message)
-  }
-  return json
-}
-
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const { prospect_id } = body
