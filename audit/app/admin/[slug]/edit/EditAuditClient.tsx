@@ -36,6 +36,7 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
     prospect_email: prospect.prospect_email ?? '',
     niche: prospect.niche ?? '',
     cta_link: prospect.cta_link ?? '',
+    gmb_cid: prospect.gmb_cid ?? '',
   })
 
   const [loading, setLoading] = useState(false)
@@ -211,6 +212,11 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
               <div>
                 <label style={labelStyle}>CTA Link</label>
                 <input value={form.cta_link} onChange={set('cta_link')} style={inputStyle} />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Google Business CID (optional)</label>
+                <input value={form.gmb_cid} onChange={set('gmb_cid')} placeholder="e.g. 15315986762384699028" style={inputStyle} />
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4, lineHeight: 1.5 }}>Find it on the Google Maps listing: right-click, View Page Source, search "ludocid". Makes the Google Business section load reliably.</p>
               </div>
             </div>
           </div>

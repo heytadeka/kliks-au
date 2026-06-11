@@ -17,13 +17,13 @@ export async function POST(req: NextRequest) {
   // Fetch prospect record
   const { data: prospect } = await supabaseAdmin
     .from('prospects')
-    .select('store_url, brand_name')
+    .select('store_url, brand_name, gmb_cid')
     .eq('id', prospect_id)
     .single()
 
   if (!prospect) return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
 
-  const { store_url, brand_name: brandNameRaw } = prospect
+  const { store_url, brand_name: brandNameRaw, gmb_cid } = prospect
   const domain = store_url
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   let gmbData: Record<string, any> = { found: false }
 
-  const gmbKeyword = brandNameRaw ?? domain
+  const gmbKeyword = gmb_cid ? `cid:${gmb_cid}` : (brandNameRaw ?? domain)
   console.log('[dataforseo-enrichment] gmb keyword:', gmbKeyword)
 
   // ── GMB lookup with 10s hard timeout (non-blocking on failure) ──

@@ -44,6 +44,7 @@ interface FormData {
   prospect_email: string
   niche: string
   location: string
+  gmb_cid: string
   cta_link: string
 }
 
@@ -65,6 +66,7 @@ export default function NewAuditPage() {
     prospect_email: '',
     niche: '',
     location: '',
+    gmb_cid: '',
     cta_link: '',
   })
 
@@ -135,7 +137,7 @@ export default function NewAuditPage() {
       const res = await fetch('/api/audit/admin/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...normalised, location: form.location || null }),
+        body: JSON.stringify({ ...normalised, location: form.location || null, gmb_cid: form.gmb_cid || null }),
       })
       const data = await res.json()
       if (data.success) {
@@ -318,6 +320,11 @@ Kliks`
                 <label style={labelStyle}>Location</label>
                 <input value={form.location} onChange={set('location')} placeholder="e.g. Sydney NSW" style={inputStyle} />
                 <p style={helperStyle}>Used to find local competitors. City and state is enough.</p>
+              </div>
+              <div>
+                <label style={labelStyle}>Google Business CID (optional)</label>
+                <input value={form.gmb_cid} onChange={set('gmb_cid')} placeholder="e.g. 15315986762384699028" style={inputStyle} />
+                <p style={helperStyle}>Optional but recommended. Find it on the Google Maps listing: right-click, View Page Source, search "ludocid". Makes the Google Business section load reliably.</p>
               </div>
               <div>
                 <label style={labelStyle}>CTA Link</label>

@@ -134,7 +134,7 @@ const inputStyle: React.CSSProperties = {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Form = { brand_name: string; prospect_name: string; prospect_email: string; niche: string; location: string; slug: string }
+type Form = { brand_name: string; prospect_name: string; prospect_email: string; niche: string; location: string; gmb_cid: string; slug: string }
 type EmailDraft = { platform: string; brand_name: string; prospect_name: string; prospect_email: string | null; slug: string }
 type TrafficResult = { checked: number; flagged_new: number; flagged_domains: { domain: string; drop_pct: number; platform: string }[] }
 
@@ -154,7 +154,7 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
 
   // Create audit modal
   const [createDomain, setCreateDomain] = useState<any | null>(null)
-  const [form, setForm] = useState<Form>({ brand_name: '', prospect_name: '', prospect_email: '', niche: '', location: '', slug: '' })
+  const [form, setForm] = useState<Form>({ brand_name: '', prospect_name: '', prospect_email: '', niche: '', location: '', gmb_cid: '', slug: '' })
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
@@ -219,6 +219,7 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
       prospect_email: '',
       niche: row.niche ?? '',
       location: '',
+      gmb_cid: '',
       slug: slugify(brandName),
     })
     setCreateError('')
@@ -249,6 +250,7 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
           prospect_email: form.prospect_email,
           niche: form.niche,
           location: form.location || null,
+          gmb_cid: form.gmb_cid || null,
           cta_link: 'https://kliks.com.au/book',
         }),
       })
@@ -394,6 +396,10 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>LOCATION</label>
                   <input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="e.g. Sydney NSW" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>GOOGLE BUSINESS CID (OPTIONAL)</label>
+                  <input value={form.gmb_cid} onChange={e => setForm(p => ({ ...p, gmb_cid: e.target.value }))} placeholder="e.g. 15315986762384699028" style={inputStyle} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>SLUG</label>
