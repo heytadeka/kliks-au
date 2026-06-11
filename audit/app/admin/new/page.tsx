@@ -322,9 +322,9 @@ Kliks`
                 <p style={helperStyle}>Used to find local competitors. City and state is enough.</p>
               </div>
               <div>
-                <label style={labelStyle}>Google Business CID (optional)</label>
-                <input value={form.gmb_cid} onChange={set('gmb_cid')} placeholder="e.g. 15315986762384699028" style={inputStyle} />
-                <p style={helperStyle}>Optional but recommended. Find it on the Google Maps listing: right-click, View Page Source, search &quot;ludocid&quot;. Makes the Google Business section load reliably.</p>
+                <label style={labelStyle}>Google Business ID (optional)</label>
+                <input value={form.gmb_cid} onChange={set('gmb_cid')} placeholder="Place ID or CID" style={inputStyle} />
+                <p style={helperStyle}>Optional but recommended. Easiest way: search Google Place ID Finder, find the business, paste the Place ID (starts with ChI). Makes the Google Business section load reliably.</p>
               </div>
               <div>
                 <label style={labelStyle}>CTA Link</label>

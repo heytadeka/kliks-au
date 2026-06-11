@@ -398,8 +398,8 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
                   <input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="e.g. Sydney NSW" style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>GOOGLE BUSINESS CID (OPTIONAL)</label>
-                  <input value={form.gmb_cid} onChange={e => setForm(p => ({ ...p, gmb_cid: e.target.value }))} placeholder="e.g. 15315986762384699028" style={inputStyle} />
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>GOOGLE BUSINESS ID (OPTIONAL)</label>
+                  <input value={form.gmb_cid} onChange={e => setForm(p => ({ ...p, gmb_cid: e.target.value }))} placeholder="Place ID or CID" style={inputStyle} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>SLUG</label>

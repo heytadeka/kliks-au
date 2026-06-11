@@ -214,9 +214,9 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
                 <input value={form.cta_link} onChange={set('cta_link')} style={inputStyle} />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={labelStyle}>Google Business CID (optional)</label>
-                <input value={form.gmb_cid} onChange={set('gmb_cid')} placeholder="e.g. 15315986762384699028" style={inputStyle} />
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4, lineHeight: 1.5 }}>Find it on the Google Maps listing: right-click, View Page Source, search &quot;ludocid&quot;. Makes the Google Business section load reliably.</p>
+                <label style={labelStyle}>Google Business ID (optional)</label>
+                <input value={form.gmb_cid} onChange={set('gmb_cid')} placeholder="Place ID or CID" style={inputStyle} />
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4, lineHeight: 1.5 }}>Optional but recommended. Easiest way: search Google Place ID Finder, find the business, paste the Place ID (starts with ChI). Makes the Google Business section load reliably.</p>
               </div>
             </div>
           </div>

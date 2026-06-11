@@ -33,7 +33,15 @@ export async function POST(req: NextRequest) {
 
   let gmbData: Record<string, any> = { found: false }
 
-  const gmbKeyword = gmb_cid ? `cid:${gmb_cid}` : (brandNameRaw ?? domain)
+  function buildGmbKeyword(gmbId: string | null, brandName: string | null, domain: string): string {
+    if (!gmbId) return brandName ?? domain
+    const trimmed = gmbId.trim()
+    if (trimmed.startsWith('cid:') || trimmed.startsWith('place_id:')) return trimmed
+    if (trimmed.startsWith('ChI')) return `place_id:${trimmed}`
+    return `cid:${trimmed}`
+  }
+
+  const gmbKeyword = buildGmbKeyword(gmb_cid ?? null, brandNameRaw ?? null, domain)
   console.log('[dataforseo-enrichment] gmb keyword:', gmbKeyword)
 
   // ── GMB lookup with 10s hard timeout (non-blocking on failure) ──
