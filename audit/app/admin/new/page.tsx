@@ -324,7 +324,7 @@ Kliks`
               <div>
                 <label style={labelStyle}>Google Business CID (optional)</label>
                 <input value={form.gmb_cid} onChange={set('gmb_cid')} placeholder="e.g. 15315986762384699028" style={inputStyle} />
-                <p style={helperStyle}>Optional but recommended. Find it on the Google Maps listing: right-click, View Page Source, search "ludocid". Makes the Google Business section load reliably.</p>
+                <p style={helperStyle}>Optional but recommended. Find it on the Google Maps listing: right-click, View Page Source, search &quot;ludocid&quot;. Makes the Google Business section load reliably.</p>
               </div>
               <div>
                 <label style={labelStyle}>CTA Link</label>
