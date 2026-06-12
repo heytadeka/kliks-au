@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const S = {
   bg: '#0e0d1a',
@@ -13,8 +13,10 @@ const S = {
   border: 'rgba(100,75,255,0.12)',
 }
 
+const MONO = "'Space Mono', ui-monospace, monospace"
+
 function SectionLabel({ children }: { children: string }) {
-  return <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 12 }}>{children}</span>
+  return <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 12 }}>{children}</span>
 }
 
 function GhostNumber({ n }: { n: string }) {
@@ -35,13 +37,56 @@ function MetricCard({ label, value, unit, status, description, target, benchmark
   return (
     <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, color: c }}>{value}{unit && <span style={{ fontSize: 16, marginLeft: 4, color: S.muted }}>{unit}</span>}</span>
-      {benchmark && <span style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.38)', marginBottom: 4 }}>{benchmark}</span>}
-      <span style={{ fontSize: 13, color: S.muted }}>{label}</span>
+      {benchmark && <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.38)', marginBottom: 4, letterSpacing: '0.08em' }}>{benchmark}</span>}
+      <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: S.muted }}>{label}</span>
       {description && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', lineHeight: 1.45 }}>{description}</span>}
-      {target && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>Target: {target}</span>}
-      <span style={{ fontSize: 11, fontWeight: 600, color: c, background: `${c}22`, padding: '2px 8px', borderRadius: 99, alignSelf: 'flex-start', letterSpacing: '0.05em' }}>
+      {target && <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>Target: {target}</span>}
+      <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: c, background: `${c}22`, padding: '2px 8px', borderRadius: 99, alignSelf: 'flex-start', letterSpacing: '0.12em' }}>
         {status === 'good' ? 'GOOD' : status === 'needs-work' ? 'NEEDS WORK' : status === 'poor' ? 'POOR' : '-'}
       </span>
+    </div>
+  )
+}
+
+function ScoreRing({ label, pct, centerText, status, benchmark, revealed }: {
+  label: string
+  pct: number | null
+  centerText: string | number
+  status: 'good' | 'needs-work' | 'poor' | 'neutral'
+  benchmark?: string
+  revealed: boolean
+}) {
+  const colours: Record<string, string> = { good: '#22c55e', 'needs-work': '#f97316', poor: '#ef4444', neutral: S.purple }
+  const c = colours[status]
+  const circ = 339.29
+  const filled = pct != null ? Math.max(0, Math.min(100, pct)) : 0
+  const dashOffset = (pct != null && revealed) ? circ * (1 - filled / 100) : circ
+  const badgeLabel = status === 'good' ? 'GOOD' : status === 'needs-work' ? 'NEEDS WORK' : status === 'poor' ? 'POOR' : '-'
+  const ct = String(centerText)
+  const isSingleLetter = ct.length <= 2 && !/\d/.test(ct) && ct !== '--'
+  const hasFraction = ct.includes('/')
+  const centerFontSize = isSingleLetter ? 44 : hasFraction ? 22 : 36
+  return (
+    <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+      <div style={{ position: 'relative', width: 130, height: 130, marginBottom: 12 }}>
+        <svg width="130" height="130" viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(-90deg)', display: 'block' }}>
+          <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
+          <circle
+            cx="65" cy="65" r="54" fill="none"
+            stroke={c} strokeWidth="9" strokeLinecap="round"
+            strokeDasharray={circ.toFixed(2)}
+            strokeDashoffset={dashOffset.toFixed(2)}
+            className="score-ring-prog"
+            style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.2,0.8,0.2,1)', filter: `drop-shadow(0 0 8px ${c}80)` }}
+          />
+        </svg>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontFamily: '"Clash Display", sans-serif', fontWeight: 600, fontSize: centerFontSize, color: '#fff', lineHeight: 1 }}>{centerText}</span>
+        </div>
+      </div>
+      <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: S.muted, marginBottom: 4, lineHeight: 1.3 }}>{label}</span>
+      {benchmark && <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.06em', marginBottom: 6 }}>{benchmark}</span>}
+      <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: c, background: `${c}22`, padding: '2px 8px', borderRadius: 99, letterSpacing: '0.10em', marginTop: 4 }}>{badgeLabel}</span>
     </div>
   )
 }
@@ -76,7 +121,7 @@ function AdamsTake({ text }: { text?: string | null }) {
   if (!text) return null
   return (
     <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24, marginTop: 24 }}>
-      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 10 }}>ADAM&apos;S COMMENTS FROM KLIKS</span>
+      <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 10 }}>ADAM&apos;S COMMENTS FROM KLIKS</span>
       <p style={{ color: S.white, lineHeight: 1.8, fontSize: 16, margin: 0 }}>{text}</p>
     </div>
   )
@@ -191,6 +236,22 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
   const [passedExpanded, setPassedExpanded] = useState(false)
 
+  // ── Score ring animation ──
+  const [scoresRevealed, setScoresRevealed] = useState(false)
+  const scoresRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) { setScoresRevealed(true); return }
+    const el = scoresRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) { setScoresRevealed(true); obs.disconnect() }
+    }, { threshold: 0.1 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
   // ── Cinematic header animation ──
   const [headerRevealed, setHeaderRevealed] = useState(false)
   const [displayRevenue, setDisplayRevenue] = useState(0)
@@ -263,17 +324,24 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
         {/* ── Cinematic Header ── */}
         <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
           @keyframes scanSweep {
             0%   { top: -2px; opacity: 0; }
             4%   { opacity: 1; }
             90%  { opacity: 1; }
             100% { top: calc(100% + 2px); opacity: 0; }
           }
+          @keyframes blink { 50% { opacity: .25 } }
           .hdr-el { opacity: 0; transform: translateY(12px); transition: opacity 0.55s ease, transform 0.55s ease; }
           .hdr-el.revealed { opacity: 1; transform: translateY(0); }
+          .live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ff4315; margin-right: 8px; box-shadow: 0 0 10px rgba(255,67,21,0.7); animation: blink 1.6s infinite; flex-shrink: 0; vertical-align: middle; }
+          .scores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+          @media (max-width: 600px) { .scores-grid { grid-template-columns: repeat(2, 1fr); } }
           @media (prefers-reduced-motion: reduce) {
             .hdr-el { opacity: 1 !important; transform: none !important; transition: none !important; }
             .hdr-scan { display: none !important; }
+            .live-dot { animation: none !important; }
+            .score-ring-prog { transition: none !important; }
           }
         `}</style>
         <div style={{ position: 'relative', background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 24, padding: '40px 32px', marginBottom: 48, overflow: 'hidden' }}>
@@ -294,8 +362,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
           {/* 1. Eyebrow */}
           <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.1s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, position: 'relative', zIndex: 1 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: S.orange }}>GROWTH AUDIT</span>
-            <span style={{ fontSize: 12, color: S.muted, letterSpacing: '0.04em' }}>{createdDate}</span>
+            <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange }}>GROWTH AUDIT</span>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: S.muted, letterSpacing: '0.08em' }}>{createdDate}</span>
           </div>
 
           {/* 2. Brand name */}
@@ -316,47 +384,62 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 36, flexWrap: 'wrap' }}>
                 {/* Hero revenue */}
                 <div>
-                  <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 7vw, 60px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
-                    ${fmtNum(displayRevenue)}
+                  <div style={{
+                    fontFamily: '"Clash Display", sans-serif',
+                    fontSize: 'clamp(86px, 17vw, 230px)',
+                    fontWeight: 600,
+                    letterSpacing: '-0.03em',
+                    lineHeight: 0.86,
+                    background: 'linear-gradient(180deg, #fff 30%, rgba(255,255,255,.62))',
+                    WebkitBackgroundClip: 'text',
+                    backgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    marginBottom: 14,
+                  }}>
+                    ${fmtNum(displayRevenue)}<span style={{ fontSize: '0.26em', color: S.orange, WebkitTextFillColor: S.orange, letterSpacing: '0', marginLeft: '0.05em' }}>/yr</span>
                   </div>
-                  <div style={{ fontSize: 13, color: S.muted, marginTop: 7 }}>Estimated annual growth opportunity</div>
-                  <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', marginTop: 5 }}>Revenue you could be capturing with the fixes in this report.</div>
+                  <div style={{ fontFamily: MONO, fontSize: 11, color: S.muted, letterSpacing: '0.16em', textTransform: 'uppercase' as const, marginTop: 4 }}>Estimated annual growth opportunity</div>
+                  <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', marginTop: 6 }}>Revenue you could be capturing with the fixes in this report.</div>
                 </div>
                 {/* Supporting stat — traffic */}
                 {kwEtv > 0 && (
-                  <div style={{ paddingBottom: 2 }}>
-                    <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, color: S.white, lineHeight: 1 }}>
+                  <div style={{ paddingBottom: 2, alignSelf: 'flex-end' }}>
+                    <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 48, fontWeight: 700, color: S.white, lineHeight: 1 }}>
                       {fmtNum(kwEtv)}
                     </div>
-                    <div style={{ fontSize: 13, color: S.muted, marginTop: 6 }}>Monthly organic visitors</div>
+                    <div style={{ fontFamily: MONO, fontSize: 11, color: S.muted, marginTop: 8, letterSpacing: '0.16em', textTransform: 'uppercase' as const }}>Monthly organic visitors</div>
                   </div>
                 )}
               </div>
             ) : (
               <div>
-                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 7vw, 60px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
+                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(60px, 10vw, 110px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
                   {fmtNum(kwEtv)}
                 </div>
-                <div style={{ fontSize: 13, color: S.muted, marginTop: 7 }}>Monthly organic visitors analysed</div>
+                <div style={{ fontFamily: MONO, fontSize: 11, color: S.muted, marginTop: 10, letterSpacing: '0.16em', textTransform: 'uppercase' as const }}>Monthly organic visitors analysed</div>
               </div>
             )}
           </div>
 
           {/* 5. Metadata — quiet */}
           <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.9s', position: 'relative', zIndex: 1 }}>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', marginBottom: 10, letterSpacing: '0.03em' }}>
+            <p style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 10, letterSpacing: '0.10em' }}>
               {(prospect.store_url ?? '').replace(/^https?:\/\//, '')}
               &nbsp;&middot;&nbsp;Shopify
               {prospect.created_at && <>&nbsp;&middot;&nbsp;{createdDate}</>}
             </p>
-            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
               {prospect.niche && (
-                <span style={{ background: 'rgba(100,75,255,0.05)', border: '1px solid rgba(100,75,255,0.12)', borderRadius: 99, padding: '2px 10px', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                <span style={{ fontFamily: MONO, background: 'rgba(100,75,255,0.05)', border: '1px solid rgba(100,75,255,0.12)', borderRadius: 99, padding: '2px 10px', fontSize: 10, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)' }}>
                   {prospect.niche}
                 </span>
               )}
-              <span style={{ background: 'rgba(100,75,255,0.05)', border: '1px solid rgba(100,75,255,0.12)', borderRadius: 99, padding: '2px 10px', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+              <span style={{ fontFamily: MONO, background: 'rgba(100,75,255,0.05)', border: '1px solid rgba(100,75,255,0.12)', borderRadius: 99, padding: '2px 10px', fontSize: 10, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)' }}>
                 Confidential
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', color: S.orange, border: '1px solid rgba(255,67,21,0.4)', borderRadius: 100, padding: '4px 12px', fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' as const }}>
+                <span className="live-dot" />
+                Live findings
               </span>
             </div>
           </div>
@@ -366,42 +449,42 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
         <div style={{ marginBottom: 64 }}>
           <SectionLabel>AUDIT SCORES</SectionLabel>
           <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 6 }}>Audit Scores</h2>
-          <p style={{ color: S.muted, fontSize: 13, marginBottom: 24 }}>Scores based on Lighthouse analysis &amp; industry benchmarks.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <p style={{ fontFamily: MONO, fontSize: 11, color: S.muted, marginBottom: 24, letterSpacing: '0.10em' }}>Lighthouse analysis &amp; industry benchmarks</p>
+          <div ref={scoresRef} className="scores-grid">
             {(() => {
               const val = ps?.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="mob" label="Mobile Performance" value={val != null ? val : '--'} unit="/100" status={st} benchmark="Target: 90+ for good UX" />
+              return <ScoreRing key="mob" label="Mobile Performance" pct={val} centerText={val != null ? val : '--'} status={st} benchmark="Target: 90+" revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = psDesktop?.performance_score != null && psDesktop.performance_score > 0 ? Math.round(psDesktop.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="desk" label="Desktop Performance" value={val != null ? val : '--'} unit="/100" status={st} benchmark="Target: 90+ for good UX" />
+              return <ScoreRing key="desk" label="Desktop Performance" pct={val} centerText={val != null ? val : '--'} status={st} benchmark="Target: 90+" revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = ps?.seo_score != null && ps.seo_score > 0 ? Math.round(ps.seo_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="seo" label="SEO Score" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} benchmark="Target: 90+ to rank competitively" />
+              return <ScoreRing key="seo" label="SEO Score" pct={val} centerText={val != null ? val : '--'} status={st} benchmark="Target: 90+" revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = ps?.accessibility_score != null && ps.accessibility_score > 0 ? Math.round(ps.accessibility_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <MetricCard key="a11y" label="Accessibility" value={val != null ? val : '--'} unit={val != null ? '/100' : undefined} status={st} benchmark="Target: 90+ recommended" />
+              return <ScoreRing key="a11y" label="Accessibility" pct={val} centerText={val != null ? val : '--'} status={st} benchmark="Target: 90+" revealed={scoresRevealed} />
             })()}
             {(() => {
               const passed = cro?.summary?.passed
               const total = cro?.summary?.total ?? 20
-              const val = passed != null ? `${passed}/${total}` : '--'
+              const ringPct = passed != null ? (passed / total * 100) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = passed == null ? 'neutral' : passed >= 16 ? 'good' : passed >= 10 ? 'needs-work' : 'poor'
-              return <MetricCard key="cro-score" label="CRO Score" value={val} status={st} benchmark="Most stores: 14-16/20" />
+              return <ScoreRing key="cro-score" label="CRO Score" pct={ringPct} centerText={passed != null ? `${passed}/${total}` : '--'} status={st} benchmark="Most stores: 14-16/20" revealed={scoresRevealed} />
             })()}
             {(() => {
               const total = cro?.summary?.total ?? 20
               const passed = cro?.summary?.passed
-              const pct = passed != null ? (passed / total * 100) : null
-              const grade = pct == null ? '--' : pct > 85 ? 'A' : pct > 70 ? 'B' : pct > 55 ? 'C' : 'D'
+              const ringPct = passed != null ? (passed / total * 100) : null
+              const grade = ringPct == null ? '--' : ringPct > 85 ? 'A' : ringPct > 70 ? 'B' : ringPct > 55 ? 'C' : 'D'
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = grade === 'A' ? 'good' : grade === 'B' ? 'needs-work' : grade === 'C' || grade === 'D' ? 'poor' : 'neutral'
-              return <MetricCard key="cro-grade" label="Overall CRO" value={grade} status={st} benchmark="Target: B or above" />
+              return <ScoreRing key="cro-grade" label="Overall CRO" pct={ringPct} centerText={grade} status={st} benchmark="Target: B or above" revealed={scoresRevealed} />
             })()}
           </div>
         </div>
@@ -439,7 +522,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   const monthlyRevLoss = Math.round((lcpS - 2.5) * 0.07 * traffic * cr * aov)
                   return (
                     <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>WHAT THIS COSTS YOU</span>
+                      <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>WHAT THIS COSTS YOU</span>
                       <p style={{ color: S.white, lineHeight: 1.7, marginBottom: 8, fontSize: 16 }}>
                         At <strong>{lcpS.toFixed(2)}s</strong> load time, you&apos;re estimated to be losing{' '}
                         <strong style={{ color: S.orange }}>${monthlyRevLoss.toLocaleString()}/month</strong> in revenue to slow page speed alone.
@@ -466,7 +549,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             <SectionLabel>CONVERSION RATE OPTIMISATION</SectionLabel>
             <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 8 }}>CRO Checklist</h2>
             {cro?.summary ? (
-              <p style={{ fontSize: 13, color: '#22c55e', fontWeight: 600, letterSpacing: '0.05em', marginBottom: 28 }}>{cro.summary.passed}/20 checks passed</p>
+              <p style={{ fontFamily: MONO, fontSize: 11, color: '#22c55e', fontWeight: 700, letterSpacing: '0.16em', marginBottom: 28 }}>{cro.summary.passed}/20 checks passed</p>
             ) : (
               <div style={{ marginBottom: 32 }} />
             )}
@@ -491,7 +574,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       ] as { label: string; value: number; bg: string; border: string; color: string }[]).map(tile => (
                         <div key={tile.label} style={{ background: tile.bg, border: `1px solid ${tile.border}`, borderRadius: 12, padding: '16px 20px' }}>
                           <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color: tile.color }}>{tile.value}</div>
-                          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>{tile.label}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>{tile.label}</div>
                         </div>
                       ))}
                     </div>
@@ -513,7 +596,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
                             <span style={{ fontSize: 15, color: S.muted }}>{item.label}</span>
-                            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', padding: '2px 7px', borderRadius: 99, background: item.importance === 'high' ? 'rgba(239,68,68,0.12)' : item.importance === 'medium' ? 'rgba(249,115,22,0.12)' : 'rgba(100,75,255,0.12)', color: item.importance === 'high' ? '#ef4444' : item.importance === 'medium' ? '#f97316' : S.purple }}>{item.importance.toUpperCase()}</span>
+                            <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', padding: '2px 7px', borderRadius: 99, background: item.importance === 'high' ? 'rgba(239,68,68,0.12)' : item.importance === 'medium' ? 'rgba(249,115,22,0.12)' : 'rgba(100,75,255,0.12)', color: item.importance === 'high' ? '#ef4444' : item.importance === 'medium' ? '#f97316' : S.purple }}>{item.importance.toUpperCase()}</span>
                           </div>
                           {item.fix && (
                             <p style={{ fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
@@ -556,7 +639,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             <div style={{ flex: 1 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
                                 <span style={{ fontSize: 15, color: S.white }}>{item.label}</span>
-                                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', padding: '2px 7px', borderRadius: 99, background: 'rgba(100,75,255,0.12)', color: S.purple }}>{item.importance?.toUpperCase()}</span>
+                                <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', padding: '2px 7px', borderRadius: 99, background: 'rgba(100,75,255,0.12)', color: S.purple }}>{item.importance?.toUpperCase()}</span>
                               </div>
                             </div>
                           </div>
@@ -624,8 +707,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       )}
                       <div>
                         {gmbData.is_claimed
-                          ? <span style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e', borderRadius: 99, padding: '3px 12px', fontSize: 11, fontWeight: 600 }}>✓ Verified</span>
-                          : <span style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444', borderRadius: 99, padding: '3px 12px', fontSize: 11, fontWeight: 600 }}>! Unclaimed</span>
+                          ? <span style={{ fontFamily: MONO, background: 'rgba(34,197,94,0.12)', color: '#22c55e', borderRadius: 99, padding: '3px 12px', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em' }}>✓ Verified</span>
+                          : <span style={{ fontFamily: MONO, background: 'rgba(239,68,68,0.12)', color: '#ef4444', borderRadius: 99, padding: '3px 12px', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em' }}>! Unclaimed</span>
                         }
                       </div>
                     </div>
@@ -807,7 +890,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   const severityBadgeBg = (s: string) => s === 'CRITICAL' ? 'rgba(239,68,68,0.15)' : s === 'WARNING' ? 'rgba(249,115,22,0.15)' : 'rgba(34,197,94,0.15)'
                   return (
                     <div style={{ marginBottom: 40 }}>
-                      <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 16, marginTop: 40 }}>SEO Findings</p>
+                      <p style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange, marginBottom: 16, marginTop: 40 }}>SEO Findings</p>
                       {seoFindings.map((f: any, i: number) => {
                         const col = severityColour(f.severity)
                         return (
@@ -815,17 +898,17 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: col }} />
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                               <span style={{ fontSize: 15, fontWeight: 600, color: S.white }}>{f.title}</span>
-                              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', padding: '2px 8px', borderRadius: 20, background: severityBadgeBg(f.severity), color: col }}>{f.severity}</span>
+                              <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', padding: '2px 8px', borderRadius: 20, background: severityBadgeBg(f.severity), color: col }}>{f.severity}</span>
                             </div>
                             {f.detail && (
                               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 6, lineHeight: 1.5 }}>
-                                <span style={{ color: col, fontWeight: 600, fontSize: 11, letterSpacing: '0.06em', marginRight: 8 }}>DETAIL</span>
+                                <span style={{ fontFamily: MONO, color: col, fontWeight: 700, fontSize: 10, letterSpacing: '0.16em', marginRight: 8 }}>DETAIL</span>
                                 {f.detail}
                               </p>
                             )}
                             {f.fix && (
                               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 0, lineHeight: 1.5 }}>
-                                <span style={{ color: S.orange, fontWeight: 600, fontSize: 11, letterSpacing: '0.06em', marginRight: 8 }}>FIX</span>
+                                <span style={{ fontFamily: MONO, color: S.orange, fontWeight: 700, fontSize: 10, letterSpacing: '0.16em', marginRight: 8 }}>FIX</span>
                                 {f.fix}
                               </p>
                             )}
@@ -842,7 +925,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       <div style={{ marginBottom: 32 }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                           <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, margin: 0 }}>Winning</h3>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: '#22c55e', letterSpacing: '0.08em' }}>POSITIONS 1-5</span>
+                          <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: '#22c55e', letterSpacing: '0.16em' }}>POSITIONS 1-5</span>
                         </div>
                         <p style={{ color: S.muted, fontSize: 13, marginBottom: 14 }}>Rankings worth protecting and doubling down on.</p>
                         <div style={{ overflowX: 'auto' }}>
@@ -850,7 +933,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             <thead>
                               <tr style={{ background: S.bg }}>
                                 {(['Keyword', 'Searches/mo', 'Position'] as const).map((h, idx) => (
-                                  <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                                  <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -876,7 +959,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       <div style={{ marginBottom: 32 }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                           <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, margin: 0 }}>Close</h3>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: S.orange, letterSpacing: '0.08em' }}>POSITIONS 6-15</span>
+                          <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: S.orange, letterSpacing: '0.16em' }}>POSITIONS 6-15</span>
                         </div>
                         <p style={{ color: S.muted, fontSize: 13, marginBottom: 14 }}>One push away from significantly more traffic.</p>
                         <div style={{ overflowX: 'auto' }}>
@@ -884,7 +967,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             <thead>
                               <tr style={{ background: S.bg }}>
                                 {(['Keyword', 'Searches/mo', 'Position'] as const).map((h, idx) => (
-                                  <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                                  <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -941,7 +1024,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     <div style={{ marginBottom: 32 }}>
                       <div style={{ marginBottom: 8 }}>
                         <span style={{ fontSize: 22, fontWeight: 700, color: S.white }}>Battleground</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: S.purple, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginLeft: 12 }}>HEAD TO HEAD</span>
+                        <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: S.purple, textTransform: 'uppercase' as const, letterSpacing: '0.16em', marginLeft: 12 }}>HEAD TO HEAD</span>
                       </div>
                       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
                         Keywords where you and {serpTarget2} both show up on Google. Your position vs theirs.
@@ -951,7 +1034,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                           <thead>
                             <tr style={{ background: S.bg }}>
                               {(['Keyword', 'Searches/mo', 'Your Position', 'Their Position', 'Advantage'] as const).map((h, idx) => (
-                                <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                                <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
@@ -994,7 +1077,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   const gap = competitorTotalEtv - prospectEtv
                   return gap > 1000 ? (
                     <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24, marginBottom: 24 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>COMPETITOR TRAFFIC GAP</span>
+                      <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>COMPETITOR TRAFFIC GAP</span>
                       <p style={{ color: S.white, lineHeight: 1.7, fontSize: 16 }}>
                         Your top competitors combined receive{' '}
                         <strong style={{ color: S.orange }}>{fmtNum(gap)} more monthly visitors</strong> than you.
@@ -1012,7 +1095,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         <thead>
                           <tr style={{ background: S.bg }}>
                             {['Domain', 'Est. Traffic', 'Avg Position', 'Visibility', 'KW Overlap'].map(h => (
-                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -1041,7 +1124,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   <div style={{ marginBottom: 40 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                       <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, margin: 0 }}>Money</h3>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: S.purple, letterSpacing: '0.08em' }}>COMPETITOR GAP</span>
+                      <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: S.purple, letterSpacing: '0.16em' }}>COMPETITOR GAP</span>
                     </div>
                     <p style={{ color: S.muted, fontSize: 13, marginBottom: 14 }}>High-intent keywords your competitors rank for. You don&apos;t yet.</p>
                     {(() => {
@@ -1068,7 +1151,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         <thead>
                           <tr style={{ background: S.bg }}>
                             {(['Keyword', 'Searches/mo', 'Competition', 'CPC', 'Top Competitor'] as const).map((h, idx) => (
-                              <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                              <th key={h} style={{ padding: '10px 14px', textAlign: idx === 0 ? 'left' : 'right', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -1104,7 +1187,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         <thead>
                           <tr style={{ background: S.bg }}>
                             {['Keyword', 'Volume', 'Competition', 'CPC'].map(h => (
-                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -1137,7 +1220,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         <thead>
                           <tr style={{ background: S.bg }}>
                             {['Keyword', 'Avg Monthly Searches', 'Competition', 'Top of Page Bid'].map(h => (
-                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -1249,7 +1332,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 <thead>
                   <tr style={{ background: S.bg }}>
                     {['Initiative', 'Confidence', 'Est. Annual Impact'].map(h => (
-                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1268,7 +1351,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                       <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                         <td style={{ padding: '12px 16px', color: S.white }}>{row.initiative}</td>
                         <td style={{ padding: '12px 16px', width: 160 }}>
-                          <span style={{ background: pillBg, color: pillColor, border: pillBorder, borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 500, display: 'inline-block' }}>{pillLabel}</span>
+                          <span style={{ fontFamily: MONO, background: pillBg, color: pillColor, border: pillBorder, borderRadius: 20, padding: '3px 10px', fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', display: 'inline-block' }}>{pillLabel}</span>
                         </td>
                         <td style={{ padding: '12px 16px', color: row.impact ? S.white : S.muted }}>{row.impact ? `$${Math.round(row.impact).toLocaleString()}/yr` : row.note}</td>
                       </tr>
@@ -1298,9 +1381,9 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 <thead>
                   <tr style={{ background: S.bg }}>
                     {(['Metric', 'Status', 'Source'] as const).map(h => (
-                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
                     ))}
-                    <th className="conf-action" style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>Action Required</th>
+                    <th className="conf-action" style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>Action Required</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1324,7 +1407,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
                       <td style={{ padding: '10px 14px', color: S.white }}>{row.metric}</td>
                       <td style={{ padding: '10px 14px' }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 99, background: row.status === 'Verified' ? 'rgba(34,197,94,0.12)' : 'rgba(255,67,21,0.12)', color: row.status === 'Verified' ? '#22c55e' : S.orange }}>{row.status}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', padding: '3px 8px', borderRadius: 99, background: row.status === 'Verified' ? 'rgba(34,197,94,0.12)' : 'rgba(255,67,21,0.12)', color: row.status === 'Verified' ? '#22c55e' : S.orange }}>{row.status}</span>
                       </td>
                       <td style={{ padding: '10px 14px', color: S.muted }}>{row.source}</td>
                       <td className="conf-action" style={{ padding: '10px 14px', color: S.muted }}>{row.action}</td>
@@ -1350,7 +1433,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
             {/* Recent Build */}
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 48, marginTop: 48, textAlign: 'center' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Recent Build</p>
+              <p style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Recent Build</p>
               <a
                 href="https://pupcases.com.au"
                 target="_blank"
