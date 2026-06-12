@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const S = {
   bg: '#0e0d1a',
@@ -104,6 +104,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
 
   const createdDate = new Date(prospect.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+  const headerDomain = (prospect.store_url ?? '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
 
   // Revenue calculations
   const revCalc = useMemo(() => {
@@ -184,6 +185,38 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
   const [passedExpanded, setPassedExpanded] = useState(false)
 
+  // ── Cinematic header animation ──
+  const [headerRevealed, setHeaderRevealed] = useState(false)
+  const [displayRevenue, setDisplayRevenue] = useState(0)
+  const hasRevenue = totalRevImpact > 100
+
+  useEffect(() => {
+    const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) {
+      setHeaderRevealed(true)
+      setDisplayRevenue(totalRevImpact)
+      return
+    }
+    const t1 = setTimeout(() => setHeaderRevealed(true), 60)
+    const target = totalRevImpact
+    if (target <= 0) return () => clearTimeout(t1)
+    let raf: number
+    const t2 = setTimeout(() => {
+      const startTime = performance.now()
+      const dur = 1000
+      function tick(now: number) {
+        const elapsed = now - startTime
+        if (elapsed >= dur) { setDisplayRevenue(target); return }
+        const eased = 1 - Math.pow(1 - elapsed / dur, 3)
+        setDisplayRevenue(Math.round(eased * target))
+        raf = requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+    }, 700)
+    return () => { clearTimeout(t1); clearTimeout(t2); cancelAnimationFrame(raf) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const topCompetitor = (() => {
     const comps = cache?.dataforseo_competitors as any[] | null
     if (!comps || comps.length === 0) return null
@@ -222,23 +255,94 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
       <div style={{ maxWidth: 820, margin: '0 auto', padding: '48px 24px 120px' }}>
 
-        {/* Intro card */}
-        <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 24, padding: 32, marginBottom: 48 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
-            <SectionLabel>GROWTH AUDIT</SectionLabel>
-            <span style={{ color: S.muted, fontSize: 13 }}>{createdDate}</span>
+        {/* ── Cinematic Header ── */}
+        <style>{`
+          @keyframes scanSweep {
+            0%   { top: -2px; opacity: 0; }
+            4%   { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { top: calc(100% + 2px); opacity: 0; }
+          }
+          .hdr-el { opacity: 0; transform: translateY(12px); transition: opacity 0.55s ease, transform 0.55s ease; }
+          .hdr-el.revealed { opacity: 1; transform: translateY(0); }
+          @media (prefers-reduced-motion: reduce) {
+            .hdr-el { opacity: 1 !important; transform: none !important; transition: none !important; }
+            .hdr-scan { display: none !important; }
+          }
+        `}</style>
+        <div style={{ position: 'relative', background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 24, padding: '40px 32px', marginBottom: 48, overflow: 'hidden' }}>
+
+          {/* Scan line — plays once on mount */}
+          {headerRevealed && (
+            <div className="hdr-scan" style={{
+              position: 'absolute', left: 0, right: 0, height: 2,
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,67,21,0.85) 35%, rgba(100,75,255,0.9) 65%, transparent 100%)',
+              boxShadow: '0 0 10px rgba(255,67,21,0.5), 0 0 20px rgba(100,75,255,0.3)',
+              animation: 'scanSweep 1.2s cubic-bezier(0.4,0,0.2,1) forwards',
+              zIndex: 10, pointerEvents: 'none',
+            }} />
+          )}
+
+          {/* Purple glow behind brand name */}
+          <div style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', width: 520, height: 200, background: 'radial-gradient(ellipse, rgba(100,75,255,0.3), transparent 70%)', filter: 'blur(50px)', pointerEvents: 'none', zIndex: 0 }} />
+
+          {/* 1. Eyebrow */}
+          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.1s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, position: 'relative', zIndex: 1 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: S.orange }}>GROWTH AUDIT</span>
+            <span style={{ fontSize: 12, color: S.muted, letterSpacing: '0.04em' }}>{createdDate}</span>
           </div>
-          <h1 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 8 }}>{prospect.brand_name}</h1>
-          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', marginTop: '8px', marginBottom: '0', letterSpacing: '0.02em' }}>
-            Domain: {(prospect.store_url ?? '').replace(/^https?:\/\//, '')}
-            &nbsp;·&nbsp;Platform: Shopify
-            {prospect.created_at && <>&nbsp;·&nbsp;Audit Date: {new Date(prospect.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}</>}
+
+          {/* 2. Brand name */}
+          <div style={{ position: 'relative', zIndex: 1, marginBottom: 14 }}>
+            <h1 className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.3s', fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 6vw, 64px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.1, margin: 0 }}>
+              {prospect.brand_name}
+            </h1>
+          </div>
+
+          {/* 3. Hook line */}
+          <p className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.5s', fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55, margin: '0 0 36px 0', position: 'relative', zIndex: 1 }}>
+            Your growth, mapped. Here&apos;s where {headerDomain} stands, and where the next wins are.
           </p>
-          <a href={prospect.store_url} target="_blank" style={{ color: S.muted, fontSize: 14, textDecoration: 'none', display: 'block', marginTop: 12 }}>{prospect.store_url}</a>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 20 }}>
-            {[`Niche: ${prospect.niche}`, `Created: ${createdDate}`, 'Confidential'].map(t => (
-              <span key={t} style={{ background: 'rgba(100,75,255,0.08)', border: `1px solid ${S.border}`, borderRadius: 99, padding: '4px 14px', fontSize: 13, color: S.muted }}>{t}</span>
-            ))}
+
+          {/* 4. Headline metric */}
+          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.7s', marginBottom: 36, position: 'relative', zIndex: 1 }}>
+            {hasRevenue ? (
+              <>
+                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 7vw, 60px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
+                  ${fmtNum(displayRevenue)}
+                </div>
+                <div style={{ fontSize: 13, color: S.muted, marginTop: 8 }}>Estimated annual growth opportunity</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 7vw, 60px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
+                  {fmtNum(dfsOverview?.metrics?.organic?.etv ?? 0)}
+                </div>
+                <div style={{ fontSize: 13, color: S.muted, marginTop: 8 }}>Monthly organic visitors analysed</div>
+              </>
+            )}
+          </div>
+
+          {/* 5. Metadata — quiet */}
+          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.9s', position: 'relative', zIndex: 1 }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)', marginBottom: 12, letterSpacing: '0.03em' }}>
+              {(prospect.store_url ?? '').replace(/^https?:\/\//, '')}
+              &nbsp;&middot;&nbsp;Shopify
+              {prospect.created_at && <>&nbsp;&middot;&nbsp;{createdDate}</>}
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {prospect.niche && (
+                <span style={{ background: 'rgba(100,75,255,0.06)', border: '1px solid rgba(100,75,255,0.14)', borderRadius: 99, padding: '3px 11px', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                  {prospect.niche}
+                </span>
+              )}
+              <span style={{ background: 'rgba(100,75,255,0.06)', border: '1px solid rgba(100,75,255,0.14)', borderRadius: 99, padding: '3px 11px', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                Created: {createdDate}
+              </span>
+              <span style={{ background: 'rgba(100,75,255,0.06)', border: '1px solid rgba(100,75,255,0.14)', borderRadius: 99, padding: '3px 11px', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                Confidential
+              </span>
+            </div>
           </div>
         </div>
 
