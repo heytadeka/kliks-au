@@ -136,6 +136,12 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
   const totalRevImpact = revCalc.filter(r => r.impact).reduce((sum: number, r: any) => sum + r.impact, 0)
 
+  const kwEtv = useMemo(() => {
+    const overviewEtv = dfsOverview?.metrics?.organic?.etv ?? 0
+    if (overviewEtv > 0) return overviewEtv
+    return dfsKeywords.reduce((sum: number, kw: any) => sum + (kw.keyword_data?.keyword_info?.search_volume ?? 0), 0)
+  }, [dfsOverview, dfsKeywords])
+
   const failedByCategory = useMemo(() => {
     if (!cro?.results) return {} as Record<string, any[]>
     const groups: Record<string, any[]> = {}
@@ -317,10 +323,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', marginTop: 5 }}>Revenue you could be capturing with the fixes in this report.</div>
                 </div>
                 {/* Supporting stat — traffic */}
-                {(dfsOverview?.metrics?.organic?.etv ?? 0) > 0 && (
+                {kwEtv > 0 && (
                   <div style={{ paddingBottom: 2 }}>
                     <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, color: S.white, lineHeight: 1 }}>
-                      {fmtNum(dfsOverview.metrics.organic.etv)}
+                      {fmtNum(kwEtv)}
                     </div>
                     <div style={{ fontSize: 13, color: S.muted, marginTop: 6 }}>Monthly organic visitors</div>
                   </div>
@@ -329,7 +335,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             ) : (
               <div>
                 <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 7vw, 60px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
-                  {fmtNum(dfsOverview?.metrics?.organic?.etv ?? 0)}
+                  {fmtNum(kwEtv)}
                 </div>
                 <div style={{ fontSize: 13, color: S.muted, marginTop: 7 }}>Monthly organic visitors analysed</div>
               </div>
