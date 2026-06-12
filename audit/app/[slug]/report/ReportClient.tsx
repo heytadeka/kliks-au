@@ -300,46 +300,56 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           </div>
 
           {/* 3. Hook line */}
-          <p className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.5s', fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55, margin: '0 0 36px 0', position: 'relative', zIndex: 1 }}>
+          <p className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.5s', fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55, margin: '0 0 22px 0', maxWidth: '62ch', position: 'relative', zIndex: 1 }}>
             Your growth, mapped. Here&apos;s where {headerDomain} stands, and where the next wins are.
           </p>
 
-          {/* 4. Headline metric */}
-          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.7s', marginBottom: 36, position: 'relative', zIndex: 1 }}>
+          {/* 4. Headline metric + supporting stat */}
+          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.7s', marginBottom: 28, position: 'relative', zIndex: 1 }}>
             {hasRevenue ? (
-              <>
-                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 7vw, 60px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
-                  ${fmtNum(displayRevenue)}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 36, flexWrap: 'wrap' }}>
+                {/* Hero revenue */}
+                <div>
+                  <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 7vw, 60px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
+                    ${fmtNum(displayRevenue)}
+                  </div>
+                  <div style={{ fontSize: 13, color: S.muted, marginTop: 7 }}>Estimated annual growth opportunity</div>
+                  <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', marginTop: 5 }}>Revenue you could be capturing with the fixes in this report.</div>
                 </div>
-                <div style={{ fontSize: 13, color: S.muted, marginTop: 8 }}>Estimated annual growth opportunity</div>
-              </>
+                {/* Supporting stat — traffic */}
+                {(dfsOverview?.metrics?.organic?.etv ?? 0) > 0 && (
+                  <div style={{ paddingBottom: 2 }}>
+                    <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, color: S.white, lineHeight: 1 }}>
+                      {fmtNum(dfsOverview.metrics.organic.etv)}
+                    </div>
+                    <div style={{ fontSize: 13, color: S.muted, marginTop: 6 }}>Monthly organic visitors</div>
+                  </div>
+                )}
+              </div>
             ) : (
-              <>
+              <div>
                 <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 7vw, 60px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
                   {fmtNum(dfsOverview?.metrics?.organic?.etv ?? 0)}
                 </div>
-                <div style={{ fontSize: 13, color: S.muted, marginTop: 8 }}>Monthly organic visitors analysed</div>
-              </>
+                <div style={{ fontSize: 13, color: S.muted, marginTop: 7 }}>Monthly organic visitors analysed</div>
+              </div>
             )}
           </div>
 
           {/* 5. Metadata — quiet */}
           <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.9s', position: 'relative', zIndex: 1 }}>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)', marginBottom: 12, letterSpacing: '0.03em' }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', marginBottom: 10, letterSpacing: '0.03em' }}>
               {(prospect.store_url ?? '').replace(/^https?:\/\//, '')}
               &nbsp;&middot;&nbsp;Shopify
               {prospect.created_at && <>&nbsp;&middot;&nbsp;{createdDate}</>}
             </p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
               {prospect.niche && (
-                <span style={{ background: 'rgba(100,75,255,0.06)', border: '1px solid rgba(100,75,255,0.14)', borderRadius: 99, padding: '3px 11px', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+                <span style={{ background: 'rgba(100,75,255,0.05)', border: '1px solid rgba(100,75,255,0.12)', borderRadius: 99, padding: '2px 10px', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
                   {prospect.niche}
                 </span>
               )}
-              <span style={{ background: 'rgba(100,75,255,0.06)', border: '1px solid rgba(100,75,255,0.14)', borderRadius: 99, padding: '3px 11px', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
-                Created: {createdDate}
-              </span>
-              <span style={{ background: 'rgba(100,75,255,0.06)', border: '1px solid rgba(100,75,255,0.14)', borderRadius: 99, padding: '3px 11px', fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>
+              <span style={{ background: 'rgba(100,75,255,0.05)', border: '1px solid rgba(100,75,255,0.12)', borderRadius: 99, padding: '2px 10px', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
                 Confidential
               </span>
             </div>
