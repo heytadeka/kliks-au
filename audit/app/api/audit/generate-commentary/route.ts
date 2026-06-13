@@ -130,7 +130,7 @@ Close Keywords (pos 6-15, high volume): ${closeKeywords.length > 0 ? closeKeywor
 Keyword Movement: ${keywordTrends.length > 0 ? `${gaining} gaining, ${stable} stable, ${losing} losing` : 'Trend data not available'}
 Referring Domains: ${backlinksUnavailable ? 'null (backlinks subscription inactive - do not comment on backlink count)' : (dfsOverview?.metrics?.referring_domains ?? 0).toLocaleString()}
 
-Generate exactly these 7 keys as JSON:
+Generate exactly these 8 keys as JSON:
 {
   "performance": "3-5 sentences about their speed scores in plain English. Reference their actual LCP and what it costs them in conversions. Specific, not generic.",
   "cro": "3-5 sentences about their CRO score and what the critical issues mean for their revenue. Focus on the 2-3 most important failed checks.",
@@ -152,8 +152,23 @@ Generate exactly these 7 keys as JSON:
     "accessibility": "One sentence about accessibility score.",
     "cro": "One sentence about X/20 CRO checks - what it means for conversions.",
     "overall": "One sentence overall store health summary."
+  },
+  "hook_headline": {
+    "line1": "Short affirming line about what this business does well, max 6 words.",
+    "line2": "The turn - what is holding them back (store/site/conversion), max 6 words.",
+    "subtext": "One or two plain-English sentences, max 32 words total, explaining that this audit looks at the store the way a real shopper does and shows what is quietly costing them and what fixing it is worth. Tailor lightly to the niche."
   }
 }
+
+Rules for hook_headline:
+- line1 and line2 must each be max 6 words. Punchy, confident, founder-to-founder tone.
+- Must feel written specifically for this business and niche, not generic.
+- No em dashes. No jargon. Plain and human.
+- subtext max 32 words total across both sentences. No em dashes.
+- Examples of the pattern (do not reuse verbatim - write fresh for this business):
+  Cake shop: line1 "Your cakes sell themselves." line2 "Your store gets in the way."
+  Supplements: line1 "Great product. Loyal customers." line2 "A checkout that loses them."
+  Fashion: line1 "People love the collection." line2 "The site makes them work for it."
 
 Rules for score_descriptions:
 - Each value must be ONE sentence only, maximum 14 words
@@ -230,6 +245,16 @@ Respond with only valid JSON. No markdown. No explanation.`
       console.error('[commentary] score_descriptions extraction failed (non-fatal)')
     }
 
+    // Extract hook_headline non-fatally
+    let hookHeadline: any = null
+    try {
+      if (parsed.hook_headline && typeof parsed.hook_headline === 'object' && parsed.hook_headline.line1) {
+        hookHeadline = parsed.hook_headline
+      }
+    } catch {
+      console.error('[commentary] hook_headline extraction failed (non-fatal)')
+    }
+
     const { error: dbError } = await supabaseAdmin
       .from('audit_content')
       .update({
@@ -240,6 +265,7 @@ Respond with only valid JSON. No markdown. No explanation.`
         ai_closing_commentary: parsed.closing ?? null,
         seo_findings: seoFindings,
         score_descriptions: scoreDescriptions,
+        hook_headline: hookHeadline,
       })
       .eq('prospect_id', prospect_id)
 

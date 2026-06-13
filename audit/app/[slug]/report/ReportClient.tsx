@@ -173,8 +173,17 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
   const scoreDescs = content?.score_descriptions as Record<string, string> | null
+  const hookHeadline = content?.hook_headline as { line1: string; line2: string; subtext?: string } | null
 
   const createdDate = new Date(prospect.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+  const auditDate = new Date(prospect.created_at)
+  const issuedMonth = auditDate.toLocaleString('en-US', { month: 'short' }).toUpperCase()
+  const issuedYear = auditDate.getFullYear()
+  const auditRef = (() => {
+    if (!prospect.id) return 'KL-0000'
+    const hex = String(prospect.id).replace(/-/g, '').slice(-6)
+    return `KL-${String(parseInt(hex, 16) % 10000).padStart(4, '0')}`
+  })()
   const headerDomain = (prospect.store_url ?? '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
 
   // Revenue calculations
@@ -389,10 +398,16 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           {/* Purple glow behind brand name */}
           <div style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', width: 520, height: 200, background: 'radial-gradient(ellipse, rgba(100,75,255,0.3), transparent 70%)', filter: 'blur(50px)', pointerEvents: 'none', zIndex: 0 }} />
 
-          {/* 1. Eyebrow */}
-          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.1s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, position: 'relative', zIndex: 1 }}>
-            <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange }}>GROWTH AUDIT</span>
-            <span style={{ fontFamily: MONO, fontSize: 11, color: S.muted, letterSpacing: '0.08em' }}>{createdDate}</span>
+          {/* Top bar: Kliks logo + audit reference */}
+          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.05s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 20, height: 20, borderRadius: 5, background: 'linear-gradient(135deg, #644bff 0%, #ff4315 100%)', flexShrink: 0 }} />
+              <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 15, fontWeight: 700, letterSpacing: '0.06em', color: S.white }}>KLIKS</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>GROWTH AUDIT / NO. {auditRef}</div>
+              <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 400, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>ISSUED {issuedMonth} {issuedYear} / VALID 30 DAYS</div>
+            </div>
           </div>
 
           {/* 2. Brand name */}
@@ -402,10 +417,22 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             </h1>
           </div>
 
-          {/* 3. Hook line */}
-          <p className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.5s', fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55, margin: '0 0 22px 0', maxWidth: '62ch', position: 'relative', zIndex: 1 }}>
-            Your growth, mapped. Here&apos;s where {headerDomain} stands, and where the next wins are.
-          </p>
+          {/* 3. Hook headline — AI two-liner or generic fallback */}
+          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.5s', marginBottom: 22, position: 'relative', zIndex: 1 }}>
+            {hookHeadline ? (
+              <>
+                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(26px, 5vw, 54px)', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.1, color: S.white }}>{hookHeadline.line1}</div>
+                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(26px, 5vw, 54px)', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.1, color: S.orange, marginBottom: 14 }}>{hookHeadline.line2}</div>
+                {hookHeadline.subtext && (
+                  <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: '62ch' }}>{hookHeadline.subtext}</p>
+                )}
+              </>
+            ) : (
+              <p style={{ fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55, margin: 0, maxWidth: '62ch' }}>
+                Your growth, mapped. Here&apos;s where {headerDomain} stands, and where the next wins are.
+              </p>
+            )}
+          </div>
 
           {/* 4. Headline metric + supporting stat */}
           <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.7s', marginBottom: 28, position: 'relative', zIndex: 1 }}>
