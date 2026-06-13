@@ -110,6 +110,8 @@ FCP: ${fcpS}s
 TBT: ${tbt}ms
 Speed Index: ${speedIndex}s
 Desktop Score: ${psDesktop?.performance_score ?? 'N/A'}/100
+SEO Score: ${ps?.seo_score ?? 'N/A'}/100
+Accessibility Score: ${ps?.accessibility_score ?? 'N/A'}/100
 
 CRO DATA:
 ${cro?.summary?.passed ?? 'N/A'}/20 checks passed
@@ -128,7 +130,7 @@ Close Keywords (pos 6-15, high volume): ${closeKeywords.length > 0 ? closeKeywor
 Keyword Movement: ${keywordTrends.length > 0 ? `${gaining} gaining, ${stable} stable, ${losing} losing` : 'Trend data not available'}
 Referring Domains: ${backlinksUnavailable ? 'null (backlinks subscription inactive - do not comment on backlink count)' : (dfsOverview?.metrics?.referring_domains ?? 0).toLocaleString()}
 
-Generate exactly these 6 keys as JSON:
+Generate exactly these 7 keys as JSON:
 {
   "performance": "3-5 sentences about their speed scores in plain English. Reference their actual LCP and what it costs them in conversions. Specific, not generic.",
   "cro": "3-5 sentences about their CRO score and what the critical issues mean for their revenue. Focus on the 2-3 most important failed checks.",
@@ -142,8 +144,22 @@ Generate exactly these 6 keys as JSON:
       "detail": "One sentence with specific data, e.g. you rank for only 50 keywords while similar stores average 200+",
       "fix": "One specific action sentence, e.g. publish 3 collection pages targeting your highest-volume unranked keywords"
     }
-  ]
+  ],
+  "score_descriptions": {
+    "mobile": "One sentence about mobile performance score - what it means for shoppers, not the score number.",
+    "desktop": "One sentence about desktop performance score.",
+    "seo": "One sentence about Lighthouse SEO score.",
+    "accessibility": "One sentence about accessibility score.",
+    "cro": "One sentence about X/20 CRO checks - what it means for conversions.",
+    "overall": "One sentence overall store health summary."
+  }
 }
+
+Rules for score_descriptions:
+- Each value must be ONE sentence only, maximum 14 words
+- Tailor to the actual score - if mobile is 23, say critical, if 87 say nearly there
+- No jargon, no em dashes, plain language a store owner reads instantly
+- Describe what it means for shoppers or sales, not the score number itself
 
 Rules for seo_findings:
 - Generate between 3 and 6 findings
@@ -204,6 +220,16 @@ Respond with only valid JSON. No markdown. No explanation.`
       console.error('[commentary] seo_findings extraction failed (non-fatal)')
     }
 
+    // Extract score_descriptions non-fatally
+    let scoreDescriptions: any = null
+    try {
+      if (parsed.score_descriptions && typeof parsed.score_descriptions === 'object' && !Array.isArray(parsed.score_descriptions)) {
+        scoreDescriptions = parsed.score_descriptions
+      }
+    } catch {
+      console.error('[commentary] score_descriptions extraction failed (non-fatal)')
+    }
+
     const { error: dbError } = await supabaseAdmin
       .from('audit_content')
       .update({
@@ -213,6 +239,7 @@ Respond with only valid JSON. No markdown. No explanation.`
         ai_opportunity_commentary: parsed.opportunity ?? null,
         ai_closing_commentary: parsed.closing ?? null,
         seo_findings: seoFindings,
+        score_descriptions: scoreDescriptions,
       })
       .eq('prospect_id', prospect_id)
 

@@ -48,45 +48,71 @@ function MetricCard({ label, value, unit, status, description, target, benchmark
   )
 }
 
-function ScoreRing({ label, pct, centerText, status, benchmark, revealed }: {
+const SCORE_COLORS: Record<string, { c: string; soft: string; line: string }> = {
+  good:         { c: '#34d296', soft: 'rgba(52,210,150,0.13)',  line: 'rgba(52,210,150,0.35)' },
+  'needs-work': { c: '#f5a623', soft: 'rgba(245,166,35,0.13)',  line: 'rgba(245,166,35,0.35)' },
+  poor:         { c: '#ff4315', soft: 'rgba(255,67,21,0.13)',   line: 'rgba(255,67,21,0.35)'  },
+  neutral:      { c: '#644bff', soft: 'rgba(100,75,255,0.13)',  line: 'rgba(100,75,255,0.35)' },
+}
+
+const SCORE_DESC_FALLBACKS: Record<string, string> = {
+  mobile:        'Slow on phones, where most shoppers browse and buy.',
+  desktop:       'Desktop loads quickly but most of your traffic is mobile.',
+  seo:           'You show up in search, but not yet where the buyers are.',
+  accessibility: 'Readable for most visitors, with some quick wins available.',
+  cro:           "Visitors aren't converting at the rate they could.",
+  overall:       'A good business held back by an underperforming store.',
+}
+
+function ScoreRing({ label, pct, centerText, unitText, status, benchmark, desc, revealed }: {
   label: string
   pct: number | null
   centerText: string | number
+  unitText?: string
   status: 'good' | 'needs-work' | 'poor' | 'neutral'
   benchmark?: string
+  desc?: string
   revealed: boolean
 }) {
-  const colours: Record<string, string> = { good: '#22c55e', 'needs-work': '#f97316', poor: '#ef4444', neutral: S.purple }
-  const c = colours[status]
+  const colors = SCORE_COLORS[status] ?? SCORE_COLORS.neutral
   const circ = 339.29
   const filled = pct != null ? Math.max(0, Math.min(100, pct)) : 0
   const dashOffset = (pct != null && revealed) ? circ * (1 - filled / 100) : circ
   const badgeLabel = status === 'good' ? 'GOOD' : status === 'needs-work' ? 'NEEDS WORK' : status === 'poor' ? 'POOR' : '-'
   const ct = String(centerText)
-  const isSingleLetter = ct.length <= 2 && !/\d/.test(ct) && ct !== '--'
-  const hasFraction = ct.includes('/')
-  const centerFontSize = isSingleLetter ? 44 : hasFraction ? 22 : 36
+  const isGrade = ct.length === 1 && /^[A-DF]$/.test(ct)
+  const centerFontSize = isGrade ? 46 : 38
   return (
-    <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-      <div style={{ position: 'relative', width: 130, height: 130, marginBottom: 12 }}>
+    <div className="score-card" style={{ background: S.bg2, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 32, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+      {/* Corner radial glow */}
+      <div style={{ position: 'absolute', top: 0, right: 0, width: 160, height: 160, background: `radial-gradient(circle at top right, ${colors.soft} 0%, transparent 70%)`, pointerEvents: 'none', zIndex: 0 }} />
+      {/* Top row: label + badge */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18, position: 'relative', zIndex: 1 }}>
+        <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: '11ch' }}>{label}</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', color: colors.c, background: colors.soft, border: `1px solid ${colors.line}`, padding: '3px 9px', borderRadius: 100, flexShrink: 0, marginLeft: 8 }}>{badgeLabel}</span>
+      </div>
+      {/* Ring */}
+      <div style={{ position: 'relative', width: 130, height: 130, marginBottom: 12, zIndex: 1 }}>
         <svg width="130" height="130" viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(-90deg)', display: 'block' }}>
           <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
           <circle
             cx="65" cy="65" r="54" fill="none"
-            stroke={c} strokeWidth="9" strokeLinecap="round"
+            stroke={colors.c} strokeWidth="9" strokeLinecap="round"
             strokeDasharray={circ.toFixed(2)}
             strokeDashoffset={dashOffset.toFixed(2)}
             className="score-ring-prog"
-            style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.2,0.8,0.2,1)', filter: `drop-shadow(0 0 8px ${c}80)` }}
+            style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.2,0.8,0.2,1)', filter: `drop-shadow(0 0 8px ${colors.c}80)` }}
           />
         </svg>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontFamily: '"Clash Display", sans-serif', fontWeight: 600, fontSize: centerFontSize, color: '#fff', lineHeight: 1 }}>{centerText}</span>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontFamily: '"Clash Display", sans-serif', fontWeight: 600, fontSize: centerFontSize, color: isGrade ? colors.c : '#fff', lineHeight: 1 }}>{centerText}</span>
+          {unitText && <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', marginTop: 3 }}>{unitText}</span>}
         </div>
       </div>
-      <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: S.muted, marginBottom: 4, lineHeight: 1.3 }}>{label}</span>
-      {benchmark && <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.06em', marginBottom: 6 }}>{benchmark}</span>}
-      <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: c, background: `${c}22`, padding: '2px 8px', borderRadius: 99, letterSpacing: '0.10em', marginTop: 4 }}>{badgeLabel}</span>
+      {/* Target line */}
+      {benchmark && <span style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', marginBottom: desc ? 8 : 0, position: 'relative', zIndex: 1 }}>{benchmark}</span>}
+      {/* AI description */}
+      {desc && <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.78)', lineHeight: 1.5, margin: 0, position: 'relative', zIndex: 1 }}>{desc}</p>}
     </div>
   )
 }
@@ -146,7 +172,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const backlinksSummary = cache?.backlinks_summary
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
-
+  const scoreDescs = content?.score_descriptions as Record<string, string> | null
 
   const createdDate = new Date(prospect.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
   const headerDomain = (prospect.store_url ?? '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
@@ -337,11 +363,14 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           .live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ff4315; margin-right: 8px; box-shadow: 0 0 10px rgba(255,67,21,0.7); animation: blink 1.6s infinite; flex-shrink: 0; vertical-align: middle; }
           .scores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
           @media (max-width: 600px) { .scores-grid { grid-template-columns: repeat(2, 1fr); } }
+          .score-card { transition: transform 0.2s ease; }
+          .score-card:hover { transform: translateY(-3px); }
           @media (prefers-reduced-motion: reduce) {
             .hdr-el { opacity: 1 !important; transform: none !important; transition: none !important; }
             .hdr-scan { display: none !important; }
             .live-dot { animation: none !important; }
             .score-ring-prog { transition: none !important; }
+            .score-card:hover { transform: none !important; }
           }
         `}</style>
         <div style={{ position: 'relative', background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 24, padding: '40px 32px', marginBottom: 48, overflow: 'hidden' }}>
@@ -454,29 +483,29 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             {(() => {
               const val = ps?.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <ScoreRing key="mob" label="Mobile Performance" pct={val} centerText={val != null ? val : '--'} status={st} benchmark="Target: 90+" revealed={scoresRevealed} />
+              return <ScoreRing key="mob" label="Mobile Performance" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.mobile ?? SCORE_DESC_FALLBACKS.mobile} revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = psDesktop?.performance_score != null && psDesktop.performance_score > 0 ? Math.round(psDesktop.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <ScoreRing key="desk" label="Desktop Performance" pct={val} centerText={val != null ? val : '--'} status={st} benchmark="Target: 90+" revealed={scoresRevealed} />
+              return <ScoreRing key="desk" label="Desktop Performance" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.desktop ?? SCORE_DESC_FALLBACKS.desktop} revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = ps?.seo_score != null && ps.seo_score > 0 ? Math.round(ps.seo_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <ScoreRing key="seo" label="SEO Score" pct={val} centerText={val != null ? val : '--'} status={st} benchmark="Target: 90+" revealed={scoresRevealed} />
+              return <ScoreRing key="seo" label="SEO Score" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.seo ?? SCORE_DESC_FALLBACKS.seo} revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = ps?.accessibility_score != null && ps.accessibility_score > 0 ? Math.round(ps.accessibility_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <ScoreRing key="a11y" label="Accessibility" pct={val} centerText={val != null ? val : '--'} status={st} benchmark="Target: 90+" revealed={scoresRevealed} />
+              return <ScoreRing key="a11y" label="Accessibility" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.accessibility ?? SCORE_DESC_FALLBACKS.accessibility} revealed={scoresRevealed} />
             })()}
             {(() => {
               const passed = cro?.summary?.passed
               const total = cro?.summary?.total ?? 20
               const ringPct = passed != null ? (passed / total * 100) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = passed == null ? 'neutral' : passed >= 16 ? 'good' : passed >= 10 ? 'needs-work' : 'poor'
-              return <ScoreRing key="cro-score" label="CRO Score" pct={ringPct} centerText={passed != null ? `${passed}/${total}` : '--'} status={st} benchmark="Most stores: 14-16/20" revealed={scoresRevealed} />
+              return <ScoreRing key="cro-score" label="CRO Score" pct={ringPct} centerText={passed != null ? passed : '--'} unitText={passed != null ? `/${total}` : undefined} status={st} benchmark="Most stores: 14-16/20" desc={scoreDescs?.cro ?? SCORE_DESC_FALLBACKS.cro} revealed={scoresRevealed} />
             })()}
             {(() => {
               const total = cro?.summary?.total ?? 20
@@ -484,7 +513,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               const ringPct = passed != null ? (passed / total * 100) : null
               const grade = ringPct == null ? '--' : ringPct > 85 ? 'A' : ringPct > 70 ? 'B' : ringPct > 55 ? 'C' : 'D'
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = grade === 'A' ? 'good' : grade === 'B' ? 'needs-work' : grade === 'C' || grade === 'D' ? 'poor' : 'neutral'
-              return <ScoreRing key="cro-grade" label="Overall CRO" pct={ringPct} centerText={grade} status={st} benchmark="Target: B or above" revealed={scoresRevealed} />
+              return <ScoreRing key="cro-grade" label="Overall CRO" pct={ringPct} centerText={grade} status={st} benchmark="Target: B or above" desc={scoreDescs?.overall ?? SCORE_DESC_FALLBACKS.overall} revealed={scoresRevealed} />
             })()}
           </div>
         </div>
