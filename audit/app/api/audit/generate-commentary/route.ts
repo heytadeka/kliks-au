@@ -101,17 +101,25 @@ export async function POST(req: NextRequest) {
   const topCompetitorTrafficRaw = dfsCompetitors[0]?.estimated_traffic ?? dfsCompetitors[0]?.full_domain_metrics?.organic?.etv ?? 0
   const trafficGap = topCompetitorTrafficRaw > monthlyTraffic ? Math.round(topCompetitorTrafficRaw - monthlyTraffic) : 0
 
+  // Round scores to integers so commentary matches the rings exactly
+  const mobileScore = ps?.performance_score != null ? Math.round(ps.performance_score) : null
+  const desktopScore = psDesktop?.performance_score != null ? Math.round(psDesktop.performance_score) : null
+  const seoScore = ps?.seo_score != null ? Math.round(ps.seo_score) : null
+  const a11yScore = ps?.accessibility_score != null ? Math.round(ps.accessibility_score) : null
+
   const userPrompt = `Generate commentary for ${prospect.brand_name} (${prospect.store_url}), a ${prospect.niche} store.
 
+IMPORTANT: Use the exact score numbers provided below. Do not change, round, or estimate them differently. Every score you mention in commentary must match these numbers exactly.
+
 PERFORMANCE DATA:
-Mobile Score: ${ps?.performance_score ?? 'N/A'}/100
+Mobile Score: ${mobileScore ?? 'N/A'}/100
 LCP: ${lcpS}s (${lcpStatus})
 FCP: ${fcpS}s
 TBT: ${tbt}ms
 Speed Index: ${speedIndex}s
-Desktop Score: ${psDesktop?.performance_score ?? 'N/A'}/100
-SEO Score: ${ps?.seo_score ?? 'N/A'}/100
-Accessibility Score: ${ps?.accessibility_score ?? 'N/A'}/100
+Desktop Score: ${desktopScore ?? 'N/A'}/100
+SEO Score: ${seoScore ?? 'N/A'}/100
+Accessibility Score: ${a11yScore ?? 'N/A'}/100
 
 CRO DATA:
 ${cro?.summary?.passed ?? 'N/A'}/20 checks passed
@@ -132,7 +140,7 @@ Referring Domains: ${backlinksUnavailable ? 'null (backlinks subscription inacti
 
 Generate exactly these 8 keys as JSON:
 {
-  "performance": "3-5 sentences about their speed scores in plain English. Reference their actual LCP and what it costs them in conversions. Specific, not generic.",
+  "performance": "3-5 sentences about their speed scores in plain English. Reference their actual LCP and what it costs them in conversions. Specific, not generic. You MUST use the exact score integers above, e.g. if mobile is 43 write 43, not 39 or 45.",
   "cro": "3-5 sentences about their CRO score and what the critical issues mean for their revenue. Focus on the 2-3 most important failed checks.",
   "seo": "3-5 sentences about their organic search presence. If numbers are low, say so directly and explain what that means for paid ad dependency.",
   "opportunity": "3-5 sentences identifying the single highest leverage move for this specific store. Be direct and specific. This is the most important section.",
@@ -173,7 +181,8 @@ Rules for hook_headline:
 Rules for score_descriptions:
 - Each value must be ONE sentence only, maximum 14 words
 - Tailor to the actual score - if mobile is 23, say critical, if 87 say nearly there
-- No jargon, no em dashes, plain language a store owner reads instantly
+- No em dashes - use commas or hyphens only. Never use em dashes anywhere in your response.
+- No jargon, plain language a store owner reads instantly
 - Describe what it means for shoppers or sales, not the score number itself
 
 Rules for seo_findings:

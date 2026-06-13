@@ -253,6 +253,27 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     return { winning, close, money }
   }, [dfsKeywords, dfsContentGap, dfsGaps])
 
+  // ── Sequential section numbers — accounts for conditional sections so there are never gaps ──
+  const sectionNums = useMemo(() => {
+    const map: Record<string, string> = {}
+    let n = 1
+    const pad = (x: number) => String(x).padStart(2, '0')
+    map.scores = pad(n++)
+    map.performance = pad(n++)
+    map.cro = pad(n++)
+    if (gmbData) map.gmb = pad(n++)
+    map.ads = pad(n++)
+    if (content?.section_strategy_headline || content?.section_strategy_body) map.strategy = pad(n++)
+    map.seo = pad(n++)
+    map.priorities = pad(n++)
+    if (content?.section_seo_headline) map.seoCommentary = pad(n++)
+    if (content?.ai_opportunity_commentary || content?.section_opportunity_headline) map.opportunity = pad(n++)
+    if (revCalc.length > 0) map.revenue = pad(n++)
+    map.appendix = pad(n++)
+    return map
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gmbData, content?.section_strategy_headline, content?.section_strategy_body, content?.section_seo_headline, content?.ai_opportunity_commentary, content?.section_opportunity_headline, revCalc.length])
+
   // ── Score ring animation ──
   const [scoresRevealed, setScoresRevealed] = useState(false)
   const scoresRef = useRef<HTMLDivElement>(null)
@@ -561,7 +582,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow-row">
-                <span className="sec-num-label">01</span>
+                <span className="sec-num-label">{sectionNums.scores}</span>
                 <span className="kicker"><span className="dot" />The Scorecard</span>
               </div>
               <h2 className="sec-title">Six scores that decide<br />whether people buy.</h2>
@@ -614,7 +635,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow-row">
-                <span className="sec-num-label">02</span>
+                <span className="sec-num-label">{sectionNums.performance}</span>
                 <span className="kicker"><span className="dot" />Speed, In Plain English</span>
               </div>
               <h2 className="sec-title">How fast your store<br />actually feels.</h2>
@@ -674,7 +695,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow-row">
-                <span className="sec-num-label">03</span>
+                <span className="sec-num-label">{sectionNums.cro}</span>
                 <span className="kicker"><span className="dot" />Turning Visits Into Orders</span>
               </div>
               <h2 className="sec-title">What makes a visitor<br />actually check out.</h2>
@@ -748,7 +769,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             <div className="wrap">
               <div className="sec-head">
                 <div className="eyebrow-row">
-                  <span className="sec-num-label">04</span>
+                  <span className="sec-num-label">{sectionNums.gmb}</span>
                   <span className="kicker"><span className="dot" />Local Presence</span>
                 </div>
                 <h2 className="sec-title">Google Business Profile</h2>
@@ -833,8 +854,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow-row">
-                <span className="sec-num-label">05</span>
-                <span className="kicker"><span className="dot" />What I Noticed</span>
+                <span className="sec-num-label">{sectionNums.ads}</span>
+                <span className="kicker"><span className="dot" />Paid Media</span>
               </div>
               <h2 className="sec-title">Ads and Creative</h2>
             </div>
@@ -894,7 +915,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             <div className="wrap">
               <div className="sec-head">
                 <div className="eyebrow-row">
-                  <span className="sec-num-label">06</span>
+                  <span className="sec-num-label">{sectionNums.strategy}</span>
                   <span className="kicker"><span className="dot" />Ad Strategy</span>
                 </div>
                 <h2 className="sec-title">{content?.section_strategy_headline || 'Ad Strategy'}</h2>
@@ -912,7 +933,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow-row">
-                <span className="sec-num-label">07</span>
+                <span className="sec-num-label">{sectionNums.seo}</span>
                 <span className="kicker"><span className="dot" />Where You Stand In Search</span>
               </div>
               <h2 className="sec-title">You show up. Just not<br />where the buyers are.</h2>
@@ -1352,7 +1373,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow-row">
-                <span className="sec-num-label">08</span>
+                <span className="sec-num-label">{sectionNums.priorities}</span>
                 <span className="kicker"><span className="dot" />Priority Actions</span>
               </div>
               <h2 className="sec-title">Your top 3 fixes<br />this month.</h2>
@@ -1388,7 +1409,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             <div className="wrap">
               <div className="sec-head">
                 <div className="eyebrow-row">
-                  <span className="sec-num-label">09</span>
+                  <span className="sec-num-label">{sectionNums.seoCommentary}</span>
                   <span className="kicker"><span className="dot" />Search Opportunity</span>
                 </div>
                 <h2 className="sec-title">{content.section_seo_headline}</h2>
@@ -1405,7 +1426,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             <div className="wrap">
               <div className="sec-head">
                 <div className="eyebrow-row">
-                  <span className="sec-num-label">10</span>
+                  <span className="sec-num-label">{sectionNums.opportunity}</span>
                   <span className="kicker"><span className="dot" />Your Biggest Opportunity</span>
                 </div>
                 <h2 className="sec-title">{content?.section_opportunity_headline || 'Where to focus next.'}</h2>
@@ -1426,7 +1447,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             <div className="wrap">
               <div className="sec-head">
                 <div className="eyebrow-row">
-                  <span className="sec-num-label">11</span>
+                  <span className="sec-num-label">{sectionNums.revenue}</span>
                   <span className="kicker"><span className="dot" />The Bottom Line</span>
                 </div>
                 <h2 className="sec-title">What fixing all of it<br />is actually worth.</h2>
@@ -1471,7 +1492,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow-row">
-                <span className="sec-num-label">12</span>
+                <span className="sec-num-label">{sectionNums.appendix}</span>
                 <span className="kicker"><span className="dot" />Appendix</span>
               </div>
               <h2 className="sec-title">Data confidence summary.</h2>
@@ -1547,7 +1568,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 <img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
                 <div style={{ textAlign: 'left' }}>
                   <p style={{ fontSize: 14, fontWeight: 500, color: S.white, margin: 0 }}>pupcases.com.au</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 0 }}>Shopify store — designed &amp; built by Kliks</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 0 }}>Shopify store, designed &amp; built by Kliks</p>
                 </div>
               </a>
             </div>
