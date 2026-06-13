@@ -15,22 +15,6 @@ const S = {
 
 const MONO = "'Space Mono', ui-monospace, monospace"
 
-function SectionLabel({ children }: { children: string }) {
-  return <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 12 }}>{children}</span>
-}
-
-function GhostNumber({ n }: { n: string }) {
-  return <span style={{ position: 'absolute', top: -16, left: -8, fontFamily: '"Clash Display", sans-serif', fontSize: 72, fontWeight: 700, color: 'rgba(100,75,255,0.15)', lineHeight: 1, zIndex: 0, userSelect: 'none', pointerEvents: 'none' }}>{n}</span>
-}
-
-function SectionWrap({ children, id }: { children: React.ReactNode; id?: string }) {
-  return (
-    <section id={id} style={{ position: 'relative', marginBottom: 80 }}>
-      {children}
-    </section>
-  )
-}
-
 function MetricCard({ label, value, unit, status, description, target, benchmark }: { label: string; value: string | number; unit?: string; status: 'good' | 'needs-work' | 'poor' | 'neutral'; description?: string; target?: string; benchmark?: string }) {
   const colours = { good: '#22c55e', 'needs-work': '#f97316', poor: '#ef4444', neutral: S.purple }
   const c = colours[status]
@@ -175,7 +159,6 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const scoreDescs = content?.score_descriptions as Record<string, string> | null
   const hookHeadline = content?.hook_headline as { line1: string; line2: string; subtext?: string } | null
 
-  const createdDate = new Date(prospect.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
   const auditDate = new Date(prospect.created_at)
   const issuedMonth = auditDate.toLocaleString('en-US', { month: 'short' }).toUpperCase()
   const issuedYear = auditDate.getFullYear()
@@ -212,7 +195,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     }
 
     return results
-  }, [ps, cro, dfsOverview, dfsGaps, metaAds])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ps, cro, dfsOverview, dfsGaps])
 
   const totalRevImpact = revCalc.filter(r => r.impact).reduce((sum: number, r: any) => sum + r.impact, 0)
 
@@ -268,8 +252,6 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
       .slice(0, 10)
     return { winning, close, money }
   }, [dfsKeywords, dfsContentGap, dfsGaps])
-
-  const [passedExpanded, setPassedExpanded] = useState(false)
 
   // ── Score ring animation ──
   const [scoresRevealed, setScoresRevealed] = useState(false)
@@ -348,42 +330,159 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
   return (
     <div style={{ background: S.bg, minHeight: '100vh', color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
-      {/* Sticky header */}
+      {/* Texture overlays */}
+      <div className="grain" />
+      <div className="scan-lines" />
+
+      {/* Sticky nav */}
       <nav style={navStyle}>
         <a href="/" style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, color: S.white, textDecoration: 'none' }}>KLIKS<span style={{ color: S.orange }}>.</span></a>
         <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600, color: S.white }}>{prospect.brand_name}</span>
         <a href={prospect.cta_link || '/book'} style={{ background: S.orange, color: '#fff', borderRadius: 100, padding: '10px 24px', textDecoration: 'none', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 14, transition: 'background 0.2s' }}>Book a call</a>
       </nav>
 
-      <div style={{ maxWidth: 820, margin: '0 auto', padding: '48px 24px 120px' }}>
+      <div>
 
-        {/* ── Cinematic Header ── */}
+        {/* ── Global styles ── */}
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
-          @keyframes scanSweep {
-            0%   { top: -2px; opacity: 0; }
-            4%   { opacity: 1; }
-            90%  { opacity: 1; }
-            100% { top: calc(100% + 2px); opacity: 0; }
-          }
+          @keyframes scanSweep { 0%{top:-2px;opacity:0} 4%{opacity:1} 90%{opacity:1} 100%{top:calc(100% + 2px);opacity:0} }
           @keyframes blink { 50% { opacity: .25 } }
+          /* header animation */
           .hdr-el { opacity: 0; transform: translateY(12px); transition: opacity 0.55s ease, transform 0.55s ease; }
           .hdr-el.revealed { opacity: 1; transform: translateY(0); }
-          .live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ff4315; margin-right: 8px; box-shadow: 0 0 10px rgba(255,67,21,0.7); animation: blink 1.6s infinite; flex-shrink: 0; vertical-align: middle; }
-          .scores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-          @media (max-width: 600px) { .scores-grid { grid-template-columns: repeat(2, 1fr); } }
-          .score-card { transition: transform 0.2s ease; }
+          /* score rings */
+          .scores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+          .score-card { transition: transform 0.2s ease, border-color 0.4s; }
           .score-card:hover { transform: translateY(-3px); }
+          /* grain + scan overlays */
+          .grain { position: fixed; inset: 0; pointer-events: none; z-index: 200; opacity: .05; mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+          .scan-lines { position: fixed; inset: 0; pointer-events: none; z-index: 199; opacity: .4;
+            background: repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,0,0,.18) 3px, transparent 4px); mix-blend-mode: multiply; }
+          /* layout */
+          .wrap { max-width: 1200px; margin: 0 auto; padding: 0 40px; position: relative; }
+          .bg2-section { background: #1a1828; }
+          .divider { height: 1px; background: rgba(255,255,255,0.09); max-width: 1200px; margin: 0 auto; }
+          /* hero */
+          .hero { padding: 38px 0 120px; position: relative; overflow: hidden; }
+          .hero-grid { position: absolute; inset: 0; z-index: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.09) 1px, transparent 1px);
+            background-size: 64px 64px; mask-image: radial-gradient(120% 90% at 70% 0%, #000 0%, transparent 70%); opacity: .5; }
+          .hero-glow { position: absolute; z-index: 0; width: 760px; height: 760px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(100,75,255,.34), transparent 62%); top: -280px; right: -160px; filter: blur(20px); }
+          .hero-glow-o { background: radial-gradient(circle, rgba(255,67,21,.20), transparent 64%); top: 240px; left: -260px; width: 620px; height: 620px; position: absolute; z-index: 0; border-radius: 50%; }
+          .hero .wrap { z-index: 2; position: relative; }
+          /* topbar */
+          .topbar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 60px; }
+          .logo { display: flex; align-items: center; gap: 13px; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 22px; color: #fff; letter-spacing: -.01em; text-decoration: none; }
+          .logo .mark { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #644bff, #ff4315); display: grid; place-items: center; position: relative; box-shadow: 0 0 24px rgba(100,75,255,.5); flex-shrink: 0; }
+          .logo .mark::after { content: ""; width: 11px; height: 11px; border: 2.5px solid #fff; border-radius: 50%; display: block; }
+          .topmeta { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .22em; color: rgba(255,255,255,0.38); text-align: right; line-height: 2; }
+          /* confidential pills */
+          .confidential { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin-bottom: 42px; }
+          .conf-pill { border: 1px solid rgba(255,255,255,0.14); padding: 7px 14px; border-radius: 100px; color: rgba(255,255,255,0.72); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .1em; }
+          .conf-pill.live { color: #ff4315; border-color: rgba(255,67,21,.4); display: inline-flex; align-items: center; gap: 8px; }
+          .conf-pill.live::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #ff4315; box-shadow: 0 0 10px #ff4315; animation: blink 1.6s infinite; }
+          /* hook */
+          .hook { font-family: 'Clash Display', sans-serif; font-weight: 500; color: #fff; letter-spacing: -.02em; line-height: 1.04; font-size: clamp(38px, 6.2vw, 82px); max-width: 16ch; margin-bottom: 30px; }
+          .hook .hl { color: #ff4315; }
+          .hero-sub { font-size: clamp(18px, 1.6vw, 22px); color: rgba(255,255,255,0.72); max-width: 54ch; line-height: 1.55; margin: 0; }
+          /* hero figure */
+          .hero-figure { margin-top: 84px; display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: end; border-top: 1px solid rgba(255,255,255,0.14); padding-top: 46px; }
+          .fig-label { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: .26em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 20px; }
+          .fig-num { font-family: 'Clash Display', sans-serif; font-weight: 600; color: #fff; letter-spacing: -.03em; line-height: .86; font-size: clamp(86px, 17vw, 230px); background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,.62)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+          .fig-num .per { font-size: .26em; color: #ff4315; -webkit-text-fill-color: #ff4315; letter-spacing: 0; margin-left: .05em; }
+          .fig-note { font-size: 17px; color: rgba(255,255,255,0.55); max-width: 30ch; text-align: right; padding-bottom: 18px; margin: 0; }
+          /* section shell */
+          .section-pad { padding: 118px 0; }
+          .sec-head { margin-bottom: 64px; max-width: 760px; }
+          .eyebrow-row { display: flex; align-items: baseline; gap: 20px; margin-bottom: 26px; }
+          .sec-num-label { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: .2em; color: #ff4315; }
+          .kicker { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: .32em; text-transform: uppercase; color: rgba(255,255,255,0.38); display: inline-flex; align-items: center; gap: 12px; }
+          .kicker .dot { width: 6px; height: 6px; background: #ff4315; border-radius: 50%; box-shadow: 0 0 12px #ff4315; flex-shrink: 0; }
+          .sec-title { font-family: 'Clash Display', sans-serif; font-weight: 600; color: #fff; line-height: 1.02; letter-spacing: -.01em; font-size: clamp(34px, 4.6vw, 60px); margin: 0; }
+          .sec-lead { font-size: clamp(18px, 1.5vw, 21px); color: rgba(255,255,255,0.72); max-width: 60ch; margin-top: 22px; margin-bottom: 0; line-height: 1.55; }
+          /* CRO two-column */
+          .cro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+          .cro-col { border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; padding: 36px; background: #1a1828; }
+          .cro-col.miss { background: linear-gradient(180deg, rgba(255,67,21,.06), transparent), #1a1828; border-color: rgba(255,67,21,.18); }
+          .cro-col h3 { font-family: 'Clash Display', sans-serif; font-weight: 500; font-size: 24px; color: #fff; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; }
+          .cro-col .cro-sub { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 28px; }
+          .cro-item-new { display: flex; gap: 16px; padding: 17px 0; border-top: 1px solid rgba(255,255,255,0.09); }
+          .cro-item-new:first-of-type { border-top: none; }
+          .cro-mk { flex: 0 0 22px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; font-size: 13px; font-weight: 700; }
+          .cro-mk.ok { background: rgba(52,210,150,.15); color: #34d296; border: 1px solid rgba(52,210,150,.35); }
+          .cro-mk.no { background: rgba(255,67,21,.13); color: #ff4315; border: 1px solid rgba(255,67,21,.35); }
+          .cro-item-h { color: #fff; font-weight: 500; font-size: 16.5px; margin-bottom: 3px; }
+          .cro-item-p { font-size: 14.5px; color: rgba(255,255,255,0.55); line-height: 1.45; margin: 0; }
+          /* Revenue summary */
+          .rev { background: linear-gradient(160deg, #171430, #0e0d1a 70%); border: 1px solid rgba(255,255,255,0.14); border-radius: 28px; padding: 64px; position: relative; overflow: hidden; }
+          .rev::before { content: ""; position: absolute; width: 560px; height: 560px; border-radius: 50%; top: -260px; right: -160px; background: radial-gradient(circle, rgba(100,75,255,.3), transparent 62%); filter: blur(10px); }
+          .rev > * { position: relative; z-index: 1; }
+          .rev-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 60px; align-items: center; }
+          .rev-total .rl { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: .24em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 18px; }
+          .rev-total .rn { font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: clamp(80px, 11vw, 148px); color: #fff; line-height: .85; letter-spacing: -.03em; background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,.62)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+          .rev-total .rn .per { font-size: .22em; color: #ff4315; -webkit-text-fill-color: #ff4315; margin-left: .05em; }
+          .rev-total .rsub { font-size: 17px; color: rgba(255,255,255,0.72); margin-top: 26px; max-width: 34ch; }
+          .rev-bars { display: flex; flex-direction: column; gap: 24px; }
+          .rbar .rbar-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+          .rbar .rbar-top .t { color: #fff; font-weight: 500; font-size: 16px; }
+          .rbar .rbar-top .v { font-family: 'Clash Display', sans-serif; font-weight: 600; color: #fff; font-size: 19px; }
+          .rbar .track { height: 10px; border-radius: 100px; background: rgba(255,255,255,.07); overflow: hidden; }
+          .rbar .track i { display: block; height: 100%; border-radius: 100px; transition: width 1.5s cubic-bezier(.2,.8,.2,1); }
+          .rbar .rbar-note { font-size: 13.5px; color: rgba(255,255,255,0.55); margin-top: 8px; }
+          .rb1 i { background: linear-gradient(90deg, #ff4315, #ff7a4d); }
+          .rb2 i { background: linear-gradient(90deg, #644bff, #9b87ff); }
+          .rb3 i { background: linear-gradient(90deg, #ff4315, #ffae00); }
+          /* CTA */
+          .cta-section { padding: 128px 0 110px; text-align: center; position: relative; overflow: hidden; }
+          .cta-glow-el { position: absolute; width: 760px; height: 540px; border-radius: 50%; left: 50%; top: 30%; transform: translateX(-50%); background: radial-gradient(circle, rgba(255,67,21,.16), transparent 64%); filter: blur(16px); z-index: 0; pointer-events: none; }
+          .cta-section .wrap { z-index: 2; position: relative; }
+          .cta-heading { font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: clamp(46px, 7vw, 96px); color: #fff; letter-spacing: -.03em; line-height: .98; margin-bottom: 30px; }
+          .cta-body { font-size: clamp(18px, 1.6vw, 21px); color: rgba(255,255,255,0.72); max-width: 50ch; margin: 0 auto 44px; }
+          .cta-btn-new { display: inline-flex; align-items: center; gap: 14px; background: #ff4315; color: #fff; font-family: 'Satoshi', sans-serif; font-weight: 700; font-size: 18px; padding: 21px 38px; border-radius: 100px; text-decoration: none; box-shadow: 0 18px 50px -12px rgba(255,67,21,.6); transition: transform .3s, box-shadow .3s; }
+          .cta-btn-new:hover { transform: translateY(-3px); box-shadow: 0 26px 60px -12px rgba(255,67,21,.75); }
+          .cta-btn-new .arr { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: 14px; }
+          .sign { margin-top: 72px; display: flex; align-items: center; justify-content: center; gap: 20px; }
+          .sign .ph { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #644bff, #ff4315); display: grid; place-items: center; font-family: 'Clash Display', sans-serif; font-weight: 600; color: #fff; font-size: 22px; flex: 0 0 auto; border: 2px solid rgba(255,255,255,.16); }
+          .sign .who .nm { font-family: 'Clash Display', sans-serif; font-weight: 500; color: #fff; font-size: 19px; }
+          .sign .who .rl { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-top: 3px; }
+          /* site footer */
+          .site-footer { border-top: 1px solid rgba(255,255,255,0.09); padding: 40px 0; }
+          .site-footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+          .site-footer .fmeta { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,0.38); }
+          /* reduced motion */
           @media (prefers-reduced-motion: reduce) {
             .hdr-el { opacity: 1 !important; transform: none !important; transition: none !important; }
             .hdr-scan { display: none !important; }
-            .live-dot { animation: none !important; }
+            .conf-pill.live::before { animation: none !important; }
             .score-ring-prog { transition: none !important; }
             .score-card:hover { transform: none !important; }
+            .rbar .track i { transition: none !important; }
+          }
+          /* responsive */
+          @media (max-width: 900px) {
+            .wrap { padding: 0 24px; }
+            .scores-grid { grid-template-columns: repeat(2, 1fr); }
+            .cro-grid { grid-template-columns: 1fr; }
+            .rev { padding: 40px 28px; }
+            .rev-grid { grid-template-columns: 1fr; gap: 44px; }
+            .hero-figure { grid-template-columns: 1fr; gap: 8px; }
+            .fig-note { text-align: left; max-width: 40ch; }
+            .section-pad { padding: 84px 0; }
+            .topmeta { display: none; }
+          }
+          @media (max-width: 600px) {
+            .scores-grid { grid-template-columns: repeat(2, 1fr); }
+            .hook { font-size: clamp(32px, 8vw, 48px); }
           }
         `}</style>
-        <div style={{ position: 'relative', background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 24, padding: '40px 32px', marginBottom: 48, overflow: 'hidden' }}>
-
+        {/* ── Hero ── */}
+        <section className="hero">
+          <div className="hero-grid" />
+          <div className="hero-glow" />
+          <div className="hero-glow-o" />
           {/* Scan line — plays once on mount */}
           {headerRevealed && (
             <div className="hdr-scan" style={{
@@ -394,119 +493,81 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               zIndex: 10, pointerEvents: 'none',
             }} />
           )}
-
-          {/* Purple glow behind brand name */}
-          <div style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', width: 520, height: 200, background: 'radial-gradient(ellipse, rgba(100,75,255,0.3), transparent 70%)', filter: 'blur(50px)', pointerEvents: 'none', zIndex: 0 }} />
-
-          {/* Top bar: Kliks logo + audit reference */}
-          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.05s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, position: 'relative', zIndex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 5, background: 'linear-gradient(135deg, #644bff 0%, #ff4315 100%)', flexShrink: 0 }} />
-              <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 15, fontWeight: 700, letterSpacing: '0.06em', color: S.white }}>KLIKS</span>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>GROWTH AUDIT / NO. {auditRef}</div>
-              <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 400, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>ISSUED {issuedMonth} {issuedYear} / VALID 30 DAYS</div>
-            </div>
-          </div>
-
-          {/* 2. Brand name */}
-          <div style={{ position: 'relative', zIndex: 1, marginBottom: 14 }}>
-            <h1 className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.3s', fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(40px, 6vw, 64px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.1, margin: 0 }}>
-              {prospect.brand_name}
-            </h1>
-          </div>
-
-          {/* 3. Hook headline — AI two-liner or generic fallback */}
-          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.5s', marginBottom: 22, position: 'relative', zIndex: 1 }}>
-            {hookHeadline ? (
-              <>
-                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(26px, 5vw, 54px)', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.1, color: S.white }}>{hookHeadline.line1}</div>
-                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(26px, 5vw, 54px)', fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.1, color: S.orange, marginBottom: 14 }}>{hookHeadline.line2}</div>
-                {hookHeadline.subtext && (
-                  <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: '62ch' }}>{hookHeadline.subtext}</p>
-                )}
-              </>
-            ) : (
-              <p style={{ fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55, margin: 0, maxWidth: '62ch' }}>
-                Your growth, mapped. Here&apos;s where {headerDomain} stands, and where the next wins are.
-              </p>
-            )}
-          </div>
-
-          {/* 4. Headline metric + supporting stat */}
-          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.7s', marginBottom: 28, position: 'relative', zIndex: 1 }}>
-            {hasRevenue ? (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 36, flexWrap: 'wrap' }}>
-                {/* Hero revenue */}
-                <div>
-                  <div style={{
-                    fontFamily: '"Clash Display", sans-serif',
-                    fontSize: 'clamp(86px, 17vw, 230px)',
-                    fontWeight: 600,
-                    letterSpacing: '-0.03em',
-                    lineHeight: 0.86,
-                    background: 'linear-gradient(180deg, #fff 30%, rgba(255,255,255,.62))',
-                    WebkitBackgroundClip: 'text',
-                    backgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    marginBottom: 14,
-                  }}>
-                    ${fmtNum(displayRevenue)}<span style={{ fontSize: '0.26em', color: S.orange, WebkitTextFillColor: S.orange, letterSpacing: '0', marginLeft: '0.05em' }}>/yr</span>
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: 11, color: S.muted, letterSpacing: '0.16em', textTransform: 'uppercase' as const, marginTop: 4 }}>Estimated annual growth opportunity</div>
-                  <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', marginTop: 6 }}>Revenue you could be capturing with the fixes in this report.</div>
-                </div>
-                {/* Supporting stat — traffic */}
-                {kwEtv > 0 && (
-                  <div style={{ paddingBottom: 2, alignSelf: 'flex-end' }}>
-                    <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 48, fontWeight: 700, color: S.white, lineHeight: 1 }}>
-                      {fmtNum(kwEtv)}
-                    </div>
-                    <div style={{ fontFamily: MONO, fontSize: 11, color: S.muted, marginTop: 8, letterSpacing: '0.16em', textTransform: 'uppercase' as const }}>Monthly organic visitors</div>
-                  </div>
-                )}
+          <div className="wrap">
+            {/* Top bar */}
+            <div className={`topbar hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.05s' }}>
+              <a href="/" className="logo">
+                <span className="mark" />
+                KLIKS
+              </a>
+              <div className="topmeta">
+                GROWTH AUDIT &nbsp;/&nbsp; <strong style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 400 }}>NO. {auditRef}</strong><br />
+                ISSUED <strong style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 400 }}>{issuedMonth} {issuedYear}</strong> &nbsp;/&nbsp; VALID 30 DAYS
               </div>
-            ) : (
-              <div>
-                <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(60px, 10vw, 110px)', fontWeight: 700, color: S.orange, lineHeight: 1 }}>
-                  {fmtNum(kwEtv)}
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 11, color: S.muted, marginTop: 10, letterSpacing: '0.16em', textTransform: 'uppercase' as const }}>Monthly organic visitors analysed</div>
-              </div>
-            )}
-          </div>
+            </div>
 
-          {/* 5. Metadata — quiet */}
-          <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.9s', position: 'relative', zIndex: 1 }}>
-            <p style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.25)', marginBottom: 10, letterSpacing: '0.10em' }}>
-              {(prospect.store_url ?? '').replace(/^https?:\/\//, '')}
-              &nbsp;&middot;&nbsp;Shopify
-              {prospect.created_at && <>&nbsp;&middot;&nbsp;{createdDate}</>}
-            </p>
-            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
-              {prospect.niche && (
-                <span style={{ fontFamily: MONO, background: 'rgba(100,75,255,0.05)', border: '1px solid rgba(100,75,255,0.12)', borderRadius: 99, padding: '2px 10px', fontSize: 10, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)' }}>
-                  {prospect.niche}
-                </span>
+            {/* Confidential pills */}
+            <div className={`confidential hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.2s' }}>
+              <span className="conf-pill live">Live findings</span>
+              <span className="conf-pill">Prepared for {prospect.brand_name}</span>
+              <span className="conf-pill">{headerDomain}</span>
+              {prospect.niche && <span className="conf-pill">{prospect.niche}</span>}
+            </div>
+
+            {/* Hook headline */}
+            <div className={`hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.35s' }}>
+              {hookHeadline ? (
+                <h1 className="hook">
+                  {hookHeadline.line1} <span className="hl">{hookHeadline.line2}</span>
+                </h1>
+              ) : (
+                <h1 className="hook">
+                  Your growth, mapped. <span className="hl">Here&apos;s where the wins are.</span>
+                </h1>
               )}
-              <span style={{ fontFamily: MONO, background: 'rgba(100,75,255,0.05)', border: '1px solid rgba(100,75,255,0.12)', borderRadius: 99, padding: '2px 10px', fontSize: 10, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.3)' }}>
-                Confidential
-              </span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', color: S.orange, border: '1px solid rgba(255,67,21,0.4)', borderRadius: 100, padding: '4px 12px', fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' as const }}>
-                <span className="live-dot" />
-                Live findings
-              </span>
+              {hookHeadline?.subtext ? (
+                <p className="hero-sub">{hookHeadline.subtext}</p>
+              ) : (
+                <p className="hero-sub">We ran {headerDomain} through every signal Google and real shoppers use to judge a store. Here is what is costing you orders, and what it is worth to fix.</p>
+              )}
+            </div>
+
+            {/* Hero figure */}
+            <div className={`hero-figure hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.55s' }}>
+              {hasRevenue ? (
+                <div>
+                  <div className="fig-label">Revenue you could be capturing</div>
+                  <div className="fig-num">
+                    ${fmtNum(displayRevenue)}<span className="per">/yr</span>
+                  </div>
+                </div>
+              ) : kwEtv > 0 ? (
+                <div>
+                  <div className="fig-label">Monthly organic visitors analysed</div>
+                  <div className="fig-num">{fmtNum(kwEtv)}</div>
+                </div>
+              ) : null}
+              <p className="fig-note">
+                <strong style={{ color: '#fff', fontWeight: 500 }}>Same traffic. Same products.</strong> A store that finally keeps up with the people already trying to buy from you.
+              </p>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Audit Scores */}
-        <div style={{ marginBottom: 64 }}>
-          <SectionLabel>AUDIT SCORES</SectionLabel>
-          <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 6 }}>Audit Scores</h2>
-          <p style={{ fontFamily: MONO, fontSize: 11, color: S.muted, marginBottom: 24, letterSpacing: '0.10em' }}>Lighthouse analysis &amp; industry benchmarks</p>
-          <div ref={scoresRef} className="scores-grid">
+        <div className="divider" />
+
+        {/* ── Audit Scores ── */}
+        <section className="section-pad bg2-section" id="scores">
+          <div className="wrap">
+            <div className="sec-head">
+              <div className="eyebrow-row">
+                <span className="sec-num-label">01</span>
+                <span className="kicker"><span className="dot" />The Scorecard</span>
+              </div>
+              <h2 className="sec-title">Six scores that decide<br />whether people buy.</h2>
+              <p className="sec-lead">We graded your store the way Google and your shoppers do. Higher is better. Anything glowing orange is leaking money right now.</p>
+            </div>
+            <div ref={scoresRef} className="scores-grid">
             {(() => {
               const val = ps?.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
@@ -543,14 +604,22 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               return <ScoreRing key="cro-grade" label="Overall CRO" pct={ringPct} centerText={grade} status={st} benchmark="Target: B or above" desc={scoreDescs?.overall ?? SCORE_DESC_FALLBACKS.overall} revealed={scoresRevealed} />
             })()}
           </div>
-        </div>
+          </div>
+        </section>
 
-        {/* SECTION 01 - PERFORMANCE */}
-        <SectionWrap id="performance">
-          <GhostNumber n="01" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>PERFORMANCE</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 32 }}>Core Web Vitals</h2>
+        <div className="divider" />
+
+        {/* ── Performance ── */}
+        <section className="section-pad" id="performance">
+          <div className="wrap">
+            <div className="sec-head">
+              <div className="eyebrow-row">
+                <span className="sec-num-label">02</span>
+                <span className="kicker"><span className="dot" />Speed, In Plain English</span>
+              </div>
+              <h2 className="sec-title">How fast your store<br />actually feels.</h2>
+              <p className="sec-lead">Google watches these signals to decide if your store feels fast. A slow store is the most expensive problem you cannot see.</p>
+            </div>
 
             {ps ? (
               <>
@@ -596,125 +665,69 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               </div>
             )}
           </div>
-        </SectionWrap>
+        </section>
 
-        {/* SECTION 02 - CRO */}
-        <SectionWrap id="cro">
-          <GhostNumber n="02" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>CONVERSION RATE OPTIMISATION</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 8 }}>CRO Checklist</h2>
-            {cro?.summary ? (
-              <p style={{ fontFamily: MONO, fontSize: 11, color: '#22c55e', fontWeight: 700, letterSpacing: '0.16em', marginBottom: 28 }}>{cro.summary.passed}/20 checks passed</p>
-            ) : (
-              <div style={{ marginBottom: 32 }} />
-            )}
-            {topCompDomain && (
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
-                Stores like {topCompDomain} typically pass 17-18 of these checks. Every failed check is a conversion opportunity being left on the table.
-              </p>
-            )}
+        <div className="divider" />
+
+        {/* ── CRO ── */}
+        <section className="section-pad bg2-section" id="cro">
+          <div className="wrap">
+            <div className="sec-head">
+              <div className="eyebrow-row">
+                <span className="sec-num-label">03</span>
+                <span className="kicker"><span className="dot" />Turning Visits Into Orders</span>
+              </div>
+              <h2 className="sec-title">What makes a visitor<br />actually check out.</h2>
+              {topCompDomain && (
+                <p className="sec-lead">You are already doing a lot right. The gaps below are the difference between someone browsing and someone buying.{' '}
+                  <span style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.85em' }}>Stores like {topCompDomain} typically pass 17–18 of these checks.</span>
+                </p>
+              )}
+              {!topCompDomain && (
+                <p className="sec-lead">You are already doing a lot right. The gaps below are the difference between someone browsing and someone buying.</p>
+              )}
+            </div>
 
             {cro?.results ? (
               <>
-                {/* CRO summary tiles */}
-                {cro?.summary && (
-                  <>
-                    <style>{`.cro-tiles{grid-template-columns:repeat(4,1fr)}@media(max-width:639px){.cro-tiles{grid-template-columns:repeat(2,1fr)}}`}</style>
-                    <div className="cro-tiles" style={{ display: 'grid', gap: 12, marginBottom: 32 }}>
-                      {([
-                        { label: 'Passed',        value: cro.summary.passed,           bg: 'rgba(34,197,94,0.08)',  border: 'rgba(34,197,94,0.2)',  color: '#22c55e' },
-                        { label: 'Critical',      value: cro.summary.critical_issues,  bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)', color: '#ef4444' },
-                        { label: 'Warnings',      value: cro.summary.warnings,         bg: 'rgba(249,115,22,0.08)',border: 'rgba(249,115,22,0.2)',color: '#f97316' },
-                        { label: 'Opportunities', value: cro.summary.opportunities,    bg: 'rgba(99,102,241,0.08)',border: 'rgba(99,102,241,0.2)',color: '#6366f1' },
-                      ] as { label: string; value: number; bg: string; border: string; color: string }[]).map(tile => (
-                        <div key={tile.label} style={{ background: tile.bg, border: `1px solid ${tile.border}`, borderRadius: 12, padding: '16px 20px' }}>
-                          <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color: tile.color }}>{tile.value}</div>
-                          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>{tile.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {/* Failed checks grouped by category */}
-                {Object.entries(failedByCategory).map(([category, items]) => (
-                  <div key={category} style={{ marginBottom: 32 }}>
-                    <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600, color: S.muted, marginBottom: 12, letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>{category}</h3>
-                    {(items as any[]).map((item, i) => (
-                      <div key={item.id} style={{
-                        display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px',
-                        background: i % 2 === 0 ? S.bg2 : S.bg,
-                        borderLeft: `3px solid ${item.importance === 'high' ? '#ef4444' : item.importance === 'medium' ? S.orange : S.muted}`,
-                        borderRadius: 8, marginBottom: 2,
-                      }}>
-                        <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>✗</span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
-                            <span style={{ fontSize: 15, color: S.muted }}>{item.label}</span>
-                            <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', padding: '2px 7px', borderRadius: 99, background: item.importance === 'high' ? 'rgba(239,68,68,0.12)' : item.importance === 'medium' ? 'rgba(249,115,22,0.12)' : 'rgba(100,75,255,0.12)', color: item.importance === 'high' ? '#ef4444' : item.importance === 'medium' ? '#f97316' : S.purple }}>{item.importance.toUpperCase()}</span>
-                          </div>
-                          {item.fix && (
-                            <p style={{ fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
-                              <span style={{ fontWeight: 700, color: S.orange, marginRight: 4 }}>FIX:</span>
-                              <span style={{ color: 'rgba(255,100,50,0.8)' }}>{item.fix}</span>
-                            </p>
-                          )}
+                <div className="cro-grid">
+                  {/* Left — passed items */}
+                  <div className="cro-col">
+                    <h3>
+                      <span className="cro-mk ok" style={{ width: 26, height: 26 }}>✓</span>
+                      Working for you
+                    </h3>
+                    <div className="cro-sub">{passedItems.length} strong foundation{passedItems.length !== 1 ? 's' : ''}</div>
+                    {(passedItems as any[]).slice(0, 8).map((item: any) => (
+                      <div key={item.id} className="cro-item-new">
+                        <span className="cro-mk ok">✓</span>
+                        <div>
+                          <div className="cro-item-h">{item.label}</div>
+                          {item.fix && <p className="cro-item-p">{item.fix}</p>}
                         </div>
                       </div>
                     ))}
                   </div>
-                ))}
 
-                {/* Passed checks summary row */}
-                {passedItems.length > 0 && (
-                  <>
-                    <div style={{ background: S.bg2, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: passedExpanded ? 12 : 24 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ color: '#22c55e', fontSize: 11, fontWeight: 700, lineHeight: 1 }}>✓</span>
-                        </div>
-                        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>{passedItems.length} checks passed</span>
-                      </div>
-                      <button onClick={() => setPassedExpanded(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: passedExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
-                          <path d="M 4 6 L 9 11 L 14 6" />
-                        </svg>
-                      </button>
+                  {/* Right — failed items */}
+                  <div className="cro-col miss">
+                    <h3>
+                      <span className="cro-mk no" style={{ width: 26, height: 26 }}>!</span>
+                      Missing, and costly
+                    </h3>
+                    <div className="cro-sub">
+                      {Object.values(failedByCategory).flat().length} fix{Object.values(failedByCategory).flat().length !== 1 ? 'es' : ''}, mostly under a week each
                     </div>
-                    {passedExpanded && (
-                      <div style={{ opacity: 0.6, marginBottom: 24 }}>
-                        {(passedItems as any[]).map((item, i) => (
-                          <div key={item.id} style={{
-                            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px',
-                            background: i % 2 === 0 ? S.bg2 : S.bg,
-                            borderLeft: '3px solid #22c55e',
-                            borderRadius: 8, marginBottom: 2,
-                          }}>
-                            <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>✓</span>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const }}>
-                                <span style={{ fontSize: 15, color: S.white }}>{item.label}</span>
-                                <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', padding: '2px 7px', borderRadius: 99, background: 'rgba(100,75,255,0.12)', color: S.purple }}>{item.importance?.toUpperCase()}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                    {(Object.values(failedByCategory).flat() as any[]).slice(0, 8).map((item: any) => (
+                      <div key={item.id} className="cro-item-new">
+                        <span className="cro-mk no">✕</span>
+                        <div>
+                          <div className="cro-item-h">{item.label}</div>
+                          {item.fix && <p className="cro-item-p">{item.fix}</p>}
+                        </div>
                       </div>
-                    )}
-                  </>
-                )}
-
-                <div style={{
-                  borderRadius: 12, padding: 24, marginTop: 24,
-                  border: `1px solid ${cro.summary.passed >= 16 ? '#22c55e' : cro.summary.passed >= 10 ? S.purple : S.orange}`,
-                  boxShadow: `0 0 24px ${cro.summary.passed >= 16 ? 'rgba(34,197,94,0.08)' : cro.summary.passed >= 10 ? 'rgba(100,75,255,0.08)' : 'rgba(255,67,21,0.08)'}`,
-                  background: S.bg2,
-                }}>
-                  <p style={{ fontSize: 16, lineHeight: 1.7 }}>
-                    <strong>{cro.summary.passed} of 20</strong> ecommerce CRO signals detected on {prospect.brand_name}.{' '}
-                    {cro.summary.passed < 10 ? 'Significant conversion optimisation opportunity identified.' : cro.summary.passed <= 15 ? 'Room for meaningful improvement across key conversion signals.' : 'Strong CRO foundation detected.'}
-                  </p>
+                    ))}
+                  </div>
                 </div>
 
                 <AdamsTake text={content?.ai_cro_commentary} />
@@ -725,15 +738,21 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               </div>
             )}
           </div>
-        </SectionWrap>
+        </section>
 
-        {/* GOOGLE BUSINESS PROFILE */}
+        <div className="divider" />
+
+        {/* ── GMB ── */}
         {gmbData && (
-          <SectionWrap id="gmb">
-            <GhostNumber n="03" />
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <SectionLabel>LOCAL PRESENCE</SectionLabel>
-              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 28 }}>Google Business Profile</h2>
+          <><section className="section-pad" id="gmb">
+            <div className="wrap">
+              <div className="sec-head">
+                <div className="eyebrow-row">
+                  <span className="sec-num-label">04</span>
+                  <span className="kicker"><span className="dot" />Local Presence</span>
+                </div>
+                <h2 className="sec-title">Google Business Profile</h2>
+              </div>
 
               {gmbData.found ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
@@ -805,15 +824,20 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 </div>
               )}
             </div>
-          </SectionWrap>
+          </section>
+          <div className="divider" /></>
         )}
 
-        {/* SECTION 03 - ADS */}
-        <SectionWrap id="ads">
-          <GhostNumber n="03" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>WHAT I NOTICED</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>Ads and Creative</h2>
+        {/* ── Ads ── */}
+        <section className="section-pad bg2-section" id="ads">
+          <div className="wrap">
+            <div className="sec-head">
+              <div className="eyebrow-row">
+                <span className="sec-num-label">05</span>
+                <span className="kicker"><span className="dot" />What I Noticed</span>
+              </div>
+              <h2 className="sec-title">Ads and Creative</h2>
+            </div>
 
             {metaAds && !metaAds.error ? (
               <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 24 }}>
@@ -860,31 +884,39 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               </div>
             )}
           </div>
-        </SectionWrap>
+        </section>
 
-        {/* SECTION 04 - AD STRATEGY (legacy manual content, only shown if populated) */}
+        <div className="divider" />
+
+        {/* ── Ad Strategy (legacy) ── */}
         {(content?.section_strategy_headline || content?.section_strategy_body) && (
-          <SectionWrap id="strategy">
-            <GhostNumber n="04" />
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <SectionLabel>AD STRATEGY</SectionLabel>
-              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>Ad Strategy</h2>
-              {content?.section_strategy_headline && (
-                <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 22, fontWeight: 600, marginBottom: 16 }}>{content.section_strategy_headline}</h3>
-              )}
+          <><section className="section-pad" id="strategy">
+            <div className="wrap">
+              <div className="sec-head">
+                <div className="eyebrow-row">
+                  <span className="sec-num-label">06</span>
+                  <span className="kicker"><span className="dot" />Ad Strategy</span>
+                </div>
+                <h2 className="sec-title">{content?.section_strategy_headline || 'Ad Strategy'}</h2>
+              </div>
               {content?.section_strategy_body && (
                 <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_strategy_body}</p>
               )}
             </div>
-          </SectionWrap>
+          </section>
+          <div className="divider" /></>
         )}
 
-        {/* SECTION 05 - SEO */}
-        <SectionWrap id="seo">
-          <GhostNumber n="05" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>ORGANIC SEARCH</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 32 }}>SEO Audit</h2>
+        {/* ── SEO ── */}
+        <section className="section-pad" id="seo">
+          <div className="wrap">
+            <div className="sec-head">
+              <div className="eyebrow-row">
+                <span className="sec-num-label">07</span>
+                <span className="kicker"><span className="dot" />Where You Stand In Search</span>
+              </div>
+              <h2 className="sec-title">You show up. Just not<br />where the buyers are.</h2>
+            </div>
 
             {dfsOverview ? (
               <>
@@ -1311,15 +1343,21 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               </div>
             )}
           </div>
-        </SectionWrap>
+        </section>
 
-        {/* PRIORITY ACTION LIST */}
-        <SectionWrap id="priorities">
-          <GhostNumber n="06" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>PRIORITY ACTIONS</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 8 }}>Your Top 3 Fixes This Month.</h2>
-            <p style={{ color: S.muted, fontSize: 15, marginBottom: 32 }}>Based on your actual data. Highest impact first.</p>
+        <div className="divider" />
+
+        {/* ── Priority Actions ── */}
+        <section className="section-pad bg2-section" id="priorities">
+          <div className="wrap">
+            <div className="sec-head">
+              <div className="eyebrow-row">
+                <span className="sec-num-label">08</span>
+                <span className="kicker"><span className="dot" />Priority Actions</span>
+              </div>
+              <h2 className="sec-title">Your top 3 fixes<br />this month.</h2>
+              <p className="sec-lead">Based on your actual data. Highest impact first.</p>
+            </div>
 
             {content?.ai_priority_list?.priorities ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1340,97 +1378,104 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               </div>
             )}
           </div>
-        </SectionWrap>
+        </section>
 
-        {/* SECTION 06 - SEO COMMENTARY (legacy manual content, shown only if populated) */}
+        <div className="divider" />
+
+        {/* ── SEO Commentary (legacy) ── */}
         {content?.section_seo_headline && (
-          <SectionWrap id="seo-commentary">
-            <GhostNumber n="06" />
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <SectionLabel>SEARCH OPPORTUNITY</SectionLabel>
-              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>{content.section_seo_headline}</h2>
+          <><section className="section-pad" id="seo-commentary">
+            <div className="wrap">
+              <div className="sec-head">
+                <div className="eyebrow-row">
+                  <span className="sec-num-label">09</span>
+                  <span className="kicker"><span className="dot" />Search Opportunity</span>
+                </div>
+                <h2 className="sec-title">{content.section_seo_headline}</h2>
+              </div>
               {content?.section_seo_body && <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_seo_body}</p>}
             </div>
-          </SectionWrap>
+          </section>
+          <div className="divider" /></>
         )}
 
-        {/* SECTION 07 - BIGGEST OPPORTUNITY */}
-        <SectionWrap id="opportunity">
-          <GhostNumber n="07" />
-          <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255,67,21,0.03)', border: '1px solid rgba(255,67,21,0.4)', boxShadow: '0 0 0 1px rgba(255,67,21,0.2), 0 0 48px rgba(255,67,21,0.08)', borderRadius: 16, padding: 40 }}>
-            <SectionLabel>YOUR BIGGEST OPPORTUNITY</SectionLabel>
-            {content?.ai_opportunity_commentary ? (
-              <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.ai_opportunity_commentary}</p>
-            ) : content?.section_opportunity_headline ? (
-              <>
-                <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 20 }}>{content.section_opportunity_headline}</h2>
-                {content?.section_opportunity_body && <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_opportunity_body}</p>}
-              </>
-            ) : (
-              <div style={{ height: 80, borderRadius: 8, background: 'rgba(255,67,21,0.08)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-            )}
-          </div>
-        </SectionWrap>
-
-        {/* SECTION 08 - REVENUE OPPORTUNITY */}
-        <SectionWrap id="revenue">
-          <GhostNumber n="08" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>BOTTOM LINE</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 32 }}>Revenue Opportunity Summary</h2>
-            {topCompDomain && topCompTraffic > 0 && (
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
-                Your top competitor ({topCompDomain}) pulls in an estimated {Math.round(topCompTraffic).toLocaleString()} organic visitors a month. That traffic advantage compounds directly into revenue every month you wait.
-              </p>
-            )}
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                <thead>
-                  <tr style={{ background: S.bg }}>
-                    {['Initiative', 'Confidence', 'Est. Annual Impact'].map(h => (
-                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {revCalc.map((row, i) => {
-                    const init: string = row.initiative ?? ''
-                    let pillBg: string, pillColor: string, pillBorder: string, pillLabel: string
-                    if (init === 'Mobile Performance' || init === 'CRO Improvements') {
-                      pillLabel = 'Verified data'; pillBg = 'rgba(34,197,94,0.12)'; pillColor = '#22c55e'; pillBorder = '1px solid rgba(34,197,94,0.25)'
-                    } else if (init === 'SEO Content Gap') {
-                      pillLabel = 'Estimated'; pillBg = 'rgba(249,115,22,0.12)'; pillColor = '#f97316'; pillBorder = '1px solid rgba(249,115,22,0.25)'
-                    } else {
-                      pillLabel = 'Industry benchmark'; pillBg = 'rgba(100,75,255,0.12)'; pillColor = '#a78bfa'; pillBorder = '1px solid rgba(100,75,255,0.25)'
-                    }
-                    return (
-                      <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                        <td style={{ padding: '12px 16px', color: S.white }}>{row.initiative}</td>
-                        <td style={{ padding: '12px 16px', width: 160 }}>
-                          <span style={{ fontFamily: MONO, background: pillBg, color: pillColor, border: pillBorder, borderRadius: 20, padding: '3px 10px', fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', display: 'inline-block' }}>{pillLabel}</span>
-                        </td>
-                        <td style={{ padding: '12px 16px', color: row.impact ? S.white : S.muted }}>{row.impact ? `$${Math.round(row.impact).toLocaleString()}/yr` : row.note}</td>
-                      </tr>
-                    )
-                  })}
-                  <tr style={{ background: S.bg, borderTop: `2px solid ${S.border}` }}>
-                    <td style={{ padding: '12px 16px', fontFamily: '"Clash Display", sans-serif', fontWeight: 700, color: S.orange }}>Total Estimated Annual Opportunity</td>
-                    <td style={{ padding: '12px 16px', color: S.muted }}>-</td>
-                    <td style={{ padding: '12px 16px', fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 700, color: S.orange }}>${Math.round(totalRevImpact).toLocaleString()}/yr estimated</td>
-                  </tr>
-                </tbody>
-              </table>
+        {/* ── Biggest Opportunity ── */}
+        {(content?.ai_opportunity_commentary || content?.section_opportunity_headline) && (
+          <><section className="section-pad" id="opportunity">
+            <div className="wrap">
+              <div className="sec-head">
+                <div className="eyebrow-row">
+                  <span className="sec-num-label">10</span>
+                  <span className="kicker"><span className="dot" />Your Biggest Opportunity</span>
+                </div>
+                <h2 className="sec-title">{content?.section_opportunity_headline || 'Where to focus next.'}</h2>
+              </div>
+              {content?.ai_opportunity_commentary ? (
+                <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.ai_opportunity_commentary}</p>
+              ) : (
+                content?.section_opportunity_body && <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17 }}>{content.section_opportunity_body}</p>
+              )}
             </div>
-            <p style={{ color: S.muted, fontSize: 13, marginTop: 16, lineHeight: 1.6 }}>Estimates based on industry benchmarks and public data. Actual results depend on execution, offer quality, and market conditions. Connect your analytics accounts for precise figures.</p>
-          </div>
-        </SectionWrap>
+          </section>
+          <div className="divider" /></>
+        )}
 
-        {/* SECTION 09 - DATA CONFIDENCE */}
-        <SectionWrap id="appendix">
-          <GhostNumber n="09" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>APPENDIX</SectionLabel>
-            <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 32 }}>Data Confidence Summary</h2>
+        {/* ── Revenue Summary ── */}
+        {revCalc.length > 0 && (
+          <><section className="section-pad bg2-section" id="revenue">
+            <div className="wrap">
+              <div className="sec-head">
+                <div className="eyebrow-row">
+                  <span className="sec-num-label">11</span>
+                  <span className="kicker"><span className="dot" />The Bottom Line</span>
+                </div>
+                <h2 className="sec-title">What fixing all of it<br />is actually worth.</h2>
+              </div>
+              <div className="rev">
+                <div className="rev-grid">
+                  <div className="rev-total">
+                    <div className="rl">Twelve-month opportunity</div>
+                    <div className="rn">${fmtNum(totalRevImpact)}<span className="per">/yr</span></div>
+                    <p className="rsub">A conservative estimate. Same traffic, same products, just a store that finally keeps up with demand you already have.</p>
+                  </div>
+                  <div className="rev-bars">
+                    {revCalc.map((row, i) => {
+                      const maxImpact = Math.max(...revCalc.map((r: any) => r.impact ?? 0))
+                      const pct = maxImpact > 0 ? Math.round((row.impact / maxImpact) * 100) : 0
+                      return (
+                        <div key={i} className={`rbar rb${i + 1}`}>
+                          <div className="rbar-top">
+                            <span className="t">{row.initiative}</span>
+                            <span className="v">${fmtNum(row.impact)}</span>
+                          </div>
+                          <div className="track"><i style={{ width: `${pct}%` }} /></div>
+                          <div className="rbar-note">
+                            {row.initiative === 'Mobile Performance' && 'Recovering shoppers who leave before your store loads.'}
+                            {row.initiative === 'CRO Improvements' && 'Turning more of your existing visitors into paid orders.'}
+                            {row.initiative === 'SEO Content Gap' && 'Showing up for searches with buyers already attached.'}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+              <p style={{ color: S.muted, fontSize: 13, marginTop: 20, lineHeight: 1.6 }}>Estimates based on industry benchmarks and public data. Actual results depend on execution, offer quality, and market conditions.</p>
+            </div>
+          </section>
+          <div className="divider" /></>
+        )}
+
+        {/* ── Data Confidence ── */}
+        <section className="section-pad" id="appendix">
+          <div className="wrap">
+            <div className="sec-head">
+              <div className="eyebrow-row">
+                <span className="sec-num-label">12</span>
+                <span className="kicker"><span className="dot" />Appendix</span>
+              </div>
+              <h2 className="sec-title">Data confidence summary.</h2>
+            </div>
             <style>{`.conf-action{display:table-cell}@media(max-width:640px){.conf-action{display:none}}`}</style>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
@@ -1474,22 +1519,23 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             </div>
             <p style={{ color: S.muted, fontSize: 13, fontStyle: 'italic', marginTop: 16 }}>Connect data sources above to unlock precise, account-level insights beyond public data benchmarks.</p>
           </div>
-        </SectionWrap>
+        </section>
 
-        {/* SECTION 10 - NEXT STEP */}
-        <SectionWrap id="next-steps">
-          <GhostNumber n="10" />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <SectionLabel>WHAT HAPPENS NEXT</SectionLabel>
-            {(content?.ai_closing_commentary || content?.section_closing_body) && (
-              <p style={{ color: S.muted, lineHeight: 1.8, fontSize: 17, marginBottom: 48 }}>
-                {content?.ai_closing_commentary || content?.section_closing_body}
-              </p>
-            )}
+        {/* ── CTA ── */}
+        <section className="cta-section">
+          <div className="cta-glow-el" />
+          <div className="wrap">
+            <h2 className="cta-heading">Let&apos;s go<br />get it.</h2>
+            <p className="cta-body">
+              {content?.ai_closing_commentary || content?.section_closing_body || `I put this together because I think ${prospect.brand_name} is leaving real money on the table, and most of it is fixable inside 90 days. If that is worth twenty minutes, I will walk you through exactly where to start.`}
+            </p>
+            <a href={prospect.cta_link || '/book'} className="cta-btn-new">
+              <span className="arr">↗</span>
+              Book your 20-minute call
+            </a>
 
             {/* Recent Build */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 48, marginTop: 48, textAlign: 'center' }}>
-              <p style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Recent Build</p>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 48, marginTop: 72, display: 'flex', justifyContent: 'center' }}>
               <a
                 href="https://pupcases.com.au"
                 target="_blank"
@@ -1501,25 +1547,32 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 <img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
                 <div style={{ textAlign: 'left' }}>
                   <p style={{ fontSize: 14, fontWeight: 500, color: S.white, margin: 0 }}>pupcases.com.au</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 0 }}>Shopify store - designed &amp; built by Kliks</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 0 }}>Shopify store — designed &amp; built by Kliks</p>
                 </div>
               </a>
             </div>
 
-            <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 20, padding: 48, textAlign: 'center', marginTop: 48 }}>
-              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: 700, letterSpacing: '0.01em', lineHeight: 1.18, marginBottom: 12 }}>Book a call with Adam.</h2>
-              <p style={{ color: S.muted, fontSize: 17, marginBottom: 32 }}>30 minutes. No pitch. Just a plan.</p>
-              <a href={prospect.cta_link || '/book'} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.orange, color: '#fff', borderRadius: 100, padding: '18px 48px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 18, textDecoration: 'none', transition: 'background 0.2s' }}>Book your call</a>
-              <p style={{ color: S.muted, fontSize: 13, marginTop: 16 }}>We work with a small number of brands at a time.</p>
+            <div className="sign">
+              <div className="ph">AN</div>
+              <div className="who">
+                <div className="nm">Adam Nagy</div>
+                <div className="rl">Founder · Kliks Digital</div>
+              </div>
             </div>
           </div>
-        </SectionWrap>
+        </section>
 
-        {/* Footer */}
-        <footer style={{ borderTop: `1px solid ${S.border}`, paddingTop: 48, textAlign: 'center' }}>
-          <a href="/" style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 700, color: S.white, textDecoration: 'none', display: 'block', marginBottom: 16 }}>KLIKS<span style={{ color: S.orange }}>.</span></a>
-          <p style={{ color: S.muted, fontSize: 13, lineHeight: 1.7, marginBottom: 12 }}>This report was prepared personally by Adam Nagy for {prospect.brand_name}. It is confidential and intended only for the recipient.</p>
-          <p style={{ color: S.muted, fontSize: 13 }}>hello@kliks.com.au | <a href="/" style={{ color: S.muted }}>kliks.com.au</a> | <a href="/privacy" style={{ color: S.muted }}>Privacy Policy</a></p>
+        {/* ── Footer ── */}
+        <footer className="site-footer">
+          <div className="wrap">
+            <a href="/" className="logo">
+              <span className="mark" />
+              KLIKS
+            </a>
+            <div className="fmeta">
+              Confidential · Prepared for {prospect.brand_name} · Audit No. {auditRef}
+            </div>
+          </div>
         </footer>
       </div>
     </div>
