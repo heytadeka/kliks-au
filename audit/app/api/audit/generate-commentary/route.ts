@@ -107,6 +107,22 @@ export async function POST(req: NextRequest) {
   const seoScore = ps?.seo_score != null ? Math.round(ps.seo_score) : null
   const a11yScore = ps?.accessibility_score != null ? Math.round(ps.accessibility_score) : null
 
+  // Hook-specific context for per-store variation
+  const scoreEntries: [string, number | null][] = [
+    ['mobile performance', mobileScore],
+    ['SEO', seoScore],
+    ['accessibility', a11yScore],
+  ]
+  const validScores = scoreEntries.filter(([, v]) => v != null) as [string, number][]
+  const worstScoreEntry = validScores.length > 0 ? validScores.sort((a, b) => a[1] - b[1])[0] : null
+  const worstScoreName = worstScoreEntry?.[0] ?? null
+  const worstScoreValue = worstScoreEntry?.[1] ?? null
+  const brandNameLower = (prospect.brand_name ?? '').toLowerCase()
+  const topNonBrandedKw = [...dfsKeywords]
+    .filter((k: any) => !(k.keyword_data?.keyword ?? '').toLowerCase().includes(brandNameLower))
+    .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
+    [0]?.keyword_data?.keyword ?? null
+
   const userPrompt = `Generate commentary for ${prospect.brand_name} (${prospect.store_url}), a ${prospect.niche} store.
 
 IMPORTANT: Use the exact score numbers provided below. Do not change, round, or estimate them differently. Every score you mention in commentary must match these numbers exactly.
@@ -137,6 +153,14 @@ Content Gap Opportunities: ${topGapKeywords}
 Close Keywords (pos 6-15, high volume): ${closeKeywords.length > 0 ? closeKeywords.join(', ') : 'None'}
 Keyword Movement: ${keywordTrends.length > 0 ? `${gaining} gaining, ${stable} stable, ${losing} losing` : 'Trend data not available'}
 Referring Domains: ${backlinksUnavailable ? 'null (backlinks subscription inactive - do not comment on backlink count)' : (dfsOverview?.metrics?.referring_domains ?? 0).toLocaleString()}
+
+HOOK DATA (use this to write a hook unique to this specific store):
+Store name: ${prospect.brand_name}
+Niche: ${prospect.niche}
+Worst score: ${worstScoreName && worstScoreValue != null ? `${worstScoreName} (${worstScoreValue}/100)` : 'N/A'}
+Top non-branded keyword: ${topNonBrandedKw ?? 'N/A'}
+CRO critical failures: ${failedHighChecks.length} items${failedHighChecks.length > 0 ? ` (${failedHighChecks.slice(0, 2).join(', ')})` : ''}
+Monthly traffic: ${monthlyTraffic.toLocaleString()} visitors
 
 Generate exactly these 8 keys as JSON:
 {
@@ -170,13 +194,18 @@ Generate exactly these 8 keys as JSON:
 
 Rules for hook_headline:
 - line1 and line2 must each be max 6 words. Punchy, confident, founder-to-founder tone.
-- Must feel written specifically for this business and niche, not generic.
-- No em dashes. No jargon. Plain and human.
-- subtext max 32 words total across both sentences. No em dashes.
-- Examples of the pattern (do not reuse verbatim - write fresh for this business):
-  Cake shop: line1 "Your cakes sell themselves." line2 "Your store gets in the way."
-  Supplements: line1 "Great product. Loyal customers." line2 "A checkout that loses them."
-  Fashion: line1 "People love the collection." line2 "The site makes them work for it."
+- THIS HOOK MUST BE UNIQUE TO ${prospect.brand_name}. Two different stores must produce two different hooks.
+- BANNED STRUCTURE: Never write "Your [product] sell themselves. Your store gets in the way." This exact phrasing and sentence pattern is banned entirely. Do not use it or anything structurally identical.
+- line1 = the specific strength of THIS business, grounded in the HOOK DATA above (their niche, what they have going for them, their top keyword).
+- line2 = their specific bottleneck from the data: ${worstScoreName ? `their ${worstScoreName} score (${worstScoreValue}/100) is the weakest signal` : 'what is quietly costing them orders'}.
+- Vary sentence structure and angle. Not every hook starts with "Your". Different stores need different shapes.
+- No em dashes. No jargon. Write what a founder would actually say.
+- subtext max 32 words total. Reference the niche (${prospect.niche}) lightly - not generic.
+- Format variety examples (never copy these words - use them to see that shapes differ):
+  "People find you. Then your checkout loses them." [traffic + CRO angle]
+  "Great product. A store that hides it." [product + visibility angle]
+  "You rank for the right terms. Speed kills the sale." [SEO + performance angle]
+  "The market wants what you sell. The store says no." [demand + friction angle]
 
 Rules for score_descriptions:
 - Each value must be ONE sentence only, maximum 14 words

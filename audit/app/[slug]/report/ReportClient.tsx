@@ -516,11 +516,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           )}
           <div className="wrap">
             {/* Top bar */}
-            <div className={`topbar hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.05s' }}>
-              <a href="/" className="logo">
-                <span className="mark" />
-                KLIKS
-              </a>
+            <div className={`topbar hdr-el${headerRevealed ? ' revealed' : ''}`} style={{ transitionDelay: '0.05s', justifyContent: 'flex-end' }}>
               <div className="topmeta">
                 GROWTH AUDIT &nbsp;/&nbsp; <strong style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 400 }}>NO. {auditRef}</strong><br />
                 ISSUED <strong style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 400 }}>{issuedMonth} {issuedYear}</strong> &nbsp;/&nbsp; VALID 30 DAYS
@@ -1474,6 +1470,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                             {row.initiative === 'Mobile Performance' && 'Recovering shoppers who leave before your store loads.'}
                             {row.initiative === 'CRO Improvements' && 'Turning more of your existing visitors into paid orders.'}
                             {row.initiative === 'SEO Content Gap' && 'Showing up for searches with buyers already attached.'}
+                            {' '}<span style={{ display: 'inline-block', fontFamily: MONO, fontSize: 10, padding: '2px 8px', borderRadius: 99, background: 'rgba(155,140,255,0.13)', color: 'rgba(155,140,255,0.75)', letterSpacing: '0.08em', fontWeight: 600, verticalAlign: 'middle' }}>Modelled estimate</span>
                           </div>
                         </div>
                       )
@@ -1554,24 +1551,6 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               <span className="arr">↗</span>
               Book your 20-minute call
             </a>
-
-            {/* Recent Build */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 48, marginTop: 72, display: 'flex', justifyContent: 'center' }}>
-              <a
-                href="https://pupcases.com.au"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 16, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '20px 32px', textDecoration: 'none', transition: 'border-color 0.2s ease' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)')}
-              >
-                <img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)', opacity: 0.85 }} />
-                <div style={{ textAlign: 'left' }}>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: S.white, margin: 0 }}>pupcases.com.au</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2, marginBottom: 0 }}>Shopify store, designed &amp; built by Kliks</p>
-                </div>
-              </a>
-            </div>
 
             <div className="sign">
               <div className="ph">AN</div>

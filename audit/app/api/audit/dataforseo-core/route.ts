@@ -70,6 +70,35 @@ function isJunk(domain: string) {
   return JUNK_DOMAINS.some(junk => d.includes(junk))
 }
 
+const AU_CITY_MAP = [
+  { terms: ['sydney', 'nsw', 'new south wales'], label: 'sydney', code: 21167 },
+  { terms: ['melbourne', 'vic', 'victoria'], label: 'melbourne', code: 21182 },
+  { terms: ['brisbane', 'qld', 'queensland'], label: 'brisbane', code: 21139 },
+  { terms: ['perth', 'western australia'], label: 'perth', code: 21188 },
+  { terms: ['adelaide', 'south australia'], label: 'adelaide', code: 21136 },
+  { terms: ['canberra', 'act'], label: 'canberra', code: 21124 },
+  { terms: ['hobart', 'tasmania'], label: 'hobart', code: 21172 },
+  { terms: ['darwin', 'northern territory'], label: 'darwin', code: 21128 },
+]
+
+function detectNicheLocation(niche: string | null | undefined): { isLocal: boolean; cityTerm: string | null; localCode: number } {
+  if (!niche) return { isLocal: false, cityTerm: null, localCode: 2036 }
+  const n = niche.toLowerCase()
+  for (const city of AU_CITY_MAP) {
+    if (city.terms.some(t => n.includes(t))) {
+      return { isLocal: true, cityTerm: city.label, localCode: city.code }
+    }
+  }
+  return { isLocal: false, cityTerm: null, localCode: 2036 }
+}
+
+// Returns true if the domain clearly signals a different AU city than the prospect's
+function isOtherCityDomain(domain: string, cityTerm: string): boolean {
+  const d = domain.toLowerCase()
+  const cityNames = ['sydney', 'melbourne', 'brisbane', 'perth', 'adelaide', 'canberra', 'hobart', 'darwin']
+  return cityNames.filter(c => c !== cityTerm).some(c => d.includes(c))
+}
+
 export async function POST(req: NextRequest) {
   const { prospect_id } = await req.json()
 
@@ -133,9 +162,21 @@ export async function POST(req: NextRequest) {
     .trim()
   console.log('[dataforseo-core] brand name for filtering:', brandNameClean)
 
+  // ── Local niche detection ──
+  const { isLocal, cityTerm, localCode } = detectNicheLocation(niche)
+  console.log('[dataforseo-core] location focus:', isLocal ? `local (${cityTerm})` : 'national')
+
   // ── SERP Competitors (primary competitor discovery) ──
+  // When local, city-containing keywords go first so SERP competitors are geographically biased
   const topKwStrings = [...keywords]
-    .sort((a: any, b: any) => (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0))
+    .sort((a: any, b: any) => {
+      if (isLocal && cityTerm) {
+        const aCity = (a.keyword_data?.keyword ?? '').toLowerCase().includes(cityTerm) ? 1 : 0
+        const bCity = (b.keyword_data?.keyword ?? '').toLowerCase().includes(cityTerm) ? 1 : 0
+        if (aCity !== bCity) return bCity - aCity
+      }
+      return (b.keyword_data?.keyword_info?.search_volume ?? 0) - (a.keyword_data?.keyword_info?.search_volume ?? 0)
+    })
     .map((item: any) => item.keyword_data?.keyword)
     .filter((kw: string | undefined): kw is string => !!kw && !kw.toLowerCase().includes(brandNameClean))
     .slice(0, 10)
@@ -144,10 +185,10 @@ export async function POST(req: NextRequest) {
 
   if (topKwStrings.length >= 3) {
     try {
-      console.log('[dataforseo-core] SERP competitors using', topKwStrings.length, 'keywords')
+      console.log('[dataforseo-core] SERP competitors using', topKwStrings.length, 'keywords, location_code:', isLocal ? localCode : 2036)
       const serpCompRes = await dfsPost('/dataforseo_labs/google/serp_competitors/live', [{
         keywords: topKwStrings,
-        location_code: 2036,
+        location_code: isLocal ? localCode : 2036,
         language_code: 'en',
       }])
       const serpCompItems: any[] = serpCompRes?.tasks?.[0]?.result?.[0]?.items ?? []
@@ -193,7 +234,7 @@ export async function POST(req: NextRequest) {
       console.log('[dataforseo-core] < 3 competitors, trying niche SERP search:', niche.slice(0, 60))
       const serpRes = await dfsPost('/serp/google/organic/live/advanced', [{
         keyword: niche,
-        location_code: 2036,
+        location_code: isLocal ? localCode : 2036,
         language_code: 'en',
         device: 'desktop',
         os: 'windows',
@@ -253,6 +294,16 @@ export async function POST(req: NextRequest) {
       console.error('[dataforseo-core] bulk traffic estimation failed:', e.message)
     }
   }
+
+  // ── Local city filter: drop other-city competitors for local stores ──
+  if (isLocal && cityTerm) {
+    const beforeCount = competitors.length
+    competitors = competitors.filter((c: any) => !isOtherCityDomain(c.domain ?? '', cityTerm))
+    if (competitors.length < beforeCount) {
+      console.log(`[dataforseo-core] dropped ${beforeCount - competitors.length} other-city competitor(s)`)
+    }
+  }
+  console.log('[dataforseo-core] competitors after local filter:', competitors.map((c: any) => c.domain))
 
   // Sort: serp_source items first (by traffic desc), niche fallback items last
   competitors.sort((a: any, b: any) => {

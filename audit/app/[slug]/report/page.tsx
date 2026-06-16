@@ -9,7 +9,7 @@ export default async function ReportPage({ params }: { params: { slug: string } 
   if (!isAdmin) {
     const authCookie = cookieStore.get(`audit_${params.slug}_auth`)
     if (authCookie?.value !== 'true') {
-      redirect(`/${params.slug}`)
+      redirect(`/audit/${params.slug}`)
     }
   }
 
@@ -20,7 +20,7 @@ export default async function ReportPage({ params }: { params: { slug: string } 
     .eq('is_active', true)
     .single()
 
-  if (!prospect) redirect(`/${params.slug}`)
+  if (!prospect) redirect(`/audit/${params.slug}`)
 
   const { data: content } = await supabaseAdmin
     .from('audit_content')

@@ -6,7 +6,9 @@
   <title>Kliks Digital — Shopify Growth Agency</title>
   <meta name="description" content="Kliks is your outsourced Shopify growth partner. Ads, creative, CRO, and Shopify, without hiring a full-time ecommerce manager.">
   <link rel="preconnect" href="https://api.fontshare.com">
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
   <!-- Facebook Pixel -->
   <script>
@@ -137,7 +139,7 @@
       100% { transform: translate3d(60px, -90px, 0) scale(1.1); }
     }
     .grain {
-      position: absolute; inset: 0; z-index: 1;
+      position: fixed; inset: 0; z-index: 1;
       pointer-events: none;
       opacity: 0.18;
       mix-blend-mode: overlay;
@@ -145,7 +147,7 @@
       background-size: 220px 220px;
     }
     .vignette {
-      position: absolute; inset: 0; z-index: 1;
+      position: fixed; inset: 0; z-index: 1;
       pointer-events: none;
       background: radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(14, 13, 26, 0.6) 100%);
     }
@@ -213,9 +215,10 @@
     h1, h2, h3, h4 { font-family: 'Clash Display', sans-serif; letter-spacing: 0.01em; line-height: 1.18; }
 
     .section-label {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--orange);
       margin-bottom: 16px;
@@ -458,18 +461,15 @@
       gap: 24px;
     }
     .vp-card {
-      background: #1a1828;
-      border: 1px solid rgba(100,75,255,0.12);
-      border-left: 3px solid #ff4315;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
       border-radius: 16px;
       padding: 32px;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
-      transition: border-color 200ms ease, transform 200ms ease;
+      transition: border-color 0.3s ease, transform 0.3s ease;
     }
     .vp-card:hover {
-      border-color: rgba(100,75,255,0.35);
-      border-left-color: #ff4315;
-      transform: translateY(-2px);
+      border-color: rgba(100,75,255,0.2);
+      transform: translateY(-6px);
     }
     .vp-icon {
       width: 44px; height: 44px; border-radius: 50%;
@@ -499,9 +499,10 @@
     }
     .marquee-label {
       text-align: center;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.18em;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 40px;
@@ -552,20 +553,6 @@
       display: flex; align-items: center; justify-content: center;
       margin-bottom: 20px;
     }
-    .card {
-      background: #1a1828;
-      border: 1px solid rgba(100,75,255,0.12);
-      border-left: 3px solid #ff4315;
-      border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
-      transition: border-color 200ms ease, transform 200ms ease;
-    }
-    .card:hover {
-      border-color: rgba(100,75,255,0.35);
-      border-left-color: #ff4315;
-      transform: translateY(-2px);
-    }
     .card h3 {
       font-family: 'Clash Display', sans-serif;
       font-size: 20px;
@@ -608,18 +595,15 @@
       gap: 24px;
     }
     .process-card {
-      background: #1a1828;
-      border: 1px solid rgba(100,75,255,0.12);
-      border-left: 3px solid #ff4315;
-      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
       padding: 32px;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
-      transition: border-color 200ms ease, transform 200ms ease;
+      transition: border-color 0.3s ease, transform 0.3s ease;
     }
     .process-card:hover {
-      border-color: rgba(100,75,255,0.35);
-      border-left-color: #ff4315;
-      transform: translateY(-2px);
+      border-color: rgba(100,75,255,0.2);
+      transform: translateY(-6px);
     }
     .process-num {
       font-family: 'Clash Display', sans-serif;
@@ -647,23 +631,21 @@
       margin-bottom: 24px;
     }
     .result-card {
-      background: #1a1828;
-      border: 1px solid rgba(100,75,255,0.12);
-      border-left: 3px solid #ff4315;
-      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
       padding: 32px;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
-      transition: border-color 200ms ease, transform 200ms ease;
+      transition: border-color 0.3s ease, transform 0.3s ease;
     }
     .result-card:hover {
-      border-color: rgba(100,75,255,0.35);
-      border-left-color: #ff4315;
-      transform: translateY(-2px);
+      border-color: rgba(100,75,255,0.2);
+      transform: translateY(-6px);
     }
     .metric-name {
+      font-family: 'Space Mono', monospace;
       font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
+      font-weight: 700;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: #ff4315;
       margin-bottom: 8px;
@@ -695,9 +677,10 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--orange);
       margin-bottom: 16px;
@@ -776,16 +759,15 @@
     }
     .who-card-section p, .who-copy p { font-size: 14.5px; color: rgba(255,255,255,0.55); line-height: 1.6; }
     .who-card {
-      background: #1a1828;
-      border: 1px solid rgba(100,75,255,0.12);
-      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
       padding: 32px;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
-      transition: border-color 200ms ease, transform 200ms ease;
+      transition: border-color 0.3s ease, transform 0.3s ease;
     }
     .who-card:hover {
-      border-color: rgba(100,75,255,0.35);
-      transform: translateY(-2px);
+      border-color: rgba(100,75,255,0.2);
+      transform: translateY(-6px);
     }
     .who-card-section { padding: 0; }
     .who-card-section + .who-card-section { border-top: 1px solid rgba(100,75,255,0.12); padding-top: 24px; margin-top: 24px; }
@@ -813,11 +795,9 @@
 
     /* ─── STRAIGHT UP ─── */
     .article-card {
-      background: #1a1828;
-      border: 1px solid rgba(100,75,255,0.12);
-      border-left: 3px solid #ff4315;
-      border-radius: 12px;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
       overflow: hidden;
     }
     .article-card-inner { padding: 48px; }
@@ -828,9 +808,11 @@
       color: #644bff;
       border-radius: 999px;
       padding: 4px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       margin-bottom: 24px;
     }
     .article-title {

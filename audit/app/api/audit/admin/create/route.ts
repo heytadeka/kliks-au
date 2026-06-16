@@ -61,14 +61,16 @@ export async function POST(req: NextRequest) {
   const pid = prospect.id
 
   // Fire all background jobs independently.
-  // dataforseo-core handles: overview, keywords, SERP competitors, content gap (~25-30s)
-  // dataforseo-enrichment handles: keyword trends, GMB, then fires commentary when done (~15-20s)
+  // dataforseo-core: overview, keywords, SERP competitors, content gap (~25-30s)
+  // dataforseo-enrichment: fires commentary after a 35s delay (buffer for core to finish)
+  // dataforseo-gmb: dedicated GMB route with 30s timeout and its own 60s budget
   // Each dataforseo route fetches the prospect record itself — only prospect_id needed.
   console.log('[create] firing background jobs for prospect_id:', pid, 'base:', base)
   waitUntil(fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }))
   waitUntil(fetch(`${base}/api/audit/crawl`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }))
   waitUntil(fetch(`${base}/api/audit/dataforseo-core`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
   waitUntil(fetch(`${base}/api/audit/dataforseo-enrichment`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
+  waitUntil(fetch(`${base}/api/audit/dataforseo-gmb`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
   waitUntil(fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, niche, store_url }) }))
   waitUntil(fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, brand_name, store_url }) }))
 
