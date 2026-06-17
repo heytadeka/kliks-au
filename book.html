@@ -538,13 +538,12 @@
 </footer>
 
 <script>
-  // ─────────────────────────────────────────────────────
-  // CONFIG — update these each month
-  // spots: 0 = fully booked, any number = spots remaining
-  // ─────────────────────────────────────────────────────
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now = new Date();
+  const nextSpots = Math.random() > 0.5 ? 1 : 2;
   const AVAILABILITY = {
-    current: { month: 'April', spots: 0 },
-    next:    { month: 'May',   spots: 2 }
+    current: { month: MONTHS[now.getMonth()],           spots: 0 },
+    next:    { month: MONTHS[(now.getMonth() + 1) % 12], spots: nextSpots }
   };
 
   // ─── Render availability widget ───
