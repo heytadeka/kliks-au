@@ -443,7 +443,7 @@
     <div class="form-card">
       <div id="formWrap">
         <h2 class="form-card-title">Tell us about your store.</h2>
-        <p class="form-card-sub">Takes 2 minutes. After you submit, you'll pick a time that works for you.</p>
+        <p class="form-card-sub">Takes 2 minutes. Adam reviews every submission personally and gets back within 24 hours.</p>
 
         <form class="book-form" id="bookForm" novalidate>
           <div class="form-row">
@@ -488,14 +488,14 @@
           <div class="form-error" id="formError">Something went wrong. Please try again or email us at hello@kliks.com.au</div>
 
           <button type="submit" class="btn-submit" id="submitBtn">Book my spot &rarr;</button>
-          <p class="form-footer-note">After submitting you'll pick a time that works for you on Calendly.</p>
+          <p class="form-footer-note">No pitch. No sales script. Just a straight look at what's going on.</p>
         </form>
       </div>
 
       <div class="form-success" id="formSuccess">
         <span class="success-icon">🎉</span>
-        <h3>You're in. Redirecting you now.</h3>
-        <p>Taking you to Calendly to pick your time.<br>If it doesn't redirect, <a href="https://calendly.com/kliks-hu/30min" target="_blank" style="color:#a89cff;">click here</a>.</p>
+        <h3>Got it. We'll be in touch.</h3>
+        <p>Adam will review your details and reach out within 24 hours. Check your inbox, and feel free to reply to add anything.</p>
       </div>
     </div>
   </div>
@@ -569,10 +569,7 @@
     `;
   })();
 
-  // ─── Form submission → Klaviyo API → Calendly ───
-  const KLAVIYO_FORM_ID = 'XV8BqD';
-  const CALENDLY_URL    = 'https://calendly.com/kliks-hu/30min';
-
+  // ─── Form submission → Web3Forms (email to Adam) + Klaviyo (list) ───
   document.getElementById('bookForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -580,7 +577,7 @@
     const errorEl = document.getElementById('formError');
     errorEl.style.display = 'none';
     btn.disabled    = true;
-    btn.textContent = 'Booking your spot...';
+    btn.textContent = 'Sending...';
 
     const firstName = document.getElementById('firstName').value.trim();
     const lastName  = document.getElementById('lastName').value.trim();
@@ -598,42 +595,62 @@
       return;
     }
 
+    // Primary — Web3Forms (sends email to wearekliks@gmail.com)
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          access_key:        '8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5',
+          subject:           'New strategy call booking — kliks.com.au',
+          from_name:         `${firstName} ${lastName}`,
+          email,
+          phone:             phone   || 'Not provided',
+          store_url:         store   || 'Not provided',
+          monthly_ad_spend:  adSpend,
+          challenge:         comment || 'Not provided'
+        })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error('Web3Forms rejected');
+    } catch (err) {
+      console.error('Submission error:', err);
+      errorEl.textContent = 'Something went wrong. Please try again or email us at hello@kliks.com.au';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Book my spot →';
+      return;
+    }
+
+    // Secondary — Klaviyo (non-blocking, for list building)
     const profileAttributes = {
       email,
       first_name: firstName,
       last_name:  lastName,
       properties: {
-        store_url:        store      || undefined,
+        store_url:        store   || undefined,
         monthly_ad_spend: adSpend,
-        enquiry_comment:  comment   || undefined,
+        enquiry_comment:  comment || undefined,
         lead_source:      'Strategy Call — book.html'
       }
     };
     if (phone) profileAttributes.phone_number = phone;
-
-    try {
-      await fetch(`https://a.klaviyo.com/client/form-submissions/?company_id=QNNHsN`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'revision': '2023-12-15' },
-        body: JSON.stringify({
-          data: {
-            type: 'form-submission',
-            attributes: {
-              form_id: KLAVIYO_FORM_ID,
-              profile: { data: { type: 'profile', attributes: profileAttributes } }
-            }
+    fetch('https://a.klaviyo.com/client/form-submissions/?company_id=QNNHsN', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'revision': '2023-12-15' },
+      body: JSON.stringify({
+        data: {
+          type: 'form-submission',
+          attributes: {
+            form_id: 'XV8BqD',
+            profile: { data: { type: 'profile', attributes: profileAttributes } }
           }
-        })
-      });
-    } catch (err) {
-      console.warn('Klaviyo submission issue:', err);
-      // Don't block — still redirect
-    }
+        }
+      })
+    }).catch(() => {});
 
-    document.getElementById('formWrap').style.display  = 'none';
+    document.getElementById('formWrap').style.display    = 'none';
     document.getElementById('formSuccess').style.display = 'block';
-
-    setTimeout(() => { window.location.href = CALENDLY_URL; }, 1800);
   });
 
 </script>
