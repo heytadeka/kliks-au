@@ -602,7 +602,7 @@
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
           access_key:        '8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5',
-          subject:           'New strategy call booking — kliks.com.au',
+          subject:           'New strategy call booking - kliks.com.au',
           from_name:         `${firstName} ${lastName}`,
           email,
           phone:             phone   || 'Not provided',
@@ -631,7 +631,7 @@
         store_url:        store   || undefined,
         monthly_ad_spend: adSpend,
         enquiry_comment:  comment || undefined,
-        lead_source:      'Strategy Call — book.html'
+        lead_source:      'Strategy Call - book.html'
       }
     };
     if (phone) profileAttributes.phone_number = phone;

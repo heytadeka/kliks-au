@@ -939,7 +939,7 @@
     }
     .contact-form { display: flex; flex-direction: column; gap: 16px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
-    .form-group label { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
+    .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
     .form-group input, .form-group textarea, .form-group select {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.1);
@@ -993,6 +993,32 @@
       animation: ctapulse 3.2s ease-in-out infinite;
     }
 
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      background-color: rgba(255,255,255,0.04);
+      padding-right: 40px;
+    }
+    .form-group select option { background: #1a1828; color: white; }
+    .form-error {
+      display: none;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #f87171;
+    }
+    .form-success { display: none; text-align: center; padding: 48px 20px; }
+    .form-success .success-icon { font-size: 52px; margin-bottom: 20px; display: block; }
+    .form-success h3 { font-family: 'Clash Display', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0; }
+    .form-success p { color: var(--muted); font-size: 15px; line-height: 1.7; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
     /* ─── FOOTER ─── */
     footer {
       border-top: 1px solid rgba(255,255,255,0.06);
@@ -1039,6 +1065,7 @@
       .about-grid { grid-template-columns: 1fr; }
       .who-grid { grid-template-columns: 1fr; }
       .contact-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
       .value-props { padding: 60px 24px; }
       .value-props-inner { grid-template-columns: 1fr; }
       .advantage-card { flex-direction: column; }
@@ -1110,7 +1137,7 @@
       <span class="live-dot"></span>
       <span>Booking Q3 — 2 spots open</span>
     </div>
-    <h1 class="headline">We run ads for Shopify brands.<br>We own Shopify brands.<br>There's a <span class="word-diff">difference</span>.</h1>
+    <h1 class="headline">We run ads for Shopify brands.<br>We own Shopify brands.<br>That's the <span class="word-diff">difference</span>.</h1>
     <div class="hero-pills">
       <span class="pill pill-neutral">Boutique agency</span>
       <span class="pill pill-purple">Founder driven</span>
@@ -1420,32 +1447,55 @@
     <p class="fade-up" style="color:var(--muted);font-size:16px;line-height:1.75;margin-bottom:40px;">No pitch call. No sales script. Just a straight look at what's going on with your store.</p>
 
     <div class="contact-grid">
-      <form class="contact-form fade-up" action="https://api.web3forms.com/submit" method="POST">
-        <input type="hidden" name="access_key" value="8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5">
-        <input type="hidden" name="redirect" value="https://kliks.com.au/booked">
-        <input type="hidden" name="subject" value="New enquiry from kliks.com.au">
-        <div class="form-group">
-          <label for="name">Your name</label>
-          <input type="text" id="name" name="name" placeholder="e.g. Sarah Johnson" required>
+      <div class="contact-form-wrap fade-up">
+        <form class="contact-form" id="contactForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First name</label>
+              <input type="text" id="firstName" name="firstName" placeholder="Sarah" required>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last name</label>
+              <input type="text" id="lastName" name="lastName" placeholder="Johnson" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" placeholder="sarah@yourstore.com.au" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone <span style="color:rgba(255,255,255,0.3);font-weight:400;">(optional)</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="+61 4XX XXX XXX">
+          </div>
+          <div class="form-group">
+            <label for="store">Shopify store URL <span style="color:rgba(255,255,255,0.3);font-weight:400;">(optional)</span></label>
+            <input type="url" id="store" name="store" placeholder="yourstore.com.au">
+          </div>
+          <div class="form-group">
+            <label for="adSpend">Monthly ad spend</label>
+            <select id="adSpend" name="adSpend" required>
+              <option value="" disabled selected>Select an option</option>
+              <option value="Under $1,000/mo">Under $1,000/mo</option>
+              <option value="$1,000 - $3,000/mo">$1,000 - $3,000/mo</option>
+              <option value="$3,000 - $5,000/mo">$3,000 - $5,000/mo</option>
+              <option value="$5,000 - $10,000/mo">$5,000 - $10,000/mo</option>
+              <option value="$10,000+/mo">$10,000+/mo</option>
+              <option value="Not running ads yet">Not running ads yet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">What's the main challenge right now?</label>
+            <textarea id="message" name="message" placeholder="e.g. Ads running but not converting, want to migrate from WooCommerce, not sure why people aren't buying..."></textarea>
+          </div>
+          <div class="form-error" id="contactError"></div>
+          <button type="submit" id="contactBtn" class="btn send-btn">Send it &rarr;</button>
+        </form>
+        <div class="form-success" id="contactSuccess">
+          <span class="success-icon">🎉</span>
+          <h3>Got it. We'll be in touch.</h3>
+          <p>Adam will review your details and reach out within 24 hours. Check your inbox, and feel free to reply to add anything.</p>
         </div>
-        <div class="form-group">
-          <label for="email">Email address</label>
-          <input type="email" id="email" name="email" placeholder="sarah@yourstore.com.au" required>
-        </div>
-        <div class="form-group">
-          <label for="store">Store URL</label>
-          <input type="text" id="store" name="store" placeholder="yourstore.com.au">
-        </div>
-        <div class="form-group">
-          <label for="adspend">Monthly ad spend</label>
-          <input type="text" id="adspend" name="adspend" placeholder="e.g. $3,000/month">
-        </div>
-        <div class="form-group">
-          <label for="message">What's the main challenge right now?</label>
-          <textarea id="message" name="message" placeholder="e.g. ads running but not converting, want to migrate from WooCommerce, not sure why people aren't buying..."></textarea>
-        </div>
-        <button type="submit" class="btn send-btn">Send it &rarr;</button>
-      </form>
+      </div>
 
       <div class="contact-info fade-up">
         <h3>Nothing to lose.</h3>
@@ -1562,5 +1612,61 @@
 })();
 </script>
 
+<script>
+  document.getElementById('contactForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn     = document.getElementById('contactBtn');
+    const errorEl = document.getElementById('contactError');
+    errorEl.style.display = 'none';
+    btn.disabled    = true;
+    btn.textContent = 'Sending...';
+
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName  = document.getElementById('lastName').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const phone     = document.getElementById('phone').value.trim();
+    const store     = document.getElementById('store').value.trim();
+    const adSpend   = document.getElementById('adSpend').value;
+    const message   = document.getElementById('message').value.trim();
+
+    if (!firstName || !email || !adSpend) {
+      errorEl.textContent = 'Please fill in your first name, email, and monthly ad spend.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Send it →';
+      return;
+    }
+
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          access_key:       '8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5',
+          subject:          'New enquiry from kliks.com.au',
+          from_name:        `${firstName} ${lastName}`,
+          email,
+          phone:            phone   || 'Not provided',
+          store_url:        store   || 'Not provided',
+          monthly_ad_spend: adSpend,
+          challenge:        message || 'Not provided'
+        })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error('Web3Forms rejected');
+    } catch (err) {
+      console.error('Submission error:', err);
+      errorEl.textContent = 'Something went wrong. Please try again or email us at hello@kliks.com.au';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Send it →';
+      return;
+    }
+
+    document.getElementById('contactForm').style.display    = 'none';
+    document.getElementById('contactSuccess').style.display = 'block';
+  });
+</script>
 </body>
 </html>
