@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { ANTHROPIC_MODEL } from '@/lib/config'
 
 export const maxDuration = 60
 
@@ -237,7 +238,7 @@ Respond with only valid JSON. No markdown. No explanation.`
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: ANTHROPIC_MODEL,
         max_tokens: 3000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
@@ -387,7 +388,7 @@ Generate exactly 3 priorities as JSON only, no other text:
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: ANTHROPIC_MODEL,
           max_tokens: 1000,
           system: prioritySystemPrompt,
           messages: [{ role: 'user', content: priorityUserPrompt }],
