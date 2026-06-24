@@ -34,6 +34,17 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
     window.location.reload()
   }
 
+  async function resetViews(id: string, brandName: string) {
+    if (!confirm(`Reset view count for ${brandName} to zero?`)) return
+    const res = await fetch('/api/audit/admin/prospect', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, access_count: 0, last_accessed_at: null }),
+    })
+    if (!res.ok) { alert('Reset failed, try again.'); return }
+    window.location.reload()
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: S.bg, color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
       <nav style={{ background: 'rgba(14,13,26,0.95)', borderBottom: `1px solid ${S.border}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
@@ -105,9 +116,10 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                       </button>
                     </td>
                     <td style={{ padding: '12px 14px' }}>
-                      <div style={{ display: 'flex', gap: 12 }}>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                         <Link href={`/audit/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
                         <a href={`https://kliks.com.au/audit/${p.slug}`} target="_blank" rel="noreferrer" style={{ color: S.orange, fontSize: 13, textDecoration: 'none' }}>View</a>
+                        <button onClick={() => resetViews(p.id, p.brand_name)} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 13, textDecoration: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>Reset views</button>
                       </div>
                     </td>
                   </tr>
@@ -129,15 +141,16 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                     <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600 }}>{p.brand_name}</div>
                     <div style={{ fontSize: 13, color: S.muted }}>/{p.slug}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <Link href={`/audit/admin/${p.slug}/edit`} style={{ color: S.purple, fontSize: 13, textDecoration: 'none' }}>Edit</Link>
                     <a href={`https://kliks.com.au/audit/${p.slug}`} target="_blank" rel="noreferrer" style={{ color: S.orange, fontSize: 13, textDecoration: 'none' }}>View</a>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 13, color: S.muted }}>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 13, color: S.muted, alignItems: 'center' }}>
                   <span>{p.prospect_email}</span>
                   <span>Views: {p.access_count}</span>
                   <span>CRO: {croLabel}</span>
+                  <button onClick={() => resetViews(p.id, p.brand_name)} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 13, textDecoration: 'underline', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>Reset views</button>
                 </div>
               </div>
             )
