@@ -156,9 +156,16 @@ function StatTile({ label, value, color }: { label: string; value: string | numb
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-type NewForm = { brand_name: string; store_url: string; prospect_name: string; prospect_email: string; niche: string; slug: string }
+type NewForm = { brand_name: string; store_url: string; prospect_name: string; prospect_email: string; niche: string; slug: string; gmb_cid: string }
 
-export default function OutreachClient({ initialRows }: { initialRows: any[] }) {
+const helperTextStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: 'rgba(255,255,255,0.35)',
+  marginTop: 6,
+  lineHeight: 1.5,
+}
+
+export default function OutreachClient({ initialRows, existingProspects }: { initialRows: any[]; existingProspects: any[] }) {
   const router = useRouter()
   const [rows, setRows] = useState<any[]>(initialRows)
   const [notesMap, setNotesMap] = useState<Record<string, string>>(
@@ -170,9 +177,28 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
 
   // New outreach form state
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState<NewForm>({ brand_name: '', store_url: '', prospect_name: '', prospect_email: '', niche: '', slug: '' })
+  const [formMode, setFormMode] = useState<'new' | 'existing'>('new')
+  const [form, setForm] = useState<NewForm>({ brand_name: '', store_url: '', prospect_name: '', prospect_email: '', niche: '', slug: '', gmb_cid: '' })
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+
+  // Attach-to-existing form state
+  const [selectedProspectId, setSelectedProspectId] = useState('')
+  const [attaching, setAttaching] = useState(false)
+  const [attachError, setAttachError] = useState('')
+
+  // Audits not already being tracked in Outreach
+  const trackedProspectIds = new Set(rows.map(r => r.prospect_id))
+  const availableProspects = existingProspects.filter(p => !trackedProspectIds.has(p.id))
+  const selectedProspect = existingProspects.find(p => p.id === selectedProspectId) ?? null
+
+  function closeForm() {
+    setShowForm(false)
+    setFormMode('new')
+    setSelectedProspectId('')
+    setAttachError('')
+    setCreateError('')
+  }
 
   // Follow-up email modal
   const [followUpModal, setFollowUpModal] = useState<any | null>(null)
@@ -202,6 +228,7 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
           prospect_name: form.prospect_name,
           prospect_email: form.prospect_email,
           niche: form.niche,
+          gmb_cid: form.gmb_cid || null,
           cta_link: 'https://kliks.com.au/book',
         }),
       })
@@ -210,11 +237,34 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
         setCreateError(data.error ?? 'Creation failed.')
         return
       }
-      setShowForm(false)
-      setForm({ brand_name: '', store_url: '', prospect_name: '', prospect_email: '', niche: '', slug: '' })
+      closeForm()
+      setForm({ brand_name: '', store_url: '', prospect_name: '', prospect_email: '', niche: '', slug: '', gmb_cid: '' })
       router.refresh()
     } finally {
       setCreating(false)
+    }
+  }
+
+  async function handleAttachExisting(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedProspectId) return
+    setAttaching(true)
+    setAttachError('')
+    try {
+      const res = await fetch('/api/audit/admin/track-existing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospect_id: selectedProspectId }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setAttachError(data.error ?? 'Could not start tracking.')
+        return
+      }
+      closeForm()
+      router.refresh()
+    } finally {
+      setAttaching(false)
     }
   }
 
@@ -431,7 +481,7 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
           <h1 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 32, fontWeight: 700, letterSpacing: '0.01em', margin: 0 }}>Outreach</h1>
-          <button onClick={() => { setShowForm(v => !v); setCreateError('') }}
+          <button onClick={() => { setShowForm(v => !v); setCreateError(''); setAttachError('') }}
             style={{ background: S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '12px 28px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>
             + New Outreach
           </button>
@@ -442,44 +492,99 @@ export default function OutreachClient({ initialRows }: { initialRows: any[] }) 
           <div style={{ background: S.bg2, border: '1px solid rgba(100,75,255,0.2)', borderRadius: 16, padding: 32, marginBottom: 32 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, color: S.white, margin: 0 }}>New Outreach</h2>
-              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={closeForm} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
             </div>
-            <form onSubmit={handleCreate}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>BRAND NAME</label>
-                  <input required value={form.brand_name} onChange={e => setForm(p => ({ ...p, brand_name: e.target.value }))} style={inputStyle} />
+
+            {/* Mode toggle */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+              <button type="button" onClick={() => setFormMode('new')}
+                style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', background: formMode === 'new' ? 'rgba(255,67,21,0.15)' : 'rgba(255,255,255,0.05)', color: formMode === 'new' ? S.orange : S.muted }}>
+                Create new audit
+              </button>
+              <button type="button" onClick={() => setFormMode('existing')}
+                style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', background: formMode === 'existing' ? 'rgba(255,67,21,0.15)' : 'rgba(255,255,255,0.05)', color: formMode === 'existing' ? S.orange : S.muted }}>
+                Attach to existing audit
+              </button>
+            </div>
+
+            {formMode === 'existing' ? (
+              <form onSubmit={handleAttachExisting}>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>EXISTING AUDIT</label>
+                  <select required value={selectedProspectId} onChange={e => setSelectedProspectId(e.target.value)} style={{ ...inputStyle, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties}>
+                    <option value="">Select an audit...</option>
+                    {availableProspects.map(p => (
+                      <option key={p.id} value={p.id} style={{ background: S.bg2 }}>{p.brand_name} ({p.slug})</option>
+                    ))}
+                  </select>
+                  <p style={helperTextStyle}>
+                    {availableProspects.length === 0
+                      ? 'Every existing audit already has outreach tracking running.'
+                      : 'Pick an audit that already exists. This starts tracking for it, no duplicate audit gets created and no data gets re-pulled.'}
+                  </p>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>STORE URL</label>
-                  <input required value={form.store_url} onChange={e => setForm(p => ({ ...p, store_url: e.target.value }))} placeholder="https://store.com.au" style={inputStyle} />
+
+                {selectedProspect && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16, padding: 16, background: 'rgba(255,255,255,0.03)', borderRadius: 10 }}>
+                    <div><span style={{ fontSize: 11, color: S.muted }}>Store URL</span><div style={{ fontSize: 13, color: S.white }}>{selectedProspect.store_url}</div></div>
+                    <div><span style={{ fontSize: 11, color: S.muted }}>Prospect</span><div style={{ fontSize: 13, color: S.white }}>{selectedProspect.prospect_name || '-'}</div></div>
+                    <div><span style={{ fontSize: 11, color: S.muted }}>Email</span><div style={{ fontSize: 13, color: S.white }}>{selectedProspect.prospect_email}</div></div>
+                    <div><span style={{ fontSize: 11, color: S.muted }}>Niche</span><div style={{ fontSize: 13, color: S.white }}>{selectedProspect.niche || '-'}</div></div>
+                  </div>
+                )}
+
+                {attachError && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 16 }}>{attachError}</p>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <button type="submit" disabled={attaching || !selectedProspectId}
+                    style={{ background: attaching ? S.orangeDark : S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '12px 28px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 15, cursor: (attaching || !selectedProspectId) ? 'not-allowed' : 'pointer', opacity: (attaching || !selectedProspectId) ? 0.7 : 1 }}>
+                    {attaching ? 'Starting...' : 'Start Tracking'}
+                  </button>
+                  <button type="button" onClick={closeForm} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>PROSPECT NAME</label>
-                  <input required value={form.prospect_name} onChange={e => setForm(p => ({ ...p, prospect_name: e.target.value }))} style={inputStyle} />
+              </form>
+            ) : (
+              <form onSubmit={handleCreate}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>BRAND NAME</label>
+                    <input required value={form.brand_name} onChange={e => setForm(p => ({ ...p, brand_name: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>STORE URL</label>
+                    <input required value={form.store_url} onChange={e => setForm(p => ({ ...p, store_url: e.target.value }))} placeholder="https://store.com.au" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>PROSPECT NAME</label>
+                    <input required value={form.prospect_name} onChange={e => setForm(p => ({ ...p, prospect_name: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>PROSPECT EMAIL</label>
+                    <input required type="email" value={form.prospect_email} onChange={e => setForm(p => ({ ...p, prospect_email: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>NICHE</label>
+                    <input value={form.niche} onChange={e => setForm(p => ({ ...p, niche: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>SLUG</label>
+                    <input required value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>GOOGLE PLACE ID (OPTIONAL)</label>
+                    <input value={form.gmb_cid} onChange={e => setForm(p => ({ ...p, gmb_cid: e.target.value }))} placeholder="ChI..." style={inputStyle} />
+                    <p style={helperTextStyle}>Paste the Place ID from Google if you have it. Leave blank to auto-detect by name.</p>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>PROSPECT EMAIL</label>
-                  <input required type="email" value={form.prospect_email} onChange={e => setForm(p => ({ ...p, prospect_email: e.target.value }))} style={inputStyle} />
+                {createError && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 16 }}>{createError}</p>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <button type="submit" disabled={creating}
+                    style={{ background: creating ? S.orangeDark : S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '12px 28px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 15, cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.7 : 1 }}>
+                    {creating ? 'Creating...' : 'Create Audit & Track'}
+                  </button>
+                  <button type="button" onClick={closeForm} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>NICHE</label>
-                  <input value={form.niche} onChange={e => setForm(p => ({ ...p, niche: e.target.value }))} style={inputStyle} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>SLUG</label>
-                  <input required value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))} style={inputStyle} />
-                </div>
-              </div>
-              {createError && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 16 }}>{createError}</p>}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <button type="submit" disabled={creating}
-                  style={{ background: creating ? S.orangeDark : S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '12px 28px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 15, cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.7 : 1 }}>
-                  {creating ? 'Creating...' : 'Create Audit & Track'}
-                </button>
-                <button type="button" onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         )}
 
