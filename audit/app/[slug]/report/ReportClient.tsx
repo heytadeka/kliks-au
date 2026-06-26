@@ -253,7 +253,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     return { winning, close, money }
   }, [dfsKeywords, dfsContentGap, dfsGaps])
 
-  // ── Sequential section numbers — accounts for conditional sections so there are never gaps ──
+  // ── Sequential section numbers, accounts for conditional sections so there are never gaps ──
   const sectionNums = useMemo(() => {
     const map: Record<string, string> = {}
     let n = 1
@@ -504,7 +504,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="hero-grid" />
           <div className="hero-glow" />
           <div className="hero-glow-o" />
-          {/* Scan line — plays once on mount */}
+          {/* Scan line, plays once on mount */}
           {headerRevealed && (
             <div className="hdr-scan" style={{
               position: 'absolute', left: 0, right: 0, height: 2,
@@ -708,7 +708,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             {cro?.results ? (
               <>
                 <div className="cro-grid">
-                  {/* Left — passed items */}
+                  {/* Left, passed items */}
                   <div className="cro-col">
                     <h3>
                       <span className="cro-mk ok" style={{ width: 26, height: 26 }}>✓</span>
@@ -726,7 +726,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     ))}
                   </div>
 
-                  {/* Right — failed items */}
+                  {/* Right, failed items */}
                   <div className="cro-col miss">
                     <h3>
                       <span className="cro-mk no" style={{ width: 26, height: 26 }}>!</span>
@@ -773,7 +773,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
               {gmbData.found ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                  {/* Left — profile stats */}
+                  {/* Left, profile stats */}
                   <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
                     <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 48, fontWeight: 700, color: S.white, lineHeight: 1 }}>
                       {gmbData.rating != null ? gmbData.rating.toFixed(1) : '-'}
@@ -806,7 +806,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     </div>
                   </div>
 
-                  {/* Right — benchmark context */}
+                  {/* Right, benchmark context */}
                   <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <p style={{ color: S.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
                       Stores with 4.5+ stars convert 28% better than those below 4.0.{' '}
@@ -942,52 +942,56 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     {topCompDomain} receives an estimated {Math.round(topCompTraffic).toLocaleString()} monthly visitors from organic search. Closing even 20% of that gap is worth targeting.
                   </p>
                 )}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 40 }}>
-                  {(() => {
-                    const overviewCount = dfsOverview.metrics?.organic?.count ?? 0
-                    const overviewEtv = dfsOverview.metrics?.organic?.etv ?? 0
-                    const kwCount = overviewCount > 0 ? overviewCount : dfsKeywords.length
-                    const kwEtv = overviewEtv > 0 ? overviewEtv : dfsKeywords.reduce((sum: number, kw: any) => sum + (kw.keyword_data?.keyword_info?.search_volume ?? 0), 0)
-                    const refDomains = dfsOverview.metrics?.referring_domains ?? 0
-                    const backlinksUnavailable = !backlinksSummary || Object.keys(backlinksSummary).length === 0
-                    return [
-                      {
-                        label: 'Organic Keywords', value: kwCount.toLocaleString(),
-                        context: kwCount < 100
-                          ? 'Below average for ecommerce - most stores your size rank for 200+'
-                          : kwCount <= 500 ? 'Average organic footprint'
-                          : 'Strong organic presence',
-                      },
-                      {
-                        label: 'Est. Monthly Traffic', value: fmtNum(kwEtv),
-                        context: kwEtv < 5000
-                          ? 'Low organic traffic - significant growth opportunity'
-                          : kwEtv <= 20000 ? 'Moderate traffic - room to grow'
-                          : 'Strong organic traffic',
-                      },
-                      {
-                        label: 'Est. Traffic Value', value: `$${fmtNum(Math.round(kwEtv * 1.2))}`,
-                        context: 'What this traffic would cost in Google Ads',
-                      },
-                      {
-                        label: 'Referring Domains',
-                        value: backlinksUnavailable ? '-' : refDomains.toLocaleString(),
-                        context: backlinksUnavailable
-                          ? 'Backlink data unavailable'
-                          : refDomains < 20
-                            ? 'Very few backlinks - authority building needed'
-                            : refDomains <= 100 ? 'Building authority - keep going'
-                            : 'Good backlink profile',
-                      },
-                    ]
-                  })().map(item => (
-                    <div key={item.label} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px' }}>
-                      <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color: S.white }}>{item.value}</div>
-                      <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>{item.label}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 8, lineHeight: 1.45 }}>{item.context}</div>
+                {(() => {
+                  const totalKeywordsCount = dfsOverview.keywords_total_count ?? null
+                  const overviewCount = dfsOverview.metrics?.organic?.count ?? 0
+                  const overviewEtv = dfsOverview.metrics?.organic?.etv ?? 0
+                  const kwCount = totalKeywordsCount ?? (overviewCount > 0 ? overviewCount : dfsKeywords.length)
+                  const kwEtv = overviewEtv > 0 ? overviewEtv : dfsKeywords.reduce((sum: number, kw: any) => sum + (kw.keyword_data?.keyword_info?.search_volume ?? 0), 0)
+                  const refDomains = dfsOverview.metrics?.referring_domains ?? 0
+                  const backlinksUnavailable = !backlinksSummary || Object.keys(backlinksSummary).length === 0
+
+                  const cards = [
+                    {
+                      label: 'Organic Keywords', value: kwCount.toLocaleString(),
+                      context: kwCount < 100
+                        ? 'Below average for ecommerce - most stores your size rank for 200+'
+                        : kwCount <= 500 ? 'Average organic footprint'
+                        : 'Strong organic presence',
+                    },
+                    {
+                      label: 'Est. Monthly Traffic', value: fmtNum(kwEtv),
+                      context: kwEtv < 5000
+                        ? 'Low organic traffic - significant growth opportunity'
+                        : kwEtv <= 20000 ? 'Moderate traffic - room to grow'
+                        : 'Strong organic traffic',
+                    },
+                    {
+                      label: 'Est. Traffic Value', value: `$${fmtNum(Math.round(kwEtv * 1.2))}`,
+                      context: 'What this traffic would cost in Google Ads',
+                    },
+                    ...(backlinksUnavailable ? [] : [{
+                      label: 'Referring Domains',
+                      value: refDomains.toLocaleString(),
+                      context: refDomains < 20
+                        ? 'Very few backlinks - authority building needed'
+                        : refDomains <= 100 ? 'Building authority - keep going'
+                        : 'Good backlink profile',
+                    }]),
+                  ]
+
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cards.length === 4 ? 2 : 3}, 1fr)`, gap: 16, marginBottom: 40 }}>
+                      {cards.map(item => (
+                        <div key={item.label} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '24px 20px' }}>
+                          <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 28, fontWeight: 700, color: S.white }}>{item.value}</div>
+                          <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>{item.label}</div>
+                          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 8, lineHeight: 1.45 }}>{item.context}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )
+                })()}
 
                 {/* SEO Findings */}
                 {seoFindings && seoFindings.length > 0 && (() => {

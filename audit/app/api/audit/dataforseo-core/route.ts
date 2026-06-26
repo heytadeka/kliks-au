@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
 
   let overview = null
   let keywords: any[] = []
+  let keywordsTotalCount: number | null = null
   let competitors: any[] = []
   let serpFeatures = null
   let contentGap: any[] = []
@@ -144,8 +145,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (keywordsRes.status === 'fulfilled') {
-    keywords = keywordsRes.value?.tasks?.[0]?.result?.[0]?.items ?? []
-    console.log('[dataforseo-core] keywords count:', keywords.length)
+    const keywordsResult0 = keywordsRes.value?.tasks?.[0]?.result?.[0]
+    keywords = keywordsResult0?.items ?? []
+    keywordsTotalCount = keywordsResult0?.total_count ?? null
+    console.log('[dataforseo-core] keywords count:', keywords.length, 'total_count:', keywordsTotalCount)
   } else {
     console.error('[dataforseo-core] keywords failed:', (keywordsRes as PromiseRejectedResult).reason?.message)
   }
@@ -266,7 +269,7 @@ export async function POST(req: NextRequest) {
     try {
       const btRes = await dfsPost('/dataforseo_labs/google/bulk_traffic_estimation/live', [{
         targets: competitorDomainsForTraffic,
-        location_code: 2036, // country-level only — city codes not supported by this endpoint
+        location_code: 2036, // country-level only, city codes not supported by this endpoint
         language_code: 'en',
         item_types: ['organic'],
       }])
@@ -383,12 +386,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ── Merge keywords_total_count into the overview object ──
+  // Stored alongside the existing domain_rank_overview metrics rather than a new
+  // column, since it's just one extra number and every reader of dataforseo_overview
+  // already treats it as a loosely-typed object.
+  const overviewToStore = keywordsTotalCount != null
+    ? { ...(overview ?? {}), keywords_total_count: keywordsTotalCount }
+    : overview
+
   // ── Write core data to cache ──
   const { error: dbError } = await supabaseAdmin
     .from('audit_data_cache')
     .upsert({
       prospect_id,
-      dataforseo_overview: overview,
+      dataforseo_overview: overviewToStore,
       dataforseo_keywords: keywords,
       dataforseo_gaps: null,
       dataforseo_competitors: competitors.length > 0 ? competitors : [],
