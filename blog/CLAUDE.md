@@ -163,3 +163,4 @@ Skip generic stock and AI-generated inline images. The structural elements (stat
 | performance-max-vs-standard-shopping-shopify | Performance Max vs Standard Shopping for Shopify: The Decision Framework Nobody Gives You | 2026-07-02 | performance max vs standard shopping shopify |
 | meta-ads-roas-shopify | Your Meta Ads ROAS Is Lying to You. Here's the Number That Actually Matters. | 2026-07-02 | blended ROAS shopify / meta ads ROAS shopify |
 | google-ads-for-shopify-beginners | How to Set Up Google Ads for Shopify Without Wasting Your First $1,000 | 2026-07-02 | google ads for shopify |
+| good-roas-shopify-break-even | What Is a Good ROAS for Shopify? It's Not the Same Number for Every Store | 2026-07-02 | what is a good roas / break even roas |
