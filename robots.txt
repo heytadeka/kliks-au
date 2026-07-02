@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /audit/
+
+Sitemap: https://kliks.com.au/sitemap.xml

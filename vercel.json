@@ -9,7 +9,9 @@
   "builds": [
     { "src": "audit/package.json", "use": "@vercel/next", "config": { "distDir": ".next" } },
     { "src": "*.html", "use": "@vercel/static" },
-    { "src": "blog/*.html", "use": "@vercel/static" }
+    { "src": "blog/*.html", "use": "@vercel/static" },
+    { "src": "sitemap.xml", "use": "@vercel/static" },
+    { "src": "robots.txt", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/audit/api/$1" },
