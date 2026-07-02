@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog | Shopify Growth, Paid Ads & CRO | Kliks Digital</title>
+  <meta name="description" content="Practical guides on Shopify paid ads, conversion rate optimisation, and ecommerce growth. Written by the team at Kliks Digital, Australia.">
+  <link rel="canonical" href="https://kliks.com.au/blog">
+
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
+  }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1875112903440305');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1875112903440305&ev=PageView&noscript=1"/></noscript>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #644bff;
+      --orange: #ff4315;
+      --orange-dark: #c42f08;
+      --bg: #0e0d1a;
+      --bg2: #1a1828;
+      --white: #ffffff;
+      --muted: rgba(255,255,255,0.55);
+      --border: rgba(100,75,255,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.09;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
+    }
+
+    .grain {
+      position: fixed; inset: 0; z-index: 1;
+      pointer-events: none;
+      opacity: 0.18;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyMjAnIGhlaWdodD0nMjIwJz48ZmlsdGVyIGlkPSduJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC45JyBudW1PY3RhdmVzPScyJyBzdGl0Y2hUaWxlcz0nc3RpdGNoJy8+PGZlQ29sb3JNYXRyaXggdmFsdWVzPScwIDAgMCAwIDEgIDAgMCAwIDAgMSAgMCAwIDAgMCAxICAwIDAgMCAwLjQ1IDAnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjbiknLz48L3N2Zz4=");
+      background-size: 220px 220px;
+    }
+
+    .vignette {
+      position: fixed; inset: 0; z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(14,13,26,0.6) 100%);
+    }
+
+    .announcement-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1001;
+      background: #0e0d1a;
+      text-align: center;
+      padding: 6px 24px;
+      border-bottom: 1px solid rgba(100,75,255,0.15);
+    }
+    .announcement-bar a {
+      color: #644bff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: opacity 0.2s;
+    }
+    .announcement-bar a:hover { opacity: 0.8; }
+    .announcement-bar .bar-arrow { color: #ff4315; }
+
+    nav {
+      position: fixed;
+      top: 40px; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(14,13,26,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--orange); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--white); }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--orange);
+      color: white;
+      border-radius: 100px;
+      padding: 16px 36px;
+      font-weight: 600;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .btn:hover { background: var(--orange-dark); transform: translateY(-2px); }
+    .btn-sm { padding: 10px 22px; font-size: 14px; }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 8px;
+    }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--white); transition: transform 0.3s ease, opacity 0.3s ease; }
+    .nav-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+    .nav-overlay a { font-family: 'Clash Display', sans-serif; font-size: 32px; font-weight: 700; color: var(--white); text-decoration: none; }
+    .nav-overlay a:hover { color: var(--orange); }
+    body.nav-open .nav-overlay { display: flex; }
+    body.nav-open .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    body.nav-open .hamburger span:nth-child(2) { opacity: 0; }
+    body.nav-open .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* PAGE */
+    .blog-page {
+      position: relative;
+      z-index: 2;
+      padding-top: 152px;
+    }
+
+    .blog-header {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 64px 48px 48px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .blog-header .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 16px;
+    }
+
+    .blog-header h1 {
+      font-family: 'Clash Display', sans-serif;
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    .blog-header p {
+      color: var(--muted);
+      font-size: 17px;
+      max-width: 540px;
+      line-height: 1.65;
+    }
+
+    /* GRID */
+    .blog-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 56px 48px 100px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .blog-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+    .blog-card:hover {
+      border-color: rgba(100,75,255,0.25);
+      transform: translateY(-4px);
+    }
+
+    .blog-card-body {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .blog-card-tag {
+      display: inline-block;
+      background: rgba(100,75,255,0.1);
+      border: 1px solid rgba(100,75,255,0.2);
+      color: #a89cff;
+      border-radius: 999px;
+      padding: 3px 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      align-self: flex-start;
+    }
+
+    .blog-card-title {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.25;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .blog-card-excerpt {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+      flex: 1;
+      margin-bottom: 20px;
+    }
+
+    .blog-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 16px;
+    }
+
+    .blog-card-meta-dot { width: 3px; height: 3px; background: rgba(255,255,255,0.25); border-radius: 50%; }
+
+    .blog-card-read {
+      color: #a89cff;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: var(--bg);
+      position: relative;
+      z-index: 2;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-left { display: flex; flex-direction: column; gap: 6px; }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-center { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .footer-center a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .footer-center a:hover { color: var(--white); }
+    .footer-right { display: flex; align-items: center; gap: 20px; }
+    .footer-right a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    .footer-right a:hover { color: var(--white); }
+
+    @media (max-width: 900px) {
+      .blog-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .nav-inner { padding: 0 24px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .blog-header { padding: 48px 24px 36px; }
+      .blog-grid { grid-template-columns: 1fr; padding: 36px 24px 80px; }
+      .footer-inner { padding: 24px; flex-direction: column; text-align: center; }
+      .footer-center { justify-content: center; }
+      .footer-right { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<div class="announcement-bar">
+  <a href="/ad-junkies">Killer ad examples every week? Join our newsletter <span class="bar-arrow">&rarr;</span></a>
+</div>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">KLIKS<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="/#services">Services</a></li>
+      <li><a href="/#process">Process</a></li>
+      <li><a href="/#results">Results</a></li>
+      <li><a href="/#about">About</a></li>
+      <li><a href="/blog" class="active">Blog</a></li>
+      <li><a href="/book" class="btn btn-sm">Free Strategy Call</a></li>
+    </ul>
+    <button class="hamburger" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="nav-overlay">
+  <a href="/#services" onclick="document.body.classList.remove('nav-open')">Services</a>
+  <a href="/#process" onclick="document.body.classList.remove('nav-open')">Process</a>
+  <a href="/#results" onclick="document.body.classList.remove('nav-open')">Results</a>
+  <a href="/#about" onclick="document.body.classList.remove('nav-open')">About</a>
+  <a href="/blog" onclick="document.body.classList.remove('nav-open')">Blog</a>
+  <a href="/book" class="btn">Free Strategy Call</a>
+</div>
+
+<main class="blog-page">
+  <div class="blog-header">
+    <div class="section-label">From the Kliks team</div>
+    <h1>Paid ads, CRO,<br>and Shopify growth.</h1>
+    <p>Practical guides written for Shopify store owners who are serious about scaling with paid traffic. No fluff, no recycled tips.</p>
+  </div>
+
+  <div class="blog-grid">
+
+    <a href="/blog/shopify-conversion-rate-optimization" class="blog-card">
+      <div class="blog-card-body">
+        <span class="blog-card-tag">Shopify CRO</span>
+        <div class="blog-card-title">Why Your Shopify Store's Conversion Rate Is Making Your Ad Spend Worthless</div>
+        <div class="blog-card-excerpt">A store converting at 1% doesn't improve by sending more paid traffic. It just produces more expensive failures. Here's what to fix before scaling spend.</div>
+        <div class="blog-card-meta">
+          <span>2 July 2026</span>
+          <span class="blog-card-meta-dot"></span>
+          <span>7 min read</span>
+        </div>
+        <div class="blog-card-read">Read article &rarr;</div>
+      </div>
+    </a>
+
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">
+      <a href="/" class="logo">KLIKS<span>.</span></a>
+      <span class="footer-copy">&copy; 2026 Kliks Digital. All rights reserved.</span>
+    </div>
+    <div class="footer-center">
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/ad-junkies">Ad Junkies</a>
+      <a href="/blog">Blog</a>
+    </div>
+    <div class="footer-right">
+      <a href="https://www.instagram.com/kliks.digital" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.tiktok.com/@adjunkies" target="_blank" rel="noopener">TikTok</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.querySelector('.hamburger').addEventListener('click', function() {
+    document.body.classList.toggle('nav-open');
+  });
+</script>
+
+</body>
+</html>
