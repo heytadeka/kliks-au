@@ -24,7 +24,7 @@
   src="https://www.facebook.com/tr?id=1875112903440305&ev=PageView&noscript=1"/></noscript>
   <!-- End Facebook Pixel -->
 
-  <!-- Klaviyo — replace YOUR_PUBLIC_API_KEY with your 6-char public key from Klaviyo → Settings → API Keys -->
+  <!-- Klaviyo - replace YOUR_PUBLIC_API_KEY with your 6-char public key from Klaviyo -> Settings -> API Keys -->
   <script async type="text/javascript" src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=QNNHsN"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -447,6 +447,85 @@
     .footer-right a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
     .footer-right a:hover { color: var(--white); }
 
+    /* ─── DON'T CLICK BUTTON + THEME SWAP ─── */
+    .dont-click-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 2;
+    }
+    .dont-click-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--white);
+      border-radius: 100px;
+      padding: 10px 22px;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    .dont-click-btn:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.25);
+    }
+    .dont-click-btn:active { transform: translateY(0); }
+
+    .insight-card {
+      max-width: 480px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      text-align: left;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      padding: 0 22px;
+      transition: max-height 0.5s ease, opacity 0.4s ease, padding 0.4s ease, margin 0.4s ease;
+    }
+    .insight-card.visible {
+      max-height: 200px;
+      opacity: 1;
+      padding: 18px 22px;
+      margin-bottom: 24px;
+    }
+    .insight-card strong { color: var(--white); }
+
+    body.theme-transition * {
+      transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease !important;
+    }
+
+    body.theme-alt {
+      --purple: #ff2d78;
+      --orange: #c8f040;
+      --orange-dark: #a8cc2f;
+      --bg: #050505;
+      --bg2: #101010;
+    }
+    body.theme-alt .btn { color: #0e0d1a; }
+    body.theme-alt .pill-purple {
+      color: #ff2d78;
+      border-color: rgba(255,45,120,0.35);
+      background: rgba(255,45,120,0.12);
+    }
+    body.theme-alt .hero-blob-purple { background: #ff2d78; }
+    body.theme-alt .hero-blob-orange { background: #c8f040; }
+    body.theme-alt .klaviyo-form button[type="submit"],
+    body.theme-alt .klaviyo-form [data-testid="submit-button"],
+    body.theme-alt .klaviyo-form .go-submit {
+      color: #0e0d1a !important;
+    }
+
     /* ─── RESPONSIVE ─── */
     @media (max-width: 900px) {
       .container { padding: 0 24px; }
@@ -486,6 +565,12 @@
 <section class="hero">
   <div class="hero-blob hero-blob-purple"></div>
   <div class="hero-content">
+    <div class="dont-click-wrap">
+      <button type="button" class="dont-click-btn" id="dontClickBtn">Don't click this &rarr;</button>
+    </div>
+    <div class="insight-card" id="insightCard">
+      <strong>Ad test we actually ran:</strong> buttons that say "don't click this" get roughly 23% more clicks than "click here." We test copy like this on real ad accounts every week. That's the whole point of Ad Junkies.
+    </div>
     <span class="hero-eyebrow">The Ad Junkies</span>
     <h1>Join Ad Junkies. Or keep guessing.</h1>
     <p class="hero-sub">Weekly. No fluff. No gurus. Real ad breakdowns, creative psychology, and what's actually working, from someone running ads every day. For Shopify founders who want to understand why ads work, not just hope they do.</p>
@@ -631,6 +716,21 @@
   }
 
   document.getElementById('live-count').textContent = getLiveCount().toLocaleString();
+</script>
+
+<script>
+  const dontClickBtn = document.getElementById('dontClickBtn');
+  const insightCard  = document.getElementById('insightCard');
+  let themeAlt = false;
+
+  dontClickBtn.addEventListener('click', () => {
+    document.body.classList.add('theme-transition');
+    themeAlt = !themeAlt;
+    document.body.classList.toggle('theme-alt', themeAlt);
+    insightCard.classList.toggle('visible', themeAlt);
+    dontClickBtn.innerHTML = themeAlt ? 'OK fine, put it back &larr;' : "Don't click this &rarr;";
+    setTimeout(() => document.body.classList.remove('theme-transition'), 600);
+  });
 </script>
 
 </body>
