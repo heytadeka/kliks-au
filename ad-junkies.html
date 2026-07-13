@@ -7,6 +7,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ad Junkies - The email that actually teaches you something</title>
   <meta name="description" content="Weekly ad breakdowns, creative strategy and Shopify growth tactics from someone who runs their own brands. Free. Always.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is Ad Junkies really free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. There is no paid tier hidden behind the newsletter and no upsell buried in a later issue. It is free because it is how people find out Kliks exists." }
+      },
+      {
+        "@type": "Question",
+        "name": "Who is Ad Junkies for?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Shopify founders running their own ads, in-house marketers at small ecommerce teams, and freelancers or operators managing client ad accounts who want sharper tactics than recycled marketing content." }
+      },
+      {
+        "@type": "Question",
+        "name": "How often does Ad Junkies send emails?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Once a week, not daily. Each issue takes about five minutes to read and is built to apply the same day." }
+      },
+      {
+        "@type": "Question",
+        "name": "What makes Ad Junkies different from other marketing newsletters?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It is written by someone who runs real ad accounts and his own Shopify brands, not someone summarising other people's content. Every issue comes from something the writer is actually testing that week." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I unsubscribe from Ad Junkies anytime?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, with one click in any email. Email addresses are never shared or sold." }
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://api.fontshare.com">
   <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
 
@@ -526,6 +561,47 @@
       color: #0e0d1a !important;
     }
 
+    /* ─── STAT ROW ─── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 28px 0 8px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-card .stat-num {
+      font-family: 'Clash Display', sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-card .stat-num.orange { color: var(--orange); }
+    .stat-card .stat-label { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+
+    /* ─── FAQ ─── */
+    .faq-section { max-width: 780px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.07); padding: 24px 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q {
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--white);
+      margin-bottom: 10px;
+      line-height: 1.4;
+      font-family: 'Clash Display', sans-serif;
+    }
+    .faq-a { color: var(--muted); font-size: 15px; line-height: 1.75; margin: 0; }
+    .faq-a a { color: var(--white); text-decoration: underline; text-underline-offset: 3px; }
+    .faq-a a:hover { color: var(--orange); }
+
     /* ─── RESPONSIVE ─── */
     @media (max-width: 900px) {
       .container { padding: 0 24px; }
@@ -534,6 +610,7 @@
       .hamburger { display: flex; }
       section { padding: 72px 0; }
       .what-grid { grid-template-columns: 1fr; }
+      .stat-row { grid-template-columns: 1fr; }
       .writer-section { flex-direction: column; text-align: center; }
       .writer-photo { width: 140px; height: 140px; }
       .writer-chips { justify-content: center; }
@@ -609,6 +686,32 @@
   </div>
 </section>
 
+<!-- WHO THIS IS FOR -->
+<section>
+  <div class="container">
+    <span class="section-label fade-up">Who it's for</span>
+    <h2 class="section-title fade-up">Built for people doing their own marketing</h2>
+
+    <div class="what-grid">
+      <div class="card fade-up">
+        <span class="card-icon">🏪</span>
+        <h3>Shopify founders running their own ads</h3>
+        <p>You don't have a marketing team. You are the marketing team. Every issue is written to be used the same day you read it.</p>
+      </div>
+      <div class="card fade-up">
+        <span class="card-icon">🧑‍💻</span>
+        <h3>In-house marketers at small ecom teams</h3>
+        <p>Wearing five hats and short on time to test creative properly. Ad Junkies does some of that thinking for you.</p>
+      </div>
+      <div class="card fade-up">
+        <span class="card-icon">📈</span>
+        <h3>Freelancers and operators managing client accounts</h3>
+        <p>Running ads for other people's stores and want sharper tactics than what's recycled across most marketing content.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- SOCIAL PROOF -->
 <section class="social-proof">
   <div class="container">
@@ -641,12 +744,57 @@
       <div class="writer-copy">
         <h3>Adam Nagy</h3>
         <p>I run Kliks and a handful of Shopify brands across Australia and Hungary. Everything in Ad Junkies comes from something I'm actually testing, running, or figuring out that week. No agency-speak. No borrowed theory. I've managed over $10M in paid ad spend across DTC brands, and I still write every issue myself. Just what's working, what isn't, and why.</p>
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-num orange">$10M+</div>
+            <div class="stat-label">in paid ad spend managed across DTC brands</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">1</div>
+            <div class="stat-label">email a week. No fluff, no filler, no daily spam</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num">2</div>
+            <div class="stat-label">countries Adam runs brands in: Australia and Hungary</div>
+          </div>
+        </div>
         <div class="writer-chips">
           <span class="chip">Founder-led</span>
           <span class="chip">Runs own brands</span>
           <span class="chip">Australia + Hungary</span>
           <span class="chip">No juniors</span>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="background:var(--bg2);">
+  <div class="container">
+    <span class="section-label fade-up">Questions</span>
+    <h2 class="section-title fade-up">Frequently asked</h2>
+
+    <div class="faq-section">
+      <div class="faq-item fade-up">
+        <div class="faq-q">Is Ad Junkies really free?</div>
+        <p class="faq-a">Yes. No paid tier hidden behind the newsletter, no upsell buried in issue three. It's free because it's how people find out Kliks exists.</p>
+      </div>
+      <div class="faq-item fade-up">
+        <div class="faq-q">Who is this for?</div>
+        <p class="faq-a">Shopify founders running their own ads, in-house marketers at small ecommerce teams, and freelancers or operators managing client ad accounts who want sharper tactics than recycled marketing content.</p>
+      </div>
+      <div class="faq-item fade-up">
+        <div class="faq-q">How often will I get emails?</div>
+        <p class="faq-a">Once a week. Not daily. One issue, five minutes to read, built to apply the same day.</p>
+      </div>
+      <div class="faq-item fade-up">
+        <div class="faq-q">What makes this different from other marketing newsletters?</div>
+        <p class="faq-a">It's written by someone who runs real ad accounts and his own Shopify brands, not someone summarising other people's content. Every issue comes from something Adam is actually testing that week.</p>
+      </div>
+      <div class="faq-item fade-up">
+        <div class="faq-q">Can I unsubscribe anytime?</div>
+        <p class="faq-a">Yes, with one click in any email. Your email is never shared or sold. See the <a href="privacy.html">Privacy Policy</a> for detail.</p>
       </div>
     </div>
   </div>
