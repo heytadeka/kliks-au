@@ -164,3 +164,4 @@ Skip generic stock and AI-generated inline images. The structural elements (stat
 | meta-ads-roas-shopify | Your Meta Ads ROAS Is Lying to You. Here's the Number That Actually Matters. | 2026-07-02 | blended ROAS shopify / meta ads ROAS shopify |
 | google-ads-for-shopify-beginners | How to Set Up Google Ads for Shopify Without Wasting Your First $1,000 | 2026-07-02 | google ads for shopify |
 | good-roas-shopify-break-even | What Is a Good ROAS for Shopify? It's Not the Same Number for Every Store | 2026-07-02 | what is a good roas / break even roas |
+| good-customer-acquisition-cost-shopify | What Is a Good Customer Acquisition Cost for a Shopify Store? | 2026-07-14 | customer acquisition cost / cac shopify / ltv cac ratio |
