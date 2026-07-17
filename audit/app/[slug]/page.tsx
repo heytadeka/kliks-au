@@ -67,6 +67,7 @@ export default function GatePage({ params }: { params: { slug: string } }) {
             required
             style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '14px 18px', color: '#fff', fontFamily: 'Satoshi, sans-serif', fontSize: 15, outline: 'none', marginBottom: 12, boxSizing: 'border-box', transition: 'border-color 0.2s' }}
           />
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>Prepared exclusively for you by Kliks Digital. Your email verifies access only. Your data is kept strictly confidential and will not be shared or added to any list.</p>
           {error && (
             <p style={{ color: '#ff4315', fontSize: 14, marginBottom: 12, lineHeight: 1.5 }}>{error}</p>
           )}
