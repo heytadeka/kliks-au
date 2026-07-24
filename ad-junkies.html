@@ -590,7 +590,13 @@ footer { background: #000; color: #999; padding: 20px 28px; display: flex; justi
 
 <script>
 document.addEventListener('klaviyoForms', function(e) {
-  if (e.detail.type === 'submit') {
+  console.log('Klaviyo event:', e.detail.type);
+  if (
+    e.detail.type === 'submit' ||
+    e.detail.type === 'formSubmit' ||
+    e.detail.type === 'successMessage' ||
+    e.detail.type === 'subscribeSuccess'
+  ) {
     if (typeof fbq !== 'undefined') {
       fbq('track', 'Lead');
     }

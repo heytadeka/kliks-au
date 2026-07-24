@@ -652,6 +652,9 @@
           event_label: 'Book Form Submission'
         });
       }
+      setTimeout(function() {
+        window.location.href = '/thanks-booking';
+      }, 300);
     } catch (err) {
       console.error('Submission error:', err);
       errorEl.textContent = 'Something went wrong. Please try again or email us at hello@kliks.com.au';

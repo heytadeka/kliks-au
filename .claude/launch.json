@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "static-site",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "serve", "-l", "8934", "."],
+      "port": 8934
+    },
+    {
+      "name": "audit-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "audit", "run", "dev"],
+      "port": 3000
+    }
+  ]
+}

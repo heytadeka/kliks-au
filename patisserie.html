@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="/kliks-monogram-3A-solid.png">
+<link rel="apple-touch-icon" href="/kliks-monogram-3A-solid.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KLIKS Patisserie - Growth systems for premium bakery brands</title>
+<meta name="description" content="KLIKS helps ambitious patisserie, cake and dessert brands improve their website, advertising and customer journey so they can grow without adding more pressure to the founder.">
+<link rel="canonical" href="https://kliks.com.au/patisserie">
+
+<meta property="og:title" content="KLIKS Patisserie - Growth systems for premium bakery brands">
+<meta property="og:description" content="Built a great food brand? Now build the system behind growth. Website, advertising, creative and retention, built by KLIKS.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kliks.com.au/patisserie">
+<meta property="og:site_name" content="Kliks Digital">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-57YSHYNH26"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-57YSHYNH26');
+</script>
+
+<!-- Facebook Pixel -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
+}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1875112903440305');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1875112903440305&ev=PageView&noscript=1"/></noscript>
+<!-- End Facebook Pixel -->
+
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: #f2ede3; color: #16140f; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+a { color: #16140f; text-decoration: none; transition: color 0.2s ease; }
+a:hover { color: #c1272d; }
+::selection { background: #c1272d; color: #f2ede3; }
+img { display: block; max-width: 100%; }
+
+.duo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.1) brightness(0.95);
+  mix-blend-mode: luminosity;
+}
+
+.eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #c1272d; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: #c1272d;
+  color: #f2ede3;
+  padding: 19px 34px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.btn:hover { background: #16140f; color: #f2ede3; }
+
+/* ─── NAV ─── */
+.nav { position: sticky; top: 0; z-index: 50; background: #f2ede3; border-bottom: 1px solid rgba(22,20,15,.15); }
+.nav-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 clamp(20px,4vw,48px);
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.nav-brand { display: flex; align-items: baseline; gap: 10px; }
+.nav-brand .mark { font-family: 'Archivo', sans-serif; font-weight: 900; font-size: 24px; letter-spacing: -0.02em; color: #16140f; }
+.nav-brand .rule { width: 1px; height: 16px; background: rgba(22,20,15,.3); }
+.nav-brand .sub { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #c1272d; }
+.nav-links { display: flex; align-items: center; gap: clamp(16px,3vw,36px); flex-wrap: wrap; }
+.nav-links .link { font-size: 14px; font-weight: 600; }
+.nav-links .cta { background: #16140f; color: #f2ede3; padding: 12px 22px; font-size: 13px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+.nav-links .cta:hover { background: #c1272d; color: #f2ede3; }
+
+/* ─── HERO ─── */
+.hero { max-width: 1400px; margin: 0 auto; padding: clamp(56px,9vw,120px) clamp(20px,4vw,48px) clamp(64px,8vw,110px); }
+.hero-grid { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(260px,1fr); gap: clamp(32px,5vw,64px); align-items: end; }
+.hero-copy { min-width: 0; }
+.hero-copy .eyebrow { margin-bottom: 28px; }
+.hero-copy h1 {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 900;
+  font-size: clamp(38px,6.2vw,84px);
+  line-height: 1.01;
+  letter-spacing: -0.02em;
+  margin: 0 0 32px;
+  max-width: 16ch;
+}
+.hero-copy p {
+  font-size: clamp(17px,1.6vw,20px);
+  line-height: 1.6;
+  color: rgba(22,20,15,.68);
+  max-width: 52ch;
+  margin: 0 0 40px;
+}
+.hero-media { min-width: 0; }
+.img-frame { width: 100%; overflow: hidden; }
+.img-frame.r-4-5 { aspect-ratio: 4/5; }
+.img-frame.r-1-1 { aspect-ratio: 1/1; }
+.caption { margin-top: 10px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(22,20,15,.5); }
+
+/* ─── SECTION SHARED ─── */
+.section { border-top: 1px solid rgba(22,20,15,.15); }
+.section-inner { max-width: 1400px; margin: 0 auto; padding: clamp(64px,9vw,120px) clamp(20px,4vw,48px); }
+.section-title { font-family: 'Archivo', sans-serif; font-weight: 900; font-size: clamp(30px,4.4vw,56px); letter-spacing: -0.02em; line-height: 1.05; margin: 0 0 56px; max-width: 16ch; }
+
+/* ─── PROBLEM ─── */
+.problem-grid { display: grid; grid-template-columns: minmax(160px,280px) minmax(0,1fr); gap: clamp(24px,4vw,48px); }
+.problem-copy { min-width: 0; max-width: 820px; }
+.problem-copy h2 { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: clamp(24px,2.6vw,34px); line-height: 1.35; letter-spacing: -0.01em; margin: 0 0 24px; }
+.problem-copy p { font-size: 18px; line-height: 1.75; color: rgba(22,20,15,.68); margin: 0; }
+
+/* ─── RULE GRID (Growth Engine / Why KLIKS) ─── */
+.rule-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(230px,1fr)); border-top: 1px solid rgba(22,20,15,.2); }
+.rule-grid .col { padding: 32px 28px 8px; border-left: 1px solid rgba(22,20,15,.2); min-width: 0; }
+.rule-grid .col:last-child { border-right: 1px solid rgba(22,20,15,.2); }
+.rule-grid .num { font-family: 'Archivo', sans-serif; font-weight: 900; font-size: clamp(40px,4vw,56px); color: #c1272d; line-height: 1; margin-bottom: 20px; }
+.rule-grid .col h3 { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 19px; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 14px; }
+.rule-grid .col p { font-size: 15.5px; line-height: 1.65; color: rgba(22,20,15,.68); margin: 0; }
+
+/* ─── WHO IT'S FOR ─── */
+.who-grid { display: grid; grid-template-columns: minmax(280px,1fr) minmax(260px,0.85fr); gap: clamp(32px,5vw,64px); align-items: center; }
+.who-media { order: 2; min-width: 0; }
+.who-copy { order: 1; min-width: 0; }
+.who-copy .eyebrow { display: block; margin-bottom: 20px; }
+.who-copy h2 { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: clamp(26px,3.2vw,42px); line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 24px; }
+.who-copy p { font-size: 17px; line-height: 1.75; color: rgba(22,20,15,.68); margin: 0; max-width: 52ch; }
+
+/* ─── FIRST 90 DAYS ─── */
+.process-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: clamp(24px,4vw,48px); }
+.process-grid .col { min-width: 0; border-top: 3px solid #16140f; padding-top: 24px; }
+.process-grid .month { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #c1272d; margin-bottom: 14px; }
+.process-grid .statement { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 20px; line-height: 1.4; margin: 0; }
+
+/* ─── WHY KLIKS (ink bg) ─── */
+.why { background: #16140f; color: #f2ede3; }
+.why .rule-grid { border-top-color: rgba(242,237,227,.25); }
+.why .rule-grid .col { border-left-color: rgba(242,237,227,.25); padding: 28px 28px 8px; }
+.why .rule-grid .col:last-child { border-right-color: rgba(242,237,227,.25); }
+.why .rule-grid .num { font-size: 32px; margin-bottom: 16px; }
+.why .rule-grid .col p { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 19px; line-height: 1.35; margin: 0; color: #f2ede3; }
+
+/* ─── AUDIT FORM ─── */
+.audit-grid { display: grid; grid-template-columns: minmax(240px,0.8fr) minmax(300px,1.2fr); gap: clamp(32px,5vw,72px); }
+.audit-copy { min-width: 0; }
+.audit-copy .eyebrow { display: block; margin-bottom: 20px; }
+.audit-copy h2 { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: clamp(26px,3vw,40px); line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 24px; }
+.audit-copy p { font-size: 17px; line-height: 1.75; color: rgba(22,20,15,.68); margin: 0; max-width: 44ch; }
+
+.audit-form { min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.field-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 28px; }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.field span { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(22,20,15,.55); }
+.field input, .field select, .field textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid #16140f;
+  background: transparent;
+  padding: 10px 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  color: #16140f;
+  outline: none;
+}
+.field textarea { resize: vertical; }
+.select-wrap { position: relative; }
+.select-wrap select { appearance: none; padding-right: 24px; cursor: pointer; }
+.select-wrap .caret { position: absolute; right: 0; top: 10px; pointer-events: none; font-size: 14px; }
+.form-error {
+  display: none;
+  font-size: 14px;
+  color: #c1272d;
+}
+
+/* ─── FINAL CTA ─── */
+.final-cta { background: #c1272d; color: #f2ede3; }
+.final-cta-inner { max-width: 1000px; margin: 0 auto; padding: clamp(72px,10vw,140px) clamp(20px,4vw,48px); text-align: center; }
+.final-cta h2 { font-family: 'Archivo', sans-serif; font-weight: 900; font-size: clamp(30px,4.6vw,58px); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 28px; }
+.final-cta p { font-size: 18px; line-height: 1.7; color: rgba(242,237,227,.85); max-width: 56ch; margin: 0 auto 40px; }
+.final-cta .btn { background: #f2ede3; color: #16140f; }
+.final-cta .btn:hover { background: #16140f; color: #f2ede3; }
+
+/* ─── FOOTER ─── */
+.footer { border-top: 1px solid rgba(22,20,15,.15); }
+.footer-inner { max-width: 1400px; margin: 0 auto; padding: 32px clamp(20px,4vw,48px); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.footer span { font-size: 13px; color: rgba(22,20,15,.6); }
+
+/* ─── RESPONSIVE (fixed-ratio grids collapse to 1 column so text never gets crushed) ─── */
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-media { max-width: 420px; }
+  .problem-grid { grid-template-columns: 1fr; }
+  .who-grid { grid-template-columns: 1fr; }
+  .who-media { order: 1; max-width: 420px; }
+  .who-copy { order: 2; }
+  .audit-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <span class="mark">KLIKS</span>
+      <span class="rule"></span>
+      <span class="sub">Patisserie</span>
+    </div>
+    <div class="nav-links">
+      <a href="#engine" class="link">Growth Engine</a>
+      <a href="#process" class="link">First 90 Days</a>
+      <a href="#why" class="link">Why KLIKS</a>
+      <a href="#audit" class="cta">Request Audit</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow">Growth Systems - For Patisserie &amp; Dessert Brands</div>
+      <h1>Built a great food brand? Now build the system behind growth.</h1>
+      <p>KLIKS helps ambitious patisserie and dessert brands improve their website, advertising and customer journey so they can grow without adding more pressure to the founder.</p>
+      <a href="#audit" class="btn">Request your free growth audit <span>&rarr;</span></a>
+    </div>
+    <div class="hero-media">
+      <div class="img-frame r-4-5">
+        <img class="duo" src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1784789744/aef93345-b189-46b8-ac63-3c4ced926f51_qlf8om.png" alt="Patisserie product, duotone treated photograph">
+      </div>
+      <div class="caption">Fig. 01 - Product, treated</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem" class="section">
+  <div class="section-inner problem-grid">
+    <div class="eyebrow">01 - The Problem</div>
+    <div class="problem-copy">
+      <h2>You built the product. Growth needs another system.</h2>
+      <p>Running a patisserie is already a full-time job. Between production, staff, suppliers, customers and daily operations, marketing often becomes something that happens whenever there is time. Meanwhile the website doesn't fully showcase the brand, the ads are inconsistent, the social content doesn't tell the full story, and existing customers aren't being brought back. KLIKS helps build the digital growth system behind the business.</p>
+    </div>
+  </div>
+</section>
+
+<!-- GROWTH ENGINE -->
+<section id="engine" class="section">
+  <div class="section-inner">
+    <div class="eyebrow" style="margin-bottom:20px;">02 - The System</div>
+    <h2 class="section-title">The KLIKS Growth Engine</h2>
+    <div class="rule-grid">
+      <div class="col">
+        <div class="num">01</div>
+        <h3>Store</h3>
+        <p>Turn your website into a better sales tool. We improve the Shopify experience, product pages, ordering journey and landing pages.</p>
+      </div>
+      <div class="col">
+        <div class="num">02</div>
+        <h3>Attention</h3>
+        <p>Bring more people to the brand. We build and manage Meta and Google campaigns, testing offers and audiences.</p>
+      </div>
+      <div class="col">
+        <div class="num">03</div>
+        <h3>Creative</h3>
+        <p>Give people a reason to stop and care. We help develop campaign ideas, content direction and seasonal concepts.</p>
+      </div>
+      <div class="col">
+        <div class="num">04</div>
+        <h3>Retention</h3>
+        <p>Create more value from existing customers. We build email systems, customer journeys and seasonal campaigns.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHO IT'S FOR -->
+<section id="who" class="section">
+  <div class="section-inner who-grid">
+    <div class="who-media">
+      <div class="img-frame r-1-1">
+        <img class="duo" src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1784806652/pexels-nano-erdozain-120534369-37888518_zioida.jpg" alt="Patisserie interior, duotone treated photograph">
+      </div>
+      <div class="caption">Fig. 02 - Storefront, treated</div>
+    </div>
+    <div class="who-copy">
+      <div class="eyebrow">03 - Fit</div>
+      <h2>Built for founders who already have something special.</h2>
+      <p>KLIKS works best with brands that already have strong product quality, loyal customers, a physical presence and a real desire to grow, especially cake brands, patisseries, dessert businesses and premium food brands.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FIRST 90 DAYS -->
+<section id="process" class="section">
+  <div class="section-inner">
+    <div class="eyebrow" style="margin-bottom:20px;">04 - Timeline</div>
+    <h2 class="section-title">The first 90 days</h2>
+    <div class="process-grid">
+      <div class="col">
+        <div class="month">Month 1</div>
+        <p class="statement">Understand the business. Output is the KLIKS Growth Roadmap.</p>
+      </div>
+      <div class="col">
+        <div class="month">Month 2</div>
+        <p class="statement">Build and test.</p>
+      </div>
+      <div class="col">
+        <div class="month">Month 3</div>
+        <p class="statement">Improve what works.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY KLIKS -->
+<section id="why" class="section why">
+  <div class="section-inner">
+    <div class="eyebrow" style="margin-bottom:20px;">05 - Why KLIKS</div>
+    <h2 class="section-title">Why KLIKS</h2>
+    <div class="rule-grid">
+      <div class="col">
+        <div class="num">01</div>
+        <p>Founder-led</p>
+      </div>
+      <div class="col">
+        <div class="num">02</div>
+        <p>Ecommerce experience</p>
+      </div>
+      <div class="col">
+        <div class="num">03</div>
+        <p>Real understanding of food businesses, through a family bakery background</p>
+      </div>
+      <div class="col">
+        <div class="num">04</div>
+        <p>Creative-first thinking</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GROWTH AUDIT FORM -->
+<section id="audit" class="section">
+  <div class="section-inner audit-grid">
+    <div class="audit-copy">
+      <div class="eyebrow">06 - Start Here</div>
+      <h2>Start with a growth audit</h2>
+      <p>The audit reviews website experience, customer journey, marketing opportunities and growth potential.</p>
+    </div>
+    <form class="audit-form" id="auditForm" novalidate>
+      <div class="field-row">
+        <label class="field">
+          <span>Name</span>
+          <input type="text" id="ptName" name="name" required>
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input type="email" id="ptEmail" name="email" required>
+        </label>
+      </div>
+      <div class="field-row">
+        <label class="field">
+          <span>Business Name</span>
+          <input type="text" id="ptBusiness" name="business_name">
+        </label>
+        <label class="field">
+          <span>Instagram Handle</span>
+          <input type="text" id="ptInstagram" name="instagram_handle" placeholder="@yourbrand">
+        </label>
+      </div>
+      <div class="field-row">
+        <label class="field">
+          <span>Website URL</span>
+          <input type="text" id="ptWebsite" name="website_url">
+        </label>
+        <label class="field">
+          <span>Monthly Revenue Range</span>
+          <div class="select-wrap">
+            <select id="ptRevenue" name="monthly_revenue_range">
+              <option value="Under $20k / month">Under $20k / month</option>
+              <option value="$20k - $50k / month">$20k - $50k / month</option>
+              <option value="$50k - $100k / month">$50k - $100k / month</option>
+              <option value="$100k - $250k / month">$100k - $250k / month</option>
+              <option value="$250k+ / month">$250k+ / month</option>
+            </select>
+            <span class="caret">&#9662;</span>
+          </div>
+        </label>
+      </div>
+      <label class="field">
+        <span>What's the biggest challenge right now?</span>
+        <textarea rows="4" id="ptChallenge" name="challenge"></textarea>
+      </label>
+
+      <div class="form-error" id="auditFormError">Something went wrong. Please try again or email us at hello@kliks.com.au</div>
+
+      <div>
+        <button type="submit" class="btn" id="auditSubmitBtn">Request your free growth audit <span>&rarr;</span></button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="final-cta-inner">
+    <h2>Ready to build the next stage of your brand?</h2>
+    <p>Your product already has value. Now it needs a digital system that helps more people discover it.</p>
+    <a href="#audit" class="btn">Request your free growth audit <span>&rarr;</span></a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <span>KLIKS Patisserie, a vertical of Kliks Digital</span>
+    <span>Sydney, Australia</span>
+  </div>
+</footer>
+
+<script>
+document.getElementById('auditForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const btn = document.getElementById('auditSubmitBtn');
+  const errorEl = document.getElementById('auditFormError');
+  errorEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = 'Sending...';
+
+  const name = document.getElementById('ptName').value.trim();
+  const email = document.getElementById('ptEmail').value.trim();
+  const business = document.getElementById('ptBusiness').value.trim();
+  const instagram = document.getElementById('ptInstagram').value.trim();
+  const website = document.getElementById('ptWebsite').value.trim();
+  const revenue = document.getElementById('ptRevenue').value;
+  const challenge = document.getElementById('ptChallenge').value.trim();
+
+  if (!name || !email) {
+    errorEl.textContent = 'Please fill in your name and email address.';
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = 'Request your free growth audit <span>&rarr;</span>';
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        access_key:            '8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5',
+        subject:                'New patisserie growth audit request - kliks.com.au',
+        from_name:              name,
+        email,
+        business_name:          business   || 'Not provided',
+        instagram_handle:       instagram  || 'Not provided',
+        website_url:            website    || 'Not provided',
+        monthly_revenue_range:  revenue    || 'Not provided',
+        challenge:              challenge  || 'Not provided'
+      })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error('Web3Forms rejected');
+  } catch (err) {
+    console.error('Submission error:', err);
+    errorEl.textContent = 'Something went wrong. Please try again or email us at hello@kliks.com.au';
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = 'Request your free growth audit <span>&rarr;</span>';
+    return;
+  }
+
+  if (typeof fbq !== 'undefined') {
+    fbq('track', 'Lead', {content_name: 'Patisserie Growth Audit'});
+  }
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'generate_lead', {
+      event_category: 'Kliks Patisserie',
+      event_label: 'Growth Audit Request'
+    });
+  }
+
+  setTimeout(function() {
+    window.location.href = '/thanks-patisserie';
+  }, 300);
+});
+</script>
+
+</body>
+</html>
