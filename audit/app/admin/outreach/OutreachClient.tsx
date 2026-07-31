@@ -341,6 +341,8 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
 
   const todayStr = new Date().toISOString().split('T')[0]
   const overdueRows = rows.filter(r => {
+    // Nothing has been sent yet, so there's no follow-up to be overdue on.
+    if (r.status === 'audit_created') return false
     if (!r.follow_up_due_at || CLOSED.includes(r.status)) return false
     return r.follow_up_due_at.split('T')[0] < todayStr
   })
@@ -611,7 +613,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
                     </span>
                     {['audit_created', 'email_sent'].includes(r.status) && (
                       <button
-                        onClick={() => updateRow(r.id, { status: 'email_sent' })}
+                        onClick={() => handleStatusChange(r.id, 'email_sent')}
                         style={{ background: 'rgba(99,102,241,0.15)', border: 'none', color: '#818cf8', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
                         Mark Sent
                       </button>
