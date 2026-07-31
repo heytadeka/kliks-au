@@ -128,7 +128,7 @@ const modalCardStyle: React.CSSProperties = {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function AdminNav({ active }: { active: 'audits' | 'pipeline' | 'outreach' }) {
+function AdminNav({ active }: { active: 'today' | 'audits' | 'pipeline' | 'outreach' }) {
   const pill = (href: string, label: string, key: typeof active) => (
     <a key={key} href={href} style={{
       padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
@@ -138,6 +138,7 @@ function AdminNav({ active }: { active: 'audits' | 'pipeline' | 'outreach' }) {
   )
   return (
     <div style={{ background: S.bg2, borderBottom: '1px solid rgba(100,75,255,0.15)', height: 48, padding: '0 32px', display: 'flex', alignItems: 'center', gap: 8 }}>
+      {pill('/audit/admin/today', 'Today', 'today')}
       {pill('/audit/admin/dashboard', 'Audits', 'audits')}
       {pill('/audit/admin/pipeline', 'Pipeline', 'pipeline')}
       {pill('/audit/admin/outreach', 'Outreach', 'outreach')}

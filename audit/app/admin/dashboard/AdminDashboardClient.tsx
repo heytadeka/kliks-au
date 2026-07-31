@@ -65,6 +65,7 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
 
       {/* Section nav */}
       <div style={{ background: '#1a1828', borderBottom: '1px solid rgba(100,75,255,0.15)', height: 48, padding: '0 32px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a href="/audit/admin/today" style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none', color: 'rgba(255,255,255,0.5)' }}>Today</a>
         <a href="/audit/admin/dashboard" style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none', background: 'rgba(255,67,21,0.15)', color: S.orange }}>Audits</a>
         <a href="/audit/admin/pipeline" style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none', color: 'rgba(255,255,255,0.5)' }}>Pipeline</a>
         <a href="/audit/admin/outreach" style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none', color: 'rgba(255,255,255,0.5)' }}>Outreach</a>

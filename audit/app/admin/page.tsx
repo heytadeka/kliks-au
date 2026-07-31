@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
       body: JSON.stringify({ email, password }),
     })
     const data = await res.json()
-    if (data.success) router.push('/audit/admin/dashboard')
+    if (data.success) router.push('/audit/admin/today')
     else { setError(data.message); setLoading(false) }
   }
 
