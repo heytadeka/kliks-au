@@ -54,9 +54,59 @@ const STATUS_COLOR: Record<string, string> = {
   not_a_fit: 'rgba(255,255,255,0.35)',
 }
 
-const CLOSED = ['won', 'lost', 'not_a_fit']
-
 const LOST_REASONS = ['Price', 'Timing', 'No response', 'Went elsewhere', 'Not a fit', 'Other']
+
+// ─── Stage Rivers board config ─────────────────────────────────────────────────
+
+const LANE_ORDER = ['to_contact', 'contacted', 'engaged', 'closed'] as const
+type LaneKey = typeof LANE_ORDER[number]
+
+const LANE_LABELS: Record<LaneKey, string> = {
+  to_contact: 'To Contact',
+  contacted: 'Contacted',
+  engaged: 'Engaged',
+  closed: 'Closed',
+}
+
+// Maps every real outreach_log.status value to one of the 4 collapsed lanes.
+const STATUS_TO_LANE: Record<string, LaneKey> = {
+  audit_created: 'to_contact',
+  email_sent: 'contacted',
+  opened: 'contacted',
+  no_response: 'contacted',
+  responded: 'engaged',
+  call_booked: 'engaged',
+  proposal_sent: 'engaged',
+  won: 'closed',
+  lost: 'closed',
+  not_a_fit: 'closed',
+}
+
+const AXIS_TICKS = [0, 7, 14, 21, 28]
+const MONO = "'Space Mono', monospace"
+
+function dotBaseStyle(lane: 'to_contact' | 'contacted' | 'engaged', size = 14): React.CSSProperties {
+  const base: React.CSSProperties = { width: size, height: size, borderRadius: '50%', flexShrink: 0, boxSizing: 'border-box' }
+  if (lane === 'to_contact') return { ...base, background: 'transparent', border: `2px solid ${S.purple}`, opacity: 0.65 }
+  if (lane === 'contacted') return { ...base, background: S.purple, opacity: 0.55 }
+  return { ...base, background: S.purple, opacity: 1 }
+}
+
+function stalenessGlow(days: number): React.CSSProperties {
+  if (days >= 15) return { boxShadow: '0 0 0 4px rgba(255,67,21,0.28), 0 0 14px rgba(255,67,21,0.55)' }
+  if (days >= 8) return { boxShadow: '0 0 0 3px rgba(255,67,21,0.18)' }
+  if (days >= 4) return { boxShadow: '0 0 0 2px rgba(255,67,21,0.1)' }
+  return {}
+}
+
+// "Last touch" is outreach_log.updated_at - every write path (status change,
+// notes, follow-up date, the prospect's own gate/open ping) sets it in the same
+// transaction as whatever else it touches, so it's a strict superset of any more
+// specific timestamp column. For prospects with no outreach_log row yet, there's
+// been no touch at all, so we fall back to when the prospect/audit was created.
+function daysSinceTouch(iso: string): number {
+  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000))
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -72,26 +122,6 @@ function timeAgo(d: string | null | undefined): string {
   if (hours < 1) return 'just now'
   if (hours < 24) return `${hours}h ago`
   return `${Math.floor(hours / 24)}d ago`
-}
-
-function toDateInput(d: string | null | undefined): string {
-  if (!d) return ''
-  return new Date(d).toISOString().split('T')[0]
-}
-
-function dueDateColor(d: string | null | undefined): string {
-  if (!d) return S.muted
-  const ms = new Date(d).getTime() - Date.now()
-  if (ms < 0) return '#ef4444'
-  if (ms < 86_400_000) return '#f97316'
-  return S.muted
-}
-
-function daysOverdue(dateStr: string): number {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const due = new Date(dateStr.split('T')[0] + 'T00:00:00')
-  return Math.floor((today.getTime() - due.getTime()) / 86_400_000)
 }
 
 const toInputDate = (d: Date) => d.toISOString().split('T')[0]
@@ -166,15 +196,21 @@ const helperTextStyle: React.CSSProperties = {
   lineHeight: 1.5,
 }
 
+// One entry per prospect eligible for the board: either a real outreach_log
+// row, or (rare/legacy) a prospect with no row yet, folded into To Contact.
+type BoardItem = {
+  outreachId: string | null
+  prospectId: string
+  brand_name: string
+  status: string
+  lastTouchIso: string
+  slug: string | null
+  raw: any
+}
+
 export default function OutreachClient({ initialRows, existingProspects }: { initialRows: any[]; existingProspects: any[] }) {
   const router = useRouter()
   const [rows, setRows] = useState<any[]>(initialRows)
-  const [notesMap, setNotesMap] = useState<Record<string, string>>(
-    Object.fromEntries(initialRows.map(r => [r.id, r.notes ?? '']))
-  )
-  const [followUpMap, setFollowUpMap] = useState<Record<string, string>>(
-    Object.fromEntries(initialRows.map(r => [r.id, toDateInput(r.follow_up_due_at)]))
-  )
 
   // New outreach form state
   const [showForm, setShowForm] = useState(false)
@@ -188,7 +224,9 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   const [attaching, setAttaching] = useState(false)
   const [attachError, setAttachError] = useState('')
 
-  // Audits not already being tracked in Outreach
+  // Audits not already being tracked in Outreach (recomputed from live rows
+  // state, not just the initial prop, so a freshly-created row is excluded
+  // immediately without waiting on a server round trip).
   const trackedProspectIds = new Set(rows.map(r => r.prospect_id))
   const availableProspects = existingProspects.filter(p => !trackedProspectIds.has(p.id))
   const selectedProspect = existingProspects.find(p => p.id === selectedProspectId) ?? null
@@ -208,6 +246,10 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   // Won / Lost prompt modal
   const [wonLostModal, setWonLostModal] = useState<{ id: string; type: 'won' | 'lost'; prevStatus: string } | null>(null)
   const [wonLostValue, setWonLostValue] = useState('')
+
+  // Prospect detail modal (opened by clicking a dot on the board)
+  const [detailProspectId, setDetailProspectId] = useState<string | null>(null)
+  const [notesDraft, setNotesDraft] = useState('')
 
   // Keep slug in sync with brand name
   useEffect(() => {
@@ -274,6 +316,18 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     window.location.href = '/audit/admin'
   }
 
+  const updateRow = useCallback(async (id: string, payload: Record<string, any>) => {
+    const res = await fetch('/api/outreach/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...payload }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setRows(prev => prev.map(r => r.id === id ? { ...r, ...data.row } : r))
+    }
+  }, [])
+
   async function handleStatusChange(id: string, newStatus: string) {
     // Intercept won / lost to show prompt before saving
     if (newStatus === 'won' || newStatus === 'lost') {
@@ -284,10 +338,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     }
     const suggested = autoFollowUp(newStatus)
     const payload: Record<string, any> = { status: newStatus }
-    if (suggested !== undefined) {
-      payload.follow_up_due_at = suggested
-      setFollowUpMap(prev => ({ ...prev, [id]: suggested ?? '' }))
-    }
+    if (suggested !== undefined) payload.follow_up_due_at = suggested
     await updateRow(id, payload)
   }
 
@@ -301,10 +352,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     }
     // Clear follow-up date for terminal statuses
     const followUpDate = autoFollowUp(type)
-    if (followUpDate !== undefined) {
-      payload.follow_up_due_at = followUpDate
-      setFollowUpMap(prev => ({ ...prev, [id]: followUpDate ?? '' }))
-    }
+    if (followUpDate !== undefined) payload.follow_up_due_at = followUpDate
     await updateRow(id, payload)
     setWonLostModal(null)
   }
@@ -315,17 +363,63 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     setTimeout(() => setCopiedKey(null), 2000)
   }
 
-  const updateRow = useCallback(async (id: string, payload: Record<string, any>) => {
-    const res = await fetch('/api/outreach/update', {
+  // Creates the outreach_log row on demand for a prospect that doesn't have
+  // one yet (rare/legacy To Contact items), reusing track-existing exactly as
+  // the "attach to existing audit" form already does. Real rows pass through.
+  async function ensureOutreachRow(item: BoardItem): Promise<any> {
+    if (item.outreachId) return item.raw
+    const res = await fetch('/api/audit/admin/track-existing', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...payload }),
+      body: JSON.stringify({ prospect_id: item.prospectId }),
     })
-    if (res.ok) {
-      const data = await res.json()
-      setRows(prev => prev.map(r => r.id === id ? { ...r, ...data.row } : r))
+    const data = await res.json()
+    if (!res.ok || !data.success) throw new Error(data.error ?? 'Could not start tracking.')
+    setRows(prev => [...prev, data.row])
+    router.refresh()
+    return data.row
+  }
+
+  function openDetail(item: BoardItem) {
+    setDetailProspectId(item.prospectId)
+    setNotesDraft(item.raw?.notes ?? '')
+  }
+
+  async function handleDetailStatusChange(item: BoardItem, newStatus: string) {
+    try {
+      const row = await ensureOutreachRow(item)
+      await handleStatusChange(row.id, newStatus)
+    } catch (e: any) {
+      alert(e.message)
     }
-  }, [])
+  }
+
+  async function handleDetailFollowUpSent(item: BoardItem) {
+    try {
+      const row = await ensureOutreachRow(item)
+      await updateRow(row.id, { status: 'no_response', follow_up_due_at: addDays(4) })
+    } catch (e: any) {
+      alert(e.message)
+    }
+  }
+
+  async function handleDetailNotesBlur(item: BoardItem) {
+    try {
+      const row = await ensureOutreachRow(item)
+      await updateRow(row.id, { notes: notesDraft })
+    } catch (e: any) {
+      alert(e.message)
+    }
+  }
+
+  function openFollowUpDraft(item: BoardItem) {
+    setFollowUpModal({
+      brand_name: item.brand_name,
+      prospect_name: item.raw?.prospect_name ?? '',
+      prospect_email: item.raw?.prospect_email ?? '',
+      audit_slug: item.slug,
+    })
+  }
 
   // ── Stats ────────────────────────────────────────────────────────────────────
 
@@ -338,15 +432,28 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   const closeRate = total > 0 ? Math.round((wonCount / total) * 100) : 0
   const avgDealSize = wonCount > 0 ? Math.round(revenueWon / wonCount) : null
 
-  // ── Overdue rows (strictly past today, date comparison only) ─────────────────
+  // ── Board items, grouped into lanes ───────────────────────────────────────────
 
-  const todayStr = new Date().toISOString().split('T')[0]
-  const overdueRows = rows.filter(r => {
-    // Nothing has been sent yet, so there's no follow-up to be overdue on.
-    if (r.status === 'audit_created') return false
-    if (!r.follow_up_due_at || CLOSED.includes(r.status)) return false
-    return r.follow_up_due_at.split('T')[0] < todayStr
-  })
+  const boardItems: BoardItem[] = [
+    ...rows.map(r => ({
+      outreachId: r.id as string, prospectId: r.prospect_id as string, brand_name: r.brand_name,
+      status: r.status, lastTouchIso: r.updated_at, slug: r.audit_slug ?? null, raw: r,
+    })),
+    ...availableProspects.map(p => ({
+      outreachId: null, prospectId: p.id as string, brand_name: p.brand_name,
+      status: 'audit_created', lastTouchIso: p.created_at, slug: p.slug ?? null, raw: p,
+    })),
+  ]
+
+  const laneItems: Record<LaneKey, BoardItem[]> = { to_contact: [], contacted: [], engaged: [], closed: [] }
+  for (const item of boardItems) {
+    const lane = STATUS_TO_LANE[item.status] ?? 'to_contact'
+    laneItems[lane].push(item)
+  }
+
+  const detailItem: BoardItem | null = detailProspectId
+    ? boardItems.find(b => b.prospectId === detailProspectId) ?? null
+    : null
 
   // ── Follow-up email drafts ───────────────────────────────────────────────────
 
@@ -361,6 +468,101 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
 
   return (
     <div style={{ minHeight: '100vh', background: S.bg, color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
+
+      {/* ── Prospect Detail Modal ─────────────────────────────────────────────── */}
+      {detailItem && (
+        <div style={modalOverlayStyle} onClick={() => setDetailProspectId(null)}>
+          <div style={modalCardStyle} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, margin: 0 }}>{detailItem.brand_name}</h2>
+                {detailItem.raw?.prospect_name && <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>{detailItem.raw.prospect_name}</div>}
+              </div>
+              <button onClick={() => setDetailProspectId(null)}
+                style={{ background: 'none', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: 4 }}>
+                ×
+              </button>
+            </div>
+
+            {/* Status dropdown */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', fontFamily: MONO, textTransform: 'uppercase' as const }}>Status</label>
+              <select
+                value={detailItem.status}
+                onChange={e => handleDetailStatusChange(detailItem, e.target.value)}
+                style={{
+                  background: STATUS_BG[detailItem.status] ?? STATUS_BG.audit_created,
+                  color: STATUS_COLOR[detailItem.status] ?? S.muted,
+                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer', outline: 'none', fontFamily: 'Satoshi, sans-serif',
+                }}
+              >
+                {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                  <option key={val} value={val} style={{ background: S.bg2, color: S.white }}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Read-only context */}
+            {detailItem.outreachId ? (
+              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 12, color: S.muted, marginBottom: 20, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
+                <span>Sent: {fmtDate(detailItem.raw.email_sent_at)}</span>
+                <span>Opens: {detailItem.raw.open_count ?? 0}{detailItem.raw.last_opened_at ? ` (${timeAgo(detailItem.raw.last_opened_at)})` : ''}</span>
+                {detailItem.raw.follow_up_due_at && <span>Next follow-up: {fmtDate(detailItem.raw.follow_up_due_at)}</span>}
+                {detailItem.raw.deal_value != null && <span>Deal value: ${Number(detailItem.raw.deal_value).toLocaleString()}</span>}
+                {detailItem.raw.lost_reason && <span>Reason: {detailItem.raw.lost_reason}</span>}
+              </div>
+            ) : (
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 20 }}>Not tracked yet - any action below starts tracking.</p>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+              {['audit_created', 'email_sent'].includes(detailItem.status) && (
+                <button onClick={() => handleDetailStatusChange(detailItem, 'email_sent')}
+                  style={{ background: 'rgba(99,102,241,0.15)', border: 'none', color: '#818cf8', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+                  Mark Sent
+                </button>
+              )}
+              {['opened', 'no_response'].includes(detailItem.status) && (
+                <button onClick={() => handleDetailFollowUpSent(detailItem)}
+                  style={{ background: 'rgba(239,68,68,0.15)', border: 'none', color: '#f87171', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+                  Follow Up Sent
+                </button>
+              )}
+              {detailItem.slug && (
+                <a href={`/audit/${detailItem.slug}/report`} target="_blank" rel="noreferrer"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: S.muted, borderRadius: 6, padding: '6px 14px', fontSize: 13, textDecoration: 'none' }}>
+                  View Audit
+                </a>
+              )}
+              {detailItem.slug && (
+                <button onClick={() => openFollowUpDraft(detailItem)}
+                  style={{ background: 'rgba(255,67,21,0.1)', border: '1px solid rgba(255,67,21,0.25)', color: S.orange, borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+                  Follow-up Email
+                </button>
+              )}
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', fontFamily: MONO, textTransform: 'uppercase' as const }}>Notes</label>
+              <input
+                type="text"
+                value={notesDraft}
+                placeholder="Add a note..."
+                onChange={e => setNotesDraft(e.target.value)}
+                onBlur={() => handleDetailNotesBlur(detailItem)}
+                style={{
+                  width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 6, padding: '8px 12px', color: S.white, fontSize: 13,
+                  fontFamily: 'Satoshi, sans-serif', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Follow-up Email Modal ─────────────────────────────────────────────── */}
       {followUpModal && (
@@ -591,48 +793,6 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
           </div>
         )}
 
-        {/* ── Follow-up Due Alert (overdue only, strictly past today) ─────────── */}
-        {overdueRows.length > 0 && (
-          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '16px 20px', marginBottom: 32 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', marginBottom: 12 }}>Follow-up Overdue</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {overdueRows.map(r => {
-                const days = daysOverdue(r.follow_up_due_at)
-                return (
-                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <span
-                      onClick={() => document.getElementById(`outreach-row-${r.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                      style={{ fontSize: 14, color: S.white, fontWeight: 500, minWidth: 160, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(255,255,255,0.2)', textUnderlineOffset: 3 }}
-                    >
-                      {r.brand_name}
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: STATUS_BG[r.status] ?? STATUS_BG.audit_created, color: STATUS_COLOR[r.status] ?? S.muted }}>
-                      {STATUS_LABELS[r.status] ?? r.status}
-                    </span>
-                    <span style={{ fontSize: 13, color: '#ef4444' }}>
-                      {days === 1 ? '1 day overdue' : `${days} days overdue`}
-                    </span>
-                    {['audit_created', 'email_sent'].includes(r.status) && (
-                      <button
-                        onClick={() => handleStatusChange(r.id, 'email_sent')}
-                        style={{ background: 'rgba(99,102,241,0.15)', border: 'none', color: '#818cf8', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
-                        Mark Sent
-                      </button>
-                    )}
-                    {['opened', 'no_response'].includes(r.status) && (
-                      <button
-                        onClick={() => updateRow(r.id, { status: 'no_response', follow_up_due_at: addDays(4) })}
-                        style={{ background: 'rgba(239,68,68,0.15)', border: 'none', color: '#f87171', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
-                        Follow Up Sent
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
         {/* ── Stats: Revenue row ───────────────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
           <StatTile label="Revenue Won" value={`$${revenueWon.toLocaleString()}`} color="#22c55e" />
@@ -648,152 +808,77 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
           <StatTile label="Won" value={wonCount} color="#22c55e" />
         </div>
 
-        {/* ── Table ────────────────────────────────────────────────────────────── */}
-        {rows.length === 0 ? (
-          <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 48, textAlign: 'center' }}>
-            <p style={{ color: S.muted, fontSize: 14 }}>No outreach yet. Create audits from the Pipeline tab to start tracking.</p>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, minWidth: 1200 }}>
-              <thead>
-                <tr style={{ background: S.bg }}>
-                  {['Brand', 'Status', 'Opens', 'Sent', 'Follow-up', 'Notes', 'Actions'].map(h => (
-                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}`, whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => {
-                  const openCount = row.open_count ?? 0
-                  const openColor = openCount >= 3 ? S.orange : S.muted
-                  return (
-                    <tr key={row.id} id={`outreach-row-${row.id}`} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+        {/* ── Stage Rivers board ───────────────────────────────────────────────── */}
+        <div style={{ background: S.bg2, borderRadius: 12, padding: '28px 32px 20px' }}>
+          {LANE_ORDER.map((laneKey, idx) => {
+            const items = laneItems[laneKey]
+            const isClosed = laneKey === 'closed'
+            return (
+              <div key={laneKey} style={{ marginBottom: idx === LANE_ORDER.length - 1 ? 0 : 20 }}>
+                {/* Lane header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.8)' }}>{LANE_LABELS[laneKey]}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{items.length}</span>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                </div>
 
-                      {/* Brand */}
-                      <td style={{ padding: '12px 14px', minWidth: 160 }}>
-                        <div style={{ fontWeight: 600, color: S.white, fontSize: 14 }}>{row.brand_name}</div>
-                        {row.prospect_name && <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>{row.prospect_name}</div>}
-                      </td>
-
-                      {/* Status dropdown */}
-                      <td style={{ padding: '12px 14px', minWidth: 150 }}>
-                        <select
-                          value={row.status}
-                          onChange={e => handleStatusChange(row.id, e.target.value)}
-                          style={{
-                            background: STATUS_BG[row.status] ?? STATUS_BG.audit_created,
-                            color: STATUS_COLOR[row.status] ?? S.muted,
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: 20,
-                            padding: '4px 10px',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            outline: 'none',
-                            fontFamily: 'Satoshi, sans-serif',
-                          }}
-                        >
-                          {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                            <option key={val} value={val} style={{ background: S.bg2, color: S.white }}>{label}</option>
-                          ))}
-                        </select>
-                      </td>
-
-                      {/* Opens */}
-                      <td style={{ padding: '12px 14px', minWidth: 100 }}>
-                        <div style={{ color: openColor, fontWeight: openCount >= 3 ? 600 : 400 }}>
-                          {openCount > 0 ? `👁 ${openCount}` : '-'}
-                        </div>
-                        {row.last_opened_at && (
-                          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
-                            {timeAgo(row.last_opened_at)}
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Sent */}
-                      <td style={{ padding: '12px 14px', color: S.muted, whiteSpace: 'nowrap' }}>
-                        {fmtDate(row.email_sent_at)}
-                      </td>
-
-                      {/* Follow-up date */}
-                      <td style={{ padding: '12px 14px', minWidth: 140 }}>
-                        <input
-                          type="date"
-                          value={followUpMap[row.id] ?? ''}
-                          onChange={e => {
-                            setFollowUpMap(prev => ({ ...prev, [row.id]: e.target.value }))
-                            updateRow(row.id, { follow_up_due_at: e.target.value || null })
-                          }}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: 6,
-                            padding: '4px 8px',
-                            color: dueDateColor(row.follow_up_due_at),
-                            fontSize: 12,
-                            fontFamily: 'Satoshi, sans-serif',
-                            outline: 'none',
-                            cursor: 'pointer',
-                            colorScheme: 'dark',
-                          } as React.CSSProperties}
+                {isClosed ? (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '10px 4px 22px', alignItems: 'center' }}>
+                    {items.map(item => {
+                      const isWon = item.status === 'won'
+                      const outcomeLabel = isWon ? 'won' : item.status === 'lost' ? 'lost' : 'not a fit'
+                      return (
+                        <div
+                          key={item.prospectId}
+                          title={`${item.brand_name} — ${outcomeLabel}`}
+                          onClick={() => openDetail(item)}
+                          style={isWon
+                            ? { width: 12, height: 12, borderRadius: '50%', background: S.purple, opacity: 1, cursor: 'pointer', flexShrink: 0 }
+                            : { width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', cursor: 'pointer', flexShrink: 0 }
+                          }
                         />
-                      </td>
-
-                      {/* Notes */}
-                      <td style={{ padding: '12px 14px', minWidth: 200 }}>
-                        <input
-                          type="text"
-                          value={notesMap[row.id] ?? ''}
-                          placeholder="Add a note..."
-                          onChange={e => setNotesMap(prev => ({ ...prev, [row.id]: e.target.value }))}
-                          onBlur={e => updateRow(row.id, { notes: e.target.value })}
+                      )
+                    })}
+                    <span style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.35)', marginLeft: 6 }}>
+                      {items.filter(i => i.status === 'won').length} won · {items.filter(i => i.status === 'lost').length} lost · {items.filter(i => i.status === 'not_a_fit').length} not a fit
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ position: 'relative', height: 56, background: 'rgba(255,255,255,0.02)', borderRadius: 8, marginBottom: 22 }}>
+                    {AXIS_TICKS.map((d, i) => (
+                      <div key={d}>
+                        <div style={{ position: 'absolute', left: `${(d / 28) * 100}%`, top: 0, bottom: 0, width: 1, background: 'rgba(255,255,255,0.05)' }} />
+                        <div style={{
+                          position: 'absolute', left: `${(d / 28) * 100}%`, bottom: 4,
+                          transform: i === AXIS_TICKS.length - 1 ? 'translateX(-100%)' : 'translateX(0)',
+                          fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.25)',
+                        }}>
+                          {i === AXIS_TICKS.length - 1 ? '28d+' : `${d}d`}
+                        </div>
+                      </div>
+                    ))}
+                    {items.map(item => {
+                      const days = daysSinceTouch(item.lastTouchIso)
+                      const pct = Math.min(days / 28, 1) * 100
+                      return (
+                        <div
+                          key={item.prospectId}
+                          title={`${item.brand_name} — ${days}d since last touch`}
+                          onClick={() => openDetail(item)}
                           style={{
-                            width: '100%',
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 6,
-                            padding: '5px 10px',
-                            color: S.white,
-                            fontSize: 12,
-                            fontFamily: 'Satoshi, sans-serif',
-                            outline: 'none',
-                            boxSizing: 'border-box',
+                            position: 'absolute', left: `calc(${pct}% - 7px)`, top: 21, cursor: 'pointer',
+                            ...dotBaseStyle(laneKey as 'to_contact' | 'contacted' | 'engaged', 14),
+                            ...stalenessGlow(days),
                           }}
                         />
-                      </td>
-
-                      {/* Actions */}
-                      <td style={{ padding: '12px 14px' }}>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          {row.audit_slug && (
-                            <a
-                              href={`/audit/${row.audit_slug}/report`}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: S.muted, borderRadius: 6, padding: '4px 10px', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' }}
-                            >
-                              View Audit
-                            </a>
-                          )}
-                          {row.audit_slug && (
-                            <button
-                              onClick={() => setFollowUpModal(row)}
-                              style={{ background: 'rgba(255,67,21,0.1)', border: '1px solid rgba(255,67,21,0.25)', color: S.orange, borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}
-                            >
-                              Follow-up
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

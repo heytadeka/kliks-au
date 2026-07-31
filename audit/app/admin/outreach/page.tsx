@@ -14,7 +14,7 @@ export default async function OutreachPage() {
 
   const { data: prospects } = await supabaseAdmin
     .from('prospects')
-    .select('id, slug, brand_name, store_url, prospect_name, prospect_email, niche')
+    .select('id, slug, brand_name, store_url, prospect_name, prospect_email, niche, created_at')
     .order('brand_name', { ascending: true })
 
   return <OutreachClient initialRows={rows ?? []} existingProspects={prospects ?? []} />
