@@ -4,6 +4,14 @@ import Link from 'next/link'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)', purple: '#644bff' }
 
+// audit_data_cache.prospect_id is a UNIQUE FK (1:1 with prospects), but the
+// Supabase embed can come back as either a single object or a one-item array
+// depending on how PostgREST resolves the relationship. Normalise so callers
+// don't have to guess the shape.
+function getCache(p: any): any {
+  return Array.isArray(p.audit_data_cache) ? p.audit_data_cache[0] : p.audit_data_cache
+}
+
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '20px 24px' }}>
@@ -93,8 +101,8 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
             </thead>
             <tbody>
               {filtered.map((p, i) => {
-                const croData = (p.audit_data_cache as any)?.[0]?.cro_checklist
-                const croStatus = !(p.audit_data_cache as any)?.[0]?.crawled_at
+                const croData = getCache(p)?.cro_checklist
+                const croStatus = !getCache(p)?.crawled_at
                   ? <span style={{ color: S.muted }}>Pending</span>
                   : croData?.error
                     ? <span style={{ color: '#ef4444' }}>Failed</span>
@@ -132,8 +140,8 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
         {/* Mobile cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {filtered.map(p => {
-            const croData = (p.audit_data_cache as any)?.[0]?.cro_checklist
-            const croLabel = !(p.audit_data_cache as any)?.[0]?.crawled_at ? 'Pending' : croData?.error ? 'Failed' : croData?.summary ? `${croData.summary.passed}/20` : 'Scanning...'
+            const croData = getCache(p)?.cro_checklist
+            const croLabel = !getCache(p)?.crawled_at ? 'Pending' : croData?.error ? 'Failed' : croData?.summary ? `${croData.summary.passed}/20` : 'Scanning...'
             return (
               <div key={p.id} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
