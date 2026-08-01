@@ -208,6 +208,50 @@ type BoardItem = {
   raw: any
 }
 
+const DOT_SIZE = 14
+const STACK_GAP = 18 // vertical distance between stacked dot centers - bigger than DOT_SIZE so stacked dots never touch
+const BASE_TRACK_HEIGHT = 56
+
+type PlacedDot = { item: BoardItem; days: number; leftPct: number; top: number }
+
+// Beeswarm layout for a non-closed lane: x stays exactly tied to days-since-
+// touch (the axis keeps its meaning), but items landing in the same integer
+// day - most commonly everything clamped into the 28d+ bucket - stack
+// vertically instead of rendering on top of each other. days is already an
+// integer (daysSinceTouch floors it), and at realistic track widths two
+// *different* day values are already several dot-widths apart, so bucketing
+// by exact day is enough to catch real collisions without needing to measure
+// actual rendered pixel widths.
+function layoutBeeswarm(items: BoardItem[]): { trackHeight: number; placed: PlacedDot[] } {
+  const buckets = new Map<number, BoardItem[]>()
+  for (const item of items) {
+    const bucket = Math.min(daysSinceTouch(item.lastTouchIso), 28)
+    if (!buckets.has(bucket)) buckets.set(bucket, [])
+    buckets.get(bucket)!.push(item)
+  }
+
+  const maxBucketSize = buckets.size === 0 ? 1 : Math.max(...Array.from(buckets.values(), b => b.length))
+  const stackSpan = (maxBucketSize - 1) * STACK_GAP + DOT_SIZE
+  const trackHeight = Math.max(BASE_TRACK_HEIGHT, stackSpan + 20)
+  const centerY = trackHeight / 2
+
+  const placed: PlacedDot[] = []
+  buckets.forEach((bucketItems, bucket) => {
+    const n = bucketItems.length
+    const leftPct = Math.min(bucket / 28, 1) * 100
+    bucketItems.forEach((item, i) => {
+      const offsetIndex = i - (n - 1) / 2
+      placed.push({
+        item,
+        days: daysSinceTouch(item.lastTouchIso),
+        leftPct,
+        top: centerY - DOT_SIZE / 2 + offsetIndex * STACK_GAP,
+      })
+    })
+  })
+  return { trackHeight, placed }
+}
+
 export default function OutreachClient({ initialRows, existingProspects }: { initialRows: any[]; existingProspects: any[] }) {
   const router = useRouter()
   const [rows, setRows] = useState<any[]>(initialRows)
@@ -813,6 +857,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
           {LANE_ORDER.map((laneKey, idx) => {
             const items = laneItems[laneKey]
             const isClosed = laneKey === 'closed'
+            const { trackHeight, placed } = isClosed ? { trackHeight: 0, placed: [] as PlacedDot[] } : layoutBeeswarm(items)
             return (
               <div key={laneKey} style={{ marginBottom: idx === LANE_ORDER.length - 1 ? 0 : 20 }}>
                 {/* Lane header */}
@@ -844,7 +889,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
                     </span>
                   </div>
                 ) : (
-                  <div style={{ position: 'relative', height: 56, background: 'rgba(255,255,255,0.02)', borderRadius: 8, marginBottom: 22 }}>
+                  <div style={{ position: 'relative', height: trackHeight, background: 'rgba(255,255,255,0.02)', borderRadius: 8, marginBottom: 22 }}>
                     {AXIS_TICKS.map((d, i) => (
                       <div key={d}>
                         <div style={{ position: 'absolute', left: `${(d / 28) * 100}%`, top: 0, bottom: 0, width: 1, background: 'rgba(255,255,255,0.05)' }} />
@@ -857,22 +902,18 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
                         </div>
                       </div>
                     ))}
-                    {items.map(item => {
-                      const days = daysSinceTouch(item.lastTouchIso)
-                      const pct = Math.min(days / 28, 1) * 100
-                      return (
-                        <div
-                          key={item.prospectId}
-                          title={`${item.brand_name} — ${days}d since last touch`}
-                          onClick={() => openDetail(item)}
-                          style={{
-                            position: 'absolute', left: `calc(${pct}% - 7px)`, top: 21, cursor: 'pointer',
-                            ...dotBaseStyle(laneKey as 'to_contact' | 'contacted' | 'engaged', 14),
-                            ...stalenessGlow(days),
-                          }}
-                        />
-                      )
-                    })}
+                    {placed.map(({ item, days, leftPct, top }) => (
+                      <div
+                        key={item.prospectId}
+                        title={`${item.brand_name} — ${days}d since last touch`}
+                        onClick={() => openDetail(item)}
+                        style={{
+                          position: 'absolute', left: `calc(${leftPct}% - 7px)`, top, cursor: 'pointer',
+                          ...dotBaseStyle(laneKey as 'to_contact' | 'contacted' | 'engaged', 14),
+                          ...stalenessGlow(days),
+                        }}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
