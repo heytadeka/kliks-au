@@ -129,7 +129,8 @@ export default function TodayClient({ sentToday, readyToReachOut, followUpsDue }
           <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Ready to reach out</h2>
           {readyToReachOut.length === 0 ? (
             <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 32, textAlign: 'center' }}>
-              <p style={{ color: S.muted, fontSize: 14 }}>Nothing waiting. Every audit has been sent.</p>
+              <p style={{ color: S.muted, fontSize: 14, marginBottom: 20 }}>Nothing waiting. Every audit has been sent.</p>
+              <Link href="/audit/admin/new" style={{ background: S.orange, color: '#fff', borderRadius: 100, padding: '12px 28px', textDecoration: 'none', fontWeight: 600, fontSize: 15, display: 'inline-block' }}>+ New Audit</Link>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
