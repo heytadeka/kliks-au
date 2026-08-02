@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { resolveOrganicStats } from '@/lib/organic-stats'
 
 const S = {
   bg: '#0e0d1a',
@@ -200,11 +201,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
   const totalRevImpact = revCalc.filter(r => r.impact).reduce((sum: number, r: any) => sum + r.impact, 0)
 
-  const kwEtv = useMemo(() => {
-    const overviewEtv = dfsOverview?.metrics?.organic?.etv ?? 0
-    if (overviewEtv > 0) return overviewEtv
-    return dfsKeywords.reduce((sum: number, kw: any) => sum + (kw.keyword_data?.keyword_info?.search_volume ?? 0), 0)
-  }, [dfsOverview, dfsKeywords])
+  const kwEtv = useMemo(() => resolveOrganicStats(dfsOverview, dfsKeywords).monthlyTraffic, [dfsOverview, dfsKeywords])
 
   const failedByCategory = useMemo(() => {
     if (!cro?.results) return {} as Record<string, any[]>
@@ -943,11 +940,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   </p>
                 )}
                 {(() => {
-                  const totalKeywordsCount = dfsOverview.keywords_total_count ?? null
-                  const overviewCount = dfsOverview.metrics?.organic?.count ?? 0
-                  const overviewEtv = dfsOverview.metrics?.organic?.etv ?? 0
-                  const kwCount = totalKeywordsCount ?? (overviewCount > 0 ? overviewCount : dfsKeywords.length)
-                  const kwEtv = overviewEtv > 0 ? overviewEtv : dfsKeywords.reduce((sum: number, kw: any) => sum + (kw.keyword_data?.keyword_info?.search_volume ?? 0), 0)
+                  const { keywordCount: kwCount, monthlyTraffic: kwEtv } = resolveOrganicStats(dfsOverview, dfsKeywords)
                   const refDomains = dfsOverview.metrics?.referring_domains ?? 0
                   const backlinksUnavailable = !backlinksSummary || Object.keys(backlinksSummary).length === 0
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { ANTHROPIC_MODEL } from '@/lib/config'
+import { resolveOrganicStats } from '@/lib/organic-stats'
 
 export const maxDuration = 60
 
@@ -51,10 +52,7 @@ export async function POST(req: NextRequest) {
   const failedMedChecks = cro?.results?.filter((c: any) => !c.passed && c.importance === 'medium').map((c: any) => c.label) ?? []
   const passedChecks = cro?.results?.filter((c: any) => c.passed).map((c: any) => c.label) ?? []
 
-  const overviewCount = dfsOverview?.metrics?.organic?.count ?? 0
-  const keywordsArrayCount = Array.isArray(dfsKeywords) ? dfsKeywords.length : 0
-  const organicKeywords = Math.max(overviewCount, keywordsArrayCount)
-  const monthlyTraffic = dfsOverview?.metrics?.organic?.etv ?? 0
+  const { keywordCount: organicKeywords, monthlyTraffic } = resolveOrganicStats(dfsOverview, dfsKeywords)
 
   const backlinksUnavailable = !cache.backlinks_summary || Object.keys(cache.backlinks_summary ?? {}).length === 0
 
