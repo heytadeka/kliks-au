@@ -586,22 +586,22 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             </div>
             <div ref={scoresRef} className="scores-grid">
             {(() => {
-              const val = ps?.performance_score != null && ps.performance_score > 0 ? Math.round(ps.performance_score) : null
+              const val = ps?.performance_score != null ? Math.round(ps.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
               return <ScoreRing key="mob" label="Mobile Performance" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.mobile ?? SCORE_DESC_FALLBACKS.mobile} revealed={scoresRevealed} />
             })()}
             {(() => {
-              const val = psDesktop?.performance_score != null && psDesktop.performance_score > 0 ? Math.round(psDesktop.performance_score) : null
+              const val = psDesktop?.performance_score != null ? Math.round(psDesktop.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
               return <ScoreRing key="desk" label="Desktop Performance" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.desktop ?? SCORE_DESC_FALLBACKS.desktop} revealed={scoresRevealed} />
             })()}
             {(() => {
-              const val = ps?.seo_score != null && ps.seo_score > 0 ? Math.round(ps.seo_score) : null
+              const val = ps?.seo_score != null ? Math.round(ps.seo_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
               return <ScoreRing key="seo" label="SEO Score" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.seo ?? SCORE_DESC_FALLBACKS.seo} revealed={scoresRevealed} />
             })()}
             {(() => {
-              const val = ps?.accessibility_score != null && ps.accessibility_score > 0 ? Math.round(ps.accessibility_score) : null
+              const val = ps?.accessibility_score != null ? Math.round(ps.accessibility_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
               return <ScoreRing key="a11y" label="Accessibility" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.accessibility ?? SCORE_DESC_FALLBACKS.accessibility} revealed={scoresRevealed} />
             })()}
