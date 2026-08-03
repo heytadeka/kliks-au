@@ -9,6 +9,11 @@ export async function POST(req: NextRequest) {
   const { prospect_id } = await req.json()
   console.log('[commentary] starting for prospect_id:', prospect_id)
 
+  // Wraps the whole handler so rescan_locked_at always clears on the way out,
+  // whichever return statement fires - success, a missing prospect/cache, an
+  // Anthropic error, or a JSON parse failure. rescan/route.ts is what sets this
+  // lock; this is what releases it, not a timer.
+  try {
   const { data: prospect } = await supabaseAdmin
     .from('prospects')
     .select('*')
@@ -417,5 +422,12 @@ Generate exactly 3 priorities as JSON only, no other text:
   } catch (err: any) {
     console.error('[commentary] unexpected error:', err.message)
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+  }
+  } finally {
+    try {
+      await supabaseAdmin.from('prospects').update({ rescan_locked_at: null }).eq('id', prospect_id)
+    } catch (e: any) {
+      console.error('[commentary] failed to clear rescan lock (non-fatal):', e.message)
+    }
   }
 }

@@ -72,6 +72,14 @@ create table if not exists admin_users (
 --   ADD COLUMN IF NOT EXISTS dataforseo_serp_features jsonb,
 --   ADD COLUMN IF NOT EXISTS dataforseo_content_gap jsonb;
 
+-- Rescan overlap lock (added to prevent concurrent rescans of the same
+-- prospect from interleaving their writes - see rescan/route.ts and
+-- generate-commentary/route.ts). Run this block in Supabase SQL editor if
+-- upgrading an existing database:
+--
+-- ALTER TABLE prospects
+--   ADD COLUMN IF NOT EXISTS rescan_locked_at timestamptz;
+
 -- Seed test prospect
 insert into prospects (slug, brand_name, store_url, prospect_email, prospect_name, niche)
 values ('test-brand', 'Test Brand', 'https://apple.com', 'wearekliks@gmail.com', 'Adam', 'Consumer Electronics')
