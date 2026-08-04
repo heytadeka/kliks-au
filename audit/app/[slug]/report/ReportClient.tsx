@@ -16,6 +16,15 @@ const S = {
 
 const MONO = "'Space Mono', ui-monospace, monospace"
 
+// Shared revenue-model assumptions. Every dollar-impact calculation on this
+// page (revCalc's three initiatives, and the "What this costs you" box) must
+// use these same two constants - traffic alone isn't revenue, it becomes
+// revenue via a conversion rate and an average order value. Defined once so
+// the two can't silently diverge into two different formulas for what's
+// meant to be the same underlying model, which is what happened before.
+const ASSUMED_CONVERSION_RATE = 0.015
+const ASSUMED_AOV = 150
+
 function MetricCard({ label, value, unit, status, description, target, benchmark }: { label: string; value: string | number; unit?: string; status: 'good' | 'needs-work' | 'poor' | 'neutral'; description?: string; target?: string; benchmark?: string }) {
   const colours = { good: '#22c55e', 'needs-work': '#f97316', poor: '#ef4444', neutral: S.purple }
   const c = colours[status]
@@ -177,21 +186,25 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
       const lcpS = ps.lcp / 1000
       if (lcpS > 2.5) {
         const traffic = dfsOverview?.metrics?.organic?.etv ?? 500
-        const mobile = (lcpS - 2.5) * 0.07 * (traffic * 150 * 12)
+        // traffic -> revenue via conversion rate and AOV, same shape as the
+        // "What this costs you" box - $150 is per order, not per visitor.
+        const mobile = (lcpS - 2.5) * 0.07 * (traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12)
         results.push({ initiative: 'Mobile Performance', confidence: lcpS > 4 ? 'High' : 'Medium', impact: mobile, note: null })
       }
     }
     if (cro?.summary) {
       const failedHigh = cro.summary.critical_issues ?? 0
       const traffic = dfsOverview?.metrics?.organic?.etv ?? 500
-      const croImpact = failedHigh * 0.03 * (traffic * 150 * 12)
+      const croImpact = failedHigh * 0.03 * (traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12)
       if (croImpact > 0) {
         results.push({ initiative: 'CRO Improvements', confidence: failedHigh > 2 ? 'High' : 'Medium', impact: croImpact, note: null })
       }
     }
     if (dfsGaps?.length > 0) {
       const topGapsVol = dfsGaps.slice(0, 3).reduce((sum: number, g: any) => sum + (g.keyword_data?.keyword_info?.search_volume ?? 0), 0)
-      const seoImpact = topGapsVol * 0.02 * 150 * 12
+      // topGapsVol is a visitor-like quantity (search volume) here, same role
+      // "traffic" plays above - same conversion-rate/AOV shape applies.
+      const seoImpact = topGapsVol * 0.02 * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12
       results.push({ initiative: 'SEO Content Gap', confidence: 'Medium', impact: seoImpact, note: null })
     }
 
@@ -655,10 +668,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 {ps.lcp && ps.lcp / 1000 > 2.5 && (() => {
                   const lcpS = ps.lcp / 1000
                   const traffic = dfsOverview?.metrics?.organic?.etv ?? 500
-                  const aov = 150
-                  const cr = 0.015
                   // Each second over 2.5s costs ~7% in conversions
-                  const monthlyRevLoss = Math.round((lcpS - 2.5) * 0.07 * traffic * cr * aov)
+                  const monthlyRevLoss = Math.round((lcpS - 2.5) * 0.07 * traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV)
                   return (
                     <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24 }}>
                       <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>WHAT THIS COSTS YOU</span>
@@ -666,7 +677,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         At <strong>{lcpS.toFixed(2)}s</strong> load time, you&apos;re estimated to be losing{' '}
                         <strong style={{ color: S.orange }}>${monthlyRevLoss.toLocaleString()}/month</strong> in revenue to slow page speed alone.
                       </p>
-                      <p style={{ color: S.muted, fontSize: 13 }}>Based on 7% conversion loss per second over 2.5s, {traffic.toLocaleString()} monthly visitors, 1.5% baseline CR, $150 AOV.</p>
+                      <p style={{ color: S.muted, fontSize: 13 }}>Based on 7% conversion loss per second over 2.5s, {traffic.toLocaleString()} monthly visitors, {(ASSUMED_CONVERSION_RATE * 100).toFixed(1)}% baseline CR, ${ASSUMED_AOV} AOV.</p>
                     </div>
                   )
                 })()}
