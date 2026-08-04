@@ -15,7 +15,14 @@ const READY_MAX_WAIT_MS = 50_000 // leaves headroom inside this route's own 60s 
 // failure, so they're a clean "job finished" signal even when the underlying scan
 // came back empty. dataforseo-core has no equivalent timestamp column; the max-wait
 // fallback below still bounds a genuine permanent failure there.
-async function waitForCommentaryData(prospect_id: string): Promise<void> {
+// Returns whether the data actually became ready. A prospect whose inputs
+// are still incomplete after READY_MAX_WAIT_MS is a slow scan, not a signal
+// to generate commentary from nulls - firing anyway produces exactly the
+// confidently-wrong client-facing text this whole readiness check exists to
+// prevent (a real score landing moments later than a description that says
+// "unavailable"). The caller must not fire generate-commentary when this
+// returns false.
+async function waitForCommentaryData(prospect_id: string): Promise<boolean> {
   const start = Date.now()
   while (Date.now() - start < READY_MAX_WAIT_MS) {
     const { data: cache } = await supabaseAdmin
@@ -26,11 +33,23 @@ async function waitForCommentaryData(prospect_id: string): Promise<void> {
 
     if (cache?.pagespeed_fetched_at && cache?.crawled_at && cache?.dataforseo_overview != null) {
       console.log('[dataforseo-enrichment] data ready after', Date.now() - start, 'ms')
-      return
+      return true
     }
     await new Promise(resolve => setTimeout(resolve, READY_POLL_INTERVAL_MS))
   }
-  console.warn('[dataforseo-enrichment] readiness wait hit', READY_MAX_WAIT_MS, 'ms cap, firing commentary with whatever is available')
+  console.warn('[dataforseo-enrichment] readiness wait hit', READY_MAX_WAIT_MS, 'ms cap without all inputs landing - skipping commentary rather than generating it from incomplete data. Re-run the data scan once the slow job finishes to pick this up.')
+
+  // generate-commentary is what normally clears rescan_locked_at (see its own
+  // try/finally). It's never being called on this path, so release the lock
+  // here instead - otherwise a rescan on this prospect would be blocked for
+  // up to RESCAN_LOCK_TIMEOUT_MS in rescan/route.ts for no reason, since
+  // nothing is actually still running.
+  try {
+    await supabaseAdmin.from('prospects').update({ rescan_locked_at: null }).eq('id', prospect_id)
+  } catch (e: any) {
+    console.error('[dataforseo-enrichment] failed to clear rescan lock after timeout (non-fatal):', e.message)
+  }
+  return false
 }
 
 export async function POST(req: NextRequest) {
@@ -60,15 +79,16 @@ export async function POST(req: NextRequest) {
     'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY!,
   }
   waitUntil(
-    waitForCommentaryData(prospect_id).then(() =>
-      fetch(`${base}/api/audit/generate-commentary`, {
+    waitForCommentaryData(prospect_id).then(ready => {
+      if (!ready) return // inputs never became ready - see waitForCommentaryData, do not fire into nulls
+      return fetch(`${base}/api/audit/generate-commentary`, {
         method: 'POST',
         headers: serviceHeaders,
         body: JSON.stringify({ prospect_id }),
       })
         .then(r => console.log('[dataforseo-enrichment] commentary triggered, status:', r.status))
         .catch((e: any) => console.error('[dataforseo-enrichment] commentary trigger failed:', e.message))
-    )
+    })
   )
 
   return NextResponse.json({ success: true })
