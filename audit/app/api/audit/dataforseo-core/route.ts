@@ -119,7 +119,18 @@ export async function POST(req: NextRequest) {
     .replace(/^www\./, '')
     .replace(/\/$/, '')
 
-  const normalise = (d: string) => d.toLowerCase().replace(/^www\./, '')
+  // Same normalisation as the domain derivation above (protocol, www, trailing
+  // slash), plus stripping any path/query/fragment down to the bare host -
+  // used for every self-exclusion and dedup comparison below. The prior
+  // version only stripped www., so a competitor domain returned by DataForSEO
+  // in a slightly different string shape than store_url's own normalisation
+  // could silently fail the equality check and let the prospect's own domain
+  // through as a "competitor."
+  const normalise = (d: string) => d
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .split(/[/?#]/)[0]
   const normalisedDomain = normalise(domain)
 
   console.log('[dataforseo-core] prospect_id:', prospect_id, 'domain:', domain, 'niche:', niche?.slice(0, 60))
