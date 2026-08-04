@@ -27,7 +27,7 @@ export default async function TodayPage() {
 
   const { data: prospects } = await supabaseAdmin
     .from('prospects')
-    .select('id, slug, brand_name, niche, created_at, audit_content(hook_headline), outreach_log(*)')
+    .select('id, slug, brand_name, niche, created_at, audit_content(hook_headline, ai_opportunity_commentary), outreach_log(*)')
     .order('created_at', { ascending: false })
 
   const rows = (prospects ?? []).map(p => ({
@@ -36,6 +36,9 @@ export default async function TodayPage() {
     brand_name: p.brand_name,
     niche: p.niche,
     hook: getOne(p.audit_content)?.hook_headline ?? null,
+    // Same field EditAuditClient/ReportClient already use to decide
+    // "AI Commentary: Pending" - reused here rather than derived a second way.
+    commentaryPending: !getOne(p.audit_content)?.ai_opportunity_commentary,
     outreach: getOne(p.outreach_log) ?? null,
   }))
 
@@ -51,7 +54,7 @@ export default async function TodayPage() {
   // so "no record yet" in practice means "never actually sent", not "no row".
   const readyToReachOut = rows
     .filter(r => !r.outreach || r.outreach.status === 'audit_created')
-    .map(r => ({ id: r.id, slug: r.slug, brand_name: r.brand_name, niche: r.niche, hook: r.hook, outreachId: r.outreach?.id ?? null }))
+    .map(r => ({ id: r.id, slug: r.slug, brand_name: r.brand_name, niche: r.niche, hook: r.hook, commentaryPending: r.commentaryPending, outreachId: r.outreach?.id ?? null }))
 
   // Section 3: follow-ups due. Same filter as the Phase 1 fix to OutreachClient's
   // overdueRows, applied here to the embedded outreach_log rows.

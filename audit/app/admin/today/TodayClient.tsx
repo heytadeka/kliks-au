@@ -37,6 +37,7 @@ type ReadyItem = {
   brand_name: string
   niche: string | null
   hook: { line1: string; line2: string; subtext?: string } | null
+  commentaryPending: boolean
   outreachId: string | null
 }
 
@@ -90,6 +91,30 @@ export default function TodayClient({ sentToday, readyToReachOut, followUpsDue }
     }
   }
 
+  // Recovery path for a prospect whose commentary never generated (the
+  // readiness-timeout case). Fires commentary directly when the underlying
+  // scan data is already there - fast, no DataForSEO/PageSpeed re-fetch. If
+  // the server finds the data genuinely isn't ready yet, it says so instead
+  // of silently falling back to a full rescan.
+  async function regenerateCommentary(item: ReadyItem) {
+    setBusyId(item.id)
+    try {
+      const res = await fetch('/api/audit/admin/regenerate-commentary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospect_id: item.id }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        alert(data.error ?? 'Could not regenerate commentary.')
+        return
+      }
+      router.refresh()
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: S.bg, color: S.white, fontFamily: 'Satoshi, sans-serif' }}>
       <nav style={{ background: 'rgba(14,13,26,0.95)', borderBottom: `1px solid ${S.border}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
@@ -135,12 +160,23 @@ export default function TodayClient({ sentToday, readyToReachOut, followUpsDue }
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {readyToReachOut.map(item => (
-                <div key={item.id} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 20 }}>
+                <div key={item.id} style={{ background: S.bg2, border: item.commentaryPending ? '1px solid rgba(255,67,21,0.4)' : `1px solid ${S.border}`, borderRadius: 12, padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: 220 }}>
-                      <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600 }}>{item.brand_name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600 }}>{item.brand_name}</div>
+                        {item.commentaryPending && (
+                          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: S.orange, background: 'rgba(255,67,21,0.15)', border: '1px solid rgba(255,67,21,0.35)', borderRadius: 99, padding: '2px 8px' }}>
+                            AI Commentary Pending
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: 13, color: S.muted, marginTop: 2 }}>{item.niche || '-'}</div>
-                      {item.hook ? (
+                      {item.commentaryPending ? (
+                        <div style={{ marginTop: 12, fontSize: 12, color: S.orange, background: 'rgba(255,67,21,0.08)', border: '1px solid rgba(255,67,21,0.2)', borderRadius: 8, padding: '10px 14px' }}>
+                          This audit&apos;s AI commentary never generated. Sending it now would send an incomplete report - regenerate first.
+                        </div>
+                      ) : item.hook ? (
                         <div style={{ marginTop: 12, background: S.bg, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '10px 14px' }}>
                           <div style={{ fontSize: 13, color: S.white, fontWeight: 500 }}>{item.hook.line1}</div>
                           <div style={{ fontSize: 13, color: S.orange, fontWeight: 500 }}>{item.hook.line2}</div>
@@ -152,6 +188,14 @@ export default function TodayClient({ sentToday, readyToReachOut, followUpsDue }
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
                       <a href={`https://kliks.com.au/audit/${item.slug}`} target="_blank" rel="noreferrer" style={{ color: S.orange, fontSize: 13, textDecoration: 'none' }}>View Audit</a>
+                      {item.commentaryPending && (
+                        <button
+                          disabled={busyId === item.id}
+                          onClick={() => regenerateCommentary(item)}
+                          style={{ background: S.orange, border: 'none', color: '#fff', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: busyId === item.id ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: busyId === item.id ? 0.6 : 1 }}>
+                          {busyId === item.id ? 'Regenerating...' : 'Regenerate Commentary'}
+                        </button>
+                      )}
                       <button
                         disabled={busyId === item.id}
                         onClick={() => markSentFromReady(item)}

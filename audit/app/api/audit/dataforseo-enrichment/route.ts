@@ -8,6 +8,26 @@ export const preferredRegion = 'syd1'
 const READY_POLL_INTERVAL_MS = 3_000
 const READY_MAX_WAIT_MS = 50_000 // leaves headroom inside this route's own 60s budget
 
+// Persists the poll's outcome to a column instead of only console.log/warn.
+// Log retention on this project has repeatedly closed before this exact
+// distinction (did it resolve or time out, how long did it take) could be
+// checked, blocking several diagnoses this session - this makes it a normal
+// query instead of a race against log rotation.
+async function recordReadinessOutcome(prospect_id: string, status: 'ready' | 'timeout', elapsedMs: number): Promise<void> {
+  try {
+    await supabaseAdmin
+      .from('audit_data_cache')
+      .update({
+        commentary_readiness_status: status,
+        commentary_readiness_ms: elapsedMs,
+        commentary_readiness_at: new Date().toISOString(),
+      })
+      .eq('prospect_id', prospect_id)
+  } catch (e: any) {
+    console.error('[dataforseo-enrichment] failed to record readiness outcome (non-fatal):', e.message)
+  }
+}
+
 // Commentary reads pagespeed_mobile/desktop, cro_checklist, and the dataforseo_*
 // fields dataforseo-core writes together in one upsert - so dataforseo_overview
 // alone is a reliable proxy for that whole write having landed. pagespeed_fetched_at
@@ -32,12 +52,16 @@ async function waitForCommentaryData(prospect_id: string): Promise<boolean> {
       .single()
 
     if (cache?.pagespeed_fetched_at && cache?.crawled_at && cache?.dataforseo_overview != null) {
-      console.log('[dataforseo-enrichment] data ready after', Date.now() - start, 'ms')
+      const elapsedMs = Date.now() - start
+      console.log('[dataforseo-enrichment] data ready after', elapsedMs, 'ms')
+      await recordReadinessOutcome(prospect_id, 'ready', elapsedMs)
       return true
     }
     await new Promise(resolve => setTimeout(resolve, READY_POLL_INTERVAL_MS))
   }
+  const elapsedMs = Date.now() - start
   console.warn('[dataforseo-enrichment] readiness wait hit', READY_MAX_WAIT_MS, 'ms cap without all inputs landing - skipping commentary rather than generating it from incomplete data. Re-run the data scan once the slow job finishes to pick this up.')
+  await recordReadinessOutcome(prospect_id, 'timeout', elapsedMs)
 
   // generate-commentary is what normally clears rescan_locked_at (see its own
   // try/finally). It's never being called on this path, so release the lock

@@ -80,6 +80,17 @@ create table if not exists admin_users (
 -- ALTER TABLE prospects
 --   ADD COLUMN IF NOT EXISTS rescan_locked_at timestamptz;
 
+-- Persisted commentary-readiness outcome (added so whether
+-- dataforseo-enrichment's readiness poll resolved ready or hit its timeout
+-- cap is a queryable fact instead of only a console.log/warn line that log
+-- retention has repeatedly rotated out before it could be checked). Run
+-- this block in Supabase SQL editor if upgrading an existing database:
+--
+-- ALTER TABLE audit_data_cache
+--   ADD COLUMN IF NOT EXISTS commentary_readiness_status text,
+--   ADD COLUMN IF NOT EXISTS commentary_readiness_ms integer,
+--   ADD COLUMN IF NOT EXISTS commentary_readiness_at timestamptz;
+
 -- Seed test prospect
 insert into prospects (slug, brand_name, store_url, prospect_email, prospect_name, niche)
 values ('test-brand', 'Test Brand', 'https://apple.com', 'wearekliks@gmail.com', 'Adam', 'Consumer Electronics')
