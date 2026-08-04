@@ -658,9 +658,11 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
             {ps ? (
               <>
-                {topCompDomain && lcpDisplayValue && (
+                {topCompDomain && lcpDisplayValue && ps.lcp && (
                   <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
-                    {topCompDomain} is one of your top competitors in organic search. Your mobile load time is {lcpDisplayValue} - industry leaders load in under 2.5s.
+                    {topCompDomain} is one of your top competitors in organic search. Your mobile load time is {lcpDisplayValue}
+                    {' - '}
+                    {ps.lcp / 1000 > 2.5 ? 'industry leaders load in under 2.5s.' : 'already faster than the 2.5s industry benchmark.'}
                   </p>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
@@ -1208,38 +1210,54 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   ) : null
                 })()}
 
-                {dfsCompetitors.length > 0 && (
-                  <div style={{ marginBottom: 40 }}>
-                    <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Top Competitors</h3>
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                        <thead>
-                          <tr style={{ background: S.bg }}>
-                            {['Domain', 'Est. Traffic', 'Avg Position', 'Visibility', 'KW Overlap'].map(h => (
-                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }}>{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dfsCompetitors.slice(0, 5).map((comp: any, i: number) => {
-                            const etv = comp.estimated_traffic ?? comp.full_domain_metrics?.organic?.etv ?? 0
-                            const avgPos = comp.avg_position != null ? `#${comp.avg_position.toFixed(1)}` : '-'
-                            const vis = comp.visibility != null ? comp.visibility.toFixed(1) : '-'
-                            return (
-                              <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
-                                <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
-                                <td style={{ padding: '10px 14px', color: S.muted }}>{etv > 0 ? fmtNum(etv) : '-'}</td>
-                                <td style={{ padding: '10px 14px', color: S.muted }}>{avgPos}</td>
-                                <td style={{ padding: '10px 14px', color: S.muted }}>{vis}</td>
-                                <td style={{ padding: '10px 14px', color: S.muted }}>{comp.intersections?.toLocaleString() ?? '-'}</td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
+                {dfsCompetitors.length > 0 && (() => {
+                  const topFive = dfsCompetitors.slice(0, 5)
+                  // avg_position/visibility/intersections only ever get set for
+                  // competitors sourced via the primary SERP-competitors path -
+                  // the niche-search fallback (used when that path finds fewer
+                  // than 3 clean competitors) never populates them. Rather than
+                  // an extra API call just to backfill three columns, hide each
+                  // one specifically when none of the displayed rows have it,
+                  // instead of showing a column of nothing but dashes.
+                  const hasAvgPosition = topFive.some((c: any) => c.avg_position != null)
+                  const hasVisibility = topFive.some((c: any) => c.visibility != null)
+                  const hasIntersections = topFive.some((c: any) => c.intersections != null)
+                  const thStyle = { padding: '10px 14px', textAlign: 'left' as const, color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }
+                  return (
+                    <div style={{ marginBottom: 40 }}>
+                      <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Top Competitors</h3>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                          <thead>
+                            <tr style={{ background: S.bg }}>
+                              <th style={thStyle}>Domain</th>
+                              <th style={thStyle}>Est. Traffic</th>
+                              {hasAvgPosition && <th style={thStyle}>Avg Position</th>}
+                              {hasVisibility && <th style={thStyle}>Visibility</th>}
+                              {hasIntersections && <th style={thStyle}>KW Overlap</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {topFive.map((comp: any, i: number) => {
+                              const etv = comp.estimated_traffic ?? comp.full_domain_metrics?.organic?.etv ?? 0
+                              const avgPos = comp.avg_position != null ? `#${comp.avg_position.toFixed(1)}` : '-'
+                              const vis = comp.visibility != null ? comp.visibility.toFixed(1) : '-'
+                              return (
+                                <tr key={i} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                                  <td style={{ padding: '10px 14px', color: S.white }}>{comp.domain}</td>
+                                  <td style={{ padding: '10px 14px', color: S.muted }}>{etv > 0 ? fmtNum(etv) : '-'}</td>
+                                  {hasAvgPosition && <td style={{ padding: '10px 14px', color: S.muted }}>{avgPos}</td>}
+                                  {hasVisibility && <td style={{ padding: '10px 14px', color: S.muted }}>{vis}</td>}
+                                  {hasIntersections && <td style={{ padding: '10px 14px', color: S.muted }}>{comp.intersections?.toLocaleString() ?? '-'}</td>}
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {kwBuckets.money.length > 0 && (
                   <div style={{ marginBottom: 40 }}>

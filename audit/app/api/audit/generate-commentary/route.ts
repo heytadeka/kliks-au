@@ -149,8 +149,8 @@ Passed: ${passedChecks.slice(0, 8).join(', ')}${passedChecks.length > 8 ? '...' 
 
 SEO DATA:
 Organic Keywords: ${organicKeywords.toLocaleString()} (benchmark: 200+ for stores this size)
-Est Monthly Traffic: ${monthlyTraffic.toLocaleString()}
-Est Traffic Value: $${Math.round(monthlyTraffic * 1.2).toLocaleString()}
+Est Monthly Traffic (a VISITOR COUNT - never write a $ before this number): ${monthlyTraffic.toLocaleString()} visitors/month
+Est Traffic Value (a DOLLAR figure - what that traffic would cost to buy via paid ads): $${Math.round(monthlyTraffic * 1.2).toLocaleString()}
 Top Competitors: ${competitorDomains}
 Top Competitor Traffic Gap: ${topCompetitorDomain ? `${topCompetitorDomain} gets ~${topCompetitorTrafficRaw.toLocaleString()} visits/mo, gap of ${trafficGap.toLocaleString()}` : 'N/A'}
 Content Gap Opportunities: ${topGapKeywords}
@@ -226,6 +226,7 @@ Rules for seo_findings:
 - Be specific: reference actual numbers from the data
 - Severity: CRITICAL for traffic declining or major visibility gap, OPPORTUNITY for untapped keywords or quick wins, WARNING for things at risk or below benchmark
 - IMPORTANT: Never title a finding "Zero Organic Visibility" or similar if organicKeywords > 0. If the store ranks for any keywords, frame the finding around the gap vs benchmark instead - for example "Below Average Keyword Footprint" or "Limited Search Visibility". Only use zero-based language if organicKeywords is literally 0.
+- IMPORTANT: Est Monthly Traffic is a count of visitors, not money. Never write a dollar sign in front of it (e.g. never "$0 monthly traffic" or "$1,200 monthly visitors"). Only Est Traffic Value is a dollar amount.
 
 Respond with only valid JSON. No markdown. No explanation.`
 
