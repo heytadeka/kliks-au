@@ -182,22 +182,30 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   // Revenue calculations
   const revCalc = useMemo(() => {
     const results: any[] = []
-    if (ps?.lcp) {
-      const lcpS = ps.lcp / 1000
-      if (lcpS > 2.5) {
-        const traffic = dfsOverview?.metrics?.organic?.etv ?? 500
-        // traffic -> revenue via conversion rate and AOV, same shape as the
-        // "What this costs you" box - $150 is per order, not per visitor.
-        const mobile = (lcpS - 2.5) * 0.07 * (traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12)
-        results.push({ initiative: 'Mobile Performance', confidence: lcpS > 4 ? 'High' : 'Medium', impact: mobile, note: null })
+    // Mobile Performance and CRO Improvements both scale their impact by
+    // traffic. Without dfsOverview there's no real signal to derive traffic
+    // from at all (not even resolveOrganicStats's keyword-volume fallback,
+    // which still needs dfsOverview to know whether etv was genuinely 0 or
+    // simply absent) - so both are skipped entirely rather than falling back
+    // to an invented visitor count. A genuine 0 once dfsOverview exists is
+    // real data and still flows through normally.
+    if (dfsOverview != null) {
+      const traffic = resolveOrganicStats(dfsOverview, dfsKeywords).monthlyTraffic
+      if (ps?.lcp) {
+        const lcpS = ps.lcp / 1000
+        if (lcpS > 2.5) {
+          // traffic -> revenue via conversion rate and AOV, same shape as the
+          // "What this costs you" box - $150 is per order, not per visitor.
+          const mobile = (lcpS - 2.5) * 0.07 * (traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12)
+          results.push({ initiative: 'Mobile Performance', confidence: lcpS > 4 ? 'High' : 'Medium', impact: mobile, note: null })
+        }
       }
-    }
-    if (cro?.summary) {
-      const failedHigh = cro.summary.critical_issues ?? 0
-      const traffic = dfsOverview?.metrics?.organic?.etv ?? 500
-      const croImpact = failedHigh * 0.03 * (traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12)
-      if (croImpact > 0) {
-        results.push({ initiative: 'CRO Improvements', confidence: failedHigh > 2 ? 'High' : 'Medium', impact: croImpact, note: null })
+      if (cro?.summary) {
+        const failedHigh = cro.summary.critical_issues ?? 0
+        const croImpact = failedHigh * 0.03 * (traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12)
+        if (croImpact > 0) {
+          results.push({ initiative: 'CRO Improvements', confidence: failedHigh > 2 ? 'High' : 'Medium', impact: croImpact, note: null })
+        }
       }
     }
     if (dfsGaps?.length > 0) {
@@ -210,7 +218,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
     return results
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ps, cro, dfsOverview, dfsGaps])
+  }, [ps, cro, dfsOverview, dfsGaps, dfsKeywords])
 
   const totalRevImpact = revCalc.filter(r => r.impact).reduce((sum: number, r: any) => sum + r.impact, 0)
 
@@ -665,9 +673,9 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 </div>
 
 
-                {ps.lcp && ps.lcp / 1000 > 2.5 && (() => {
+                {ps.lcp && ps.lcp / 1000 > 2.5 && dfsOverview != null && (() => {
                   const lcpS = ps.lcp / 1000
-                  const traffic = dfsOverview?.metrics?.organic?.etv ?? 500
+                  const traffic = resolveOrganicStats(dfsOverview, dfsKeywords).monthlyTraffic
                   // Each second over 2.5s costs ~7% in conversions
                   const monthlyRevLoss = Math.round((lcpS - 2.5) * 0.07 * traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV)
                   return (
