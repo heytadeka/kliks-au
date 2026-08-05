@@ -717,14 +717,9 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                 <span className="kicker"><span className="dot" />Turning Visits Into Orders</span>
               </div>
               <h2 className="sec-title">What makes a visitor<br />actually check out.</h2>
-              {topCompDomain && (
-                <p className="sec-lead">You are already doing a lot right. The gaps below are the difference between someone browsing and someone buying.{' '}
-                  <span style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.85em' }}>Stores like {topCompDomain} typically pass 17–18 of these checks.</span>
-                </p>
-              )}
-              {!topCompDomain && (
-                <p className="sec-lead">You are already doing a lot right. The gaps below are the difference between someone browsing and someone buying.</p>
-              )}
+              <p className="sec-lead">You are already doing a lot right. The gaps below are the difference between someone browsing and someone buying.{' '}
+                <span style={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.85em' }}>Well-optimised ecommerce stores typically pass 17–18 of these checks.</span>
+              </p>
             </div>
 
             {cro?.results ? (
@@ -963,7 +958,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               <>
                 {topCompDomain && topCompTraffic > 0 && (
                   <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.38)', margin: '0 0 24px 0', fontStyle: 'italic' }}>
-                    {topCompDomain} receives an estimated {Math.round(topCompTraffic).toLocaleString()} monthly visitors from organic search. Closing even 20% of that gap is worth targeting.
+                    {topCompDomain} receives an estimated {Math.round(topCompTraffic).toLocaleString()} monthly visitors from organic search. Even a fraction of that gap is real customers you are not reaching yet.
                   </p>
                 )}
                 {(() => {
