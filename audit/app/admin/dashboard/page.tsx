@@ -9,21 +9,39 @@ export default async function AdminDashboardPage() {
 
   const { data: prospects } = await supabaseAdmin
     .from('prospects')
-    .select('*, audit_data_cache(cro_checklist, crawled_at)')
+    .select('*')
     .order('created_at', { ascending: false })
 
-  // audit_data_cache.prospect_id is a UNIQUE FK (1:1 with prospects), but the
-  // Supabase embed can come back as either a single object or a one-item array
-  // depending on how PostgREST resolves the relationship. Normalise so callers
-  // don't have to guess the shape.
-  const getCache = (p: any) => Array.isArray(p.audit_data_cache) ? p.audit_data_cache[0] : p.audit_data_cache
+  const prospectIds = (prospects ?? []).map(p => p.id)
+
+  // Direct query rather than embedding audit_data_cache through prospects.
+  // This is the same pattern that produced a false-positive Pending badge on
+  // Today (see lib/commentary-status.ts), and this file is where the
+  // original "Crawls Complete: 0" bug lived - patched at the time with a
+  // shape-normalising getCache() helper rather than a query change. Today
+  // proved shape-handling alone doesn't reliably fix this, so match the
+  // pattern already proven correct on Today, the report page, and
+  // EditAuditClient: fetch separately via .in(prospect_id), join in JS.
+  const { data: cacheRows } = await supabaseAdmin
+    .from('audit_data_cache')
+    .select('prospect_id, cro_checklist, crawled_at')
+    .in('prospect_id', prospectIds)
+
+  const cacheByProspect = new Map((cacheRows ?? []).map(c => [c.prospect_id, c]))
+
+  // Attach the resolved cache back onto each prospect as a plain object (or
+  // null) so AdminDashboardClient never has to guess at an embed's shape.
+  const prospectsWithCache = (prospects ?? []).map(p => ({
+    ...p,
+    audit_data_cache: cacheByProspect.get(p.id) ?? null,
+  }))
 
   const stats = {
-    total: prospects?.length ?? 0,
-    viewedThisWeek: prospects?.filter(p => p.last_accessed_at && new Date(p.last_accessed_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length ?? 0,
-    totalViews: prospects?.reduce((sum, p) => sum + (p.access_count ?? 0), 0) ?? 0,
-    crawlComplete: prospects?.filter(p => getCache(p)?.cro_checklist?.summary).length ?? 0,
+    total: prospectsWithCache.length,
+    viewedThisWeek: prospectsWithCache.filter(p => p.last_accessed_at && new Date(p.last_accessed_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length,
+    totalViews: prospectsWithCache.reduce((sum, p) => sum + (p.access_count ?? 0), 0),
+    crawlComplete: prospectsWithCache.filter(p => p.audit_data_cache?.cro_checklist?.summary).length,
   }
 
-  return <AdminDashboardClient prospects={prospects ?? []} stats={stats} />
+  return <AdminDashboardClient prospects={prospectsWithCache} stats={stats} />
 }
