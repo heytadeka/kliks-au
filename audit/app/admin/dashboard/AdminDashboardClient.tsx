@@ -106,7 +106,7 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                 const croStatus = !getCache(p)?.crawled_at
                   ? <span style={{ color: S.muted }}>Pending</span>
                   : croData?.error
-                    ? <span style={{ color: '#ef4444' }}>Failed</span>
+                    ? <span style={{ color: '#ef4444' }} title={croData.message ?? ''}>Failed{croData.message ? ` — ${croData.message}` : ''}</span>
                     : croData?.summary
                       ? <span style={{ color: '#22c55e' }}>{croData.summary.passed}/20</span>
                       : <span style={{ color: S.orange }}>Scanning...</span>
@@ -142,7 +142,11 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {filtered.map(p => {
             const croData = getCache(p)?.cro_checklist
-            const croLabel = !getCache(p)?.crawled_at ? 'Pending' : croData?.error ? 'Failed' : croData?.summary ? `${croData.summary.passed}/20` : 'Scanning...'
+            const croLabel = !getCache(p)?.crawled_at
+              ? 'Pending'
+              : croData?.error
+                ? `Failed${croData.message ? ` — ${croData.message}` : ''}`
+                : croData?.summary ? `${croData.summary.passed}/20` : 'Scanning...'
             return (
               <div key={p.id} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>

@@ -28,7 +28,7 @@ const labelStyle: React.CSSProperties = {
 }
 
 
-export default function EditAuditClient({ prospect, content }: { prospect: any; content: any }) {
+export default function EditAuditClient({ prospect, content, cache }: { prospect: any; content: any; cache: any }) {
   const router = useRouter()
   const [form, setForm] = useState({
     brand_name: prospect.brand_name ?? '',
@@ -166,6 +166,15 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
         ) : (
           <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
             <p style={{ color: S.orange, fontSize: 13, fontWeight: 600 }}>AI commentary not yet generated, or incomplete. Run a data scan to generate.</p>
+          </div>
+        )}
+
+        {/* CRO crawl status - surfaces the real failure reason instead of leaving it in the DB only */}
+        {cache?.cro_checklist?.error && (
+          <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
+            <p style={{ color: '#ef4444', fontSize: 13, fontWeight: 600 }}>
+              CRO scan failed: {cache.cro_checklist.message ?? 'Unknown error'}
+            </p>
           </div>
         )}
 

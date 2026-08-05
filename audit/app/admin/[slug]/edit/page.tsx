@@ -21,5 +21,11 @@ export default async function EditAuditPage({ params }: { params: { slug: string
     .eq('prospect_id', prospect.id)
     .single()
 
-  return <EditAuditClient prospect={prospect} content={content} />
+  const { data: cache } = await supabaseAdmin
+    .from('audit_data_cache')
+    .select('cro_checklist')
+    .eq('prospect_id', prospect.id)
+    .single()
+
+  return <EditAuditClient prospect={prospect} content={content} cache={cache} />
 }
