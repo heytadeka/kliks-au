@@ -270,7 +270,11 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     const pad = (x: number) => String(x).padStart(2, '0')
     map.scores = pad(n++)
     map.performance = pad(n++)
-    map.cro = pad(n++)
+    // Failed crawls hide the CRO section entirely (see below) rather than
+    // showing the prospect a message about our own tooling failing against
+    // their site - so a failed crawl must also skip its section number,
+    // same as any other conditionally-rendered section.
+    if (!cro?.error) map.cro = pad(n++)
     if (gmbData) map.gmb = pad(n++)
     map.ads = pad(n++)
     if (content?.section_strategy_headline || content?.section_strategy_body) map.strategy = pad(n++)
@@ -282,7 +286,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     map.appendix = pad(n++)
     return map
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gmbData, content?.section_strategy_headline, content?.section_strategy_body, content?.section_seo_headline, content?.ai_opportunity_commentary, content?.section_opportunity_headline, revCalc.length])
+  }, [cro?.error, gmbData, content?.section_strategy_headline, content?.section_strategy_body, content?.section_seo_headline, content?.ai_opportunity_commentary, content?.section_opportunity_headline, revCalc.length])
 
   // ── Score ring animation ──
   const [scoresRevealed, setScoresRevealed] = useState(false)
@@ -696,8 +700,16 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
         <div className="divider" />
 
-        {/* ── CRO ── */}
-        <section className="section-pad bg2-section" id="cro">
+        {/* ── CRO ──
+            Hidden entirely when the crawl failed (cro?.error), rather than
+            telling the prospect our own tooling couldn't get past their
+            site - same principle as the Group 1 fallback work: no output
+            beats output that undermines the report. The "in progress" state
+            (no results yet, no error) still shows its own shell below;
+            only a confirmed failure skips the section. */}
+        {!cro?.error && (
+          <>
+          <section className="section-pad bg2-section" id="cro">
           <div className="wrap">
             <div className="sec-head">
               <div className="eyebrow-row">
@@ -761,13 +773,15 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               </>
             ) : (
               <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 32, textAlign: 'center' }}>
-                <p style={{ color: S.muted }}>{cro?.error ? 'Automated CRO scan could not complete for this store. Manual review recommended.' : 'CRO scan in progress...'}</p>
+                <p style={{ color: S.muted }}>CRO scan in progress...</p>
               </div>
             )}
           </div>
-        </section>
+          </section>
 
-        <div className="divider" />
+          <div className="divider" />
+          </>
+        )}
 
         {/* ── GMB ── */}
         {gmbData && (
