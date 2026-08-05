@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { isCommentaryPending } from '@/lib/commentary-status'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', orangeDark: '#c42f08', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)', purple: '#644bff' }
 
@@ -158,14 +159,13 @@ export default function EditAuditClient({ prospect, content }: { prospect: any; 
         <p style={{ color: S.muted, fontSize: 13, marginBottom: 40 }}>/{prospect.slug} &middot; {prospect.access_count ?? 0} views &middot; {prospect.is_active ? 'Active' : 'Inactive'}</p>
 
         {/* AI commentary status */}
-        {content?.ai_opportunity_commentary && (
+        {!isCommentaryPending(content) ? (
           <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
             <p style={{ color: '#22c55e', fontSize: 13, fontWeight: 600 }}>AI commentary is live. Run a data scan to regenerate.</p>
           </div>
-        )}
-        {!content?.ai_opportunity_commentary && (
+        ) : (
           <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
-            <p style={{ color: S.orange, fontSize: 13, fontWeight: 600 }}>AI commentary not yet generated. Run a data scan to generate.</p>
+            <p style={{ color: S.orange, fontSize: 13, fontWeight: 600 }}>AI commentary not yet generated, or incomplete. Run a data scan to generate.</p>
           </div>
         )}
 

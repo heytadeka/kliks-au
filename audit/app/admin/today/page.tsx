@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase'
+import { isCommentaryPending } from '@/lib/commentary-status'
 import TodayClient from './TodayClient'
 
 const CLOSED = ['won', 'lost', 'not_a_fit']
@@ -27,7 +28,7 @@ export default async function TodayPage() {
 
   const { data: prospects } = await supabaseAdmin
     .from('prospects')
-    .select('id, slug, brand_name, niche, created_at, audit_content(hook_headline, ai_opportunity_commentary), outreach_log(*)')
+    .select('id, slug, brand_name, niche, created_at, audit_content(hook_headline, ai_opportunity_commentary, score_descriptions, ai_closing_commentary), outreach_log(*)')
     .order('created_at', { ascending: false })
 
   const rows = (prospects ?? []).map(p => ({
@@ -36,9 +37,9 @@ export default async function TodayPage() {
     brand_name: p.brand_name,
     niche: p.niche,
     hook: getOne(p.audit_content)?.hook_headline ?? null,
-    // Same field EditAuditClient/ReportClient already use to decide
-    // "AI Commentary: Pending" - reused here rather than derived a second way.
-    commentaryPending: !getOne(p.audit_content)?.ai_opportunity_commentary,
+    // Shared with EditAuditClient/ReportClient via isCommentaryPending()
+    // rather than each deriving "is this audit done" a different way.
+    commentaryPending: isCommentaryPending(getOne(p.audit_content)),
     outreach: getOne(p.outreach_log) ?? null,
   }))
 

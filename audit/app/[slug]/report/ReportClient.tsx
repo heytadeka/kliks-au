@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { resolveOrganicStats } from '@/lib/organic-stats'
+import { isCommentaryPending } from '@/lib/commentary-status'
 
 const S = {
   bg: '#0e0d1a',
@@ -47,15 +48,6 @@ const SCORE_COLORS: Record<string, { c: string; soft: string; line: string }> = 
   'needs-work': { c: '#f5a623', soft: 'rgba(245,166,35,0.13)',  line: 'rgba(245,166,35,0.35)' },
   poor:         { c: '#ff4315', soft: 'rgba(255,67,21,0.13)',   line: 'rgba(255,67,21,0.35)'  },
   neutral:      { c: '#644bff', soft: 'rgba(100,75,255,0.13)',  line: 'rgba(100,75,255,0.35)' },
-}
-
-const SCORE_DESC_FALLBACKS: Record<string, string> = {
-  mobile:        'Slow on phones, where most shoppers browse and buy.',
-  desktop:       'Desktop loads quickly but most of your traffic is mobile.',
-  seo:           'You show up in search, but not yet where the buyers are.',
-  accessibility: 'Readable for most visitors, with some quick wins available.',
-  cro:           "Visitors aren't converting at the rate they could.",
-  overall:       'A good business held back by an underperforming store.',
 }
 
 function ScoreRing({ label, pct, centerText, unitText, status, benchmark, desc, revealed }: {
@@ -563,7 +555,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               {hookHeadline?.subtext ? (
                 <p className="hero-sub">{hookHeadline.subtext}</p>
               ) : (
-                <p className="hero-sub">We ran {headerDomain} through every signal Google and real shoppers use to judge a store. Here is what is costing you orders, and what it is worth to fix.</p>
+                <p className="hero-sub">This audit runs your store through every signal Google and real shoppers use to judge one. Here is what is costing you orders, and what it is worth to fix.</p>
               )}
             </div>
 
@@ -606,29 +598,29 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             {(() => {
               const val = ps?.performance_score != null ? Math.round(ps.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <ScoreRing key="mob" label="Mobile Performance" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.mobile ?? SCORE_DESC_FALLBACKS.mobile} revealed={scoresRevealed} />
+              return <ScoreRing key="mob" label="Mobile Performance" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.mobile} revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = psDesktop?.performance_score != null ? Math.round(psDesktop.performance_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <ScoreRing key="desk" label="Desktop Performance" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.desktop ?? SCORE_DESC_FALLBACKS.desktop} revealed={scoresRevealed} />
+              return <ScoreRing key="desk" label="Desktop Performance" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.desktop} revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = ps?.seo_score != null ? Math.round(ps.seo_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <ScoreRing key="seo" label="SEO Score" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.seo ?? SCORE_DESC_FALLBACKS.seo} revealed={scoresRevealed} />
+              return <ScoreRing key="seo" label="SEO Score" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.seo} revealed={scoresRevealed} />
             })()}
             {(() => {
               const val = ps?.accessibility_score != null ? Math.round(ps.accessibility_score) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = val == null ? 'neutral' : val >= 90 ? 'good' : val >= 50 ? 'needs-work' : 'poor'
-              return <ScoreRing key="a11y" label="Accessibility" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.accessibility ?? SCORE_DESC_FALLBACKS.accessibility} revealed={scoresRevealed} />
+              return <ScoreRing key="a11y" label="Accessibility" pct={val} centerText={val != null ? val : '--'} unitText="/100" status={st} benchmark="Target: 90+" desc={scoreDescs?.accessibility} revealed={scoresRevealed} />
             })()}
             {(() => {
               const passed = cro?.summary?.passed
               const total = cro?.summary?.total ?? 20
               const ringPct = passed != null ? (passed / total * 100) : null
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = passed == null ? 'neutral' : passed >= 16 ? 'good' : passed >= 10 ? 'needs-work' : 'poor'
-              return <ScoreRing key="cro-score" label="CRO Score" pct={ringPct} centerText={passed != null ? passed : '--'} unitText={passed != null ? `/${total}` : undefined} status={st} benchmark="Most stores: 14-16/20" desc={scoreDescs?.cro ?? SCORE_DESC_FALLBACKS.cro} revealed={scoresRevealed} />
+              return <ScoreRing key="cro-score" label="CRO Score" pct={ringPct} centerText={passed != null ? passed : '--'} unitText={passed != null ? `/${total}` : undefined} status={st} benchmark="Most stores: 14-16/20" desc={scoreDescs?.cro} revealed={scoresRevealed} />
             })()}
             {(() => {
               const total = cro?.summary?.total ?? 20
@@ -636,7 +628,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               const ringPct = passed != null ? (passed / total * 100) : null
               const grade = ringPct == null ? '--' : ringPct > 85 ? 'A' : ringPct > 70 ? 'B' : ringPct > 55 ? 'C' : 'D'
               const st: 'good' | 'needs-work' | 'poor' | 'neutral' = grade === 'A' ? 'good' : grade === 'B' ? 'needs-work' : grade === 'C' || grade === 'D' ? 'poor' : 'neutral'
-              return <ScoreRing key="cro-grade" label="Overall CRO" pct={ringPct} centerText={grade} status={st} benchmark="Target: B or above" desc={scoreDescs?.overall ?? SCORE_DESC_FALLBACKS.overall} revealed={scoresRevealed} />
+              return <ScoreRing key="cro-grade" label="Overall CRO" pct={ringPct} centerText={grade} status={st} benchmark="Target: B or above" desc={scoreDescs?.overall} revealed={scoresRevealed} />
             })()}
           </div>
           </div>
@@ -1548,7 +1540,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     { metric: 'Organic Keywords', status: dfsOverview ? 'Verified' : 'Pending', source: 'DataForSEO Labs API', action: 'None' },
                     { metric: 'Competitor Analysis', status: dfsCompetitors.length > 0 ? 'Verified' : 'Pending', source: 'DataForSEO Labs API', action: 'None' },
                     { metric: 'Content Gap Analysis', status: dfsContentGap.length > 0 ? 'Verified' : 'Pending', source: 'DataForSEO Labs API', action: 'None' },
-                    { metric: 'AI Commentary', status: content?.ai_opportunity_commentary ? 'Verified' : 'Pending', source: 'Claude AI', action: 'None' },
+                    { metric: 'AI Commentary', status: !isCommentaryPending(content) ? 'Verified' : 'Pending', source: 'Claude AI', action: 'None' },
                     { metric: 'Category Keyword Intelligence', status: gads && !gads.error ? 'Verified' : 'Not Connected', source: 'DataForSEO + Google Ads Planner', action: gads?.error ? 'Configure API' : 'None' },
                     { metric: 'Meta Ad Library', status: metaAds && !metaAds.error ? 'Verified' : 'Not Connected', source: 'Meta Ad Library API', action: metaAds?.error ? 'Configure API' : 'None' },
                     { metric: 'Google Analytics 4', status: 'Not Connected', source: 'GA4 API', action: 'Connect data source' },
@@ -1578,9 +1570,11 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="cta-glow-el" />
           <div className="wrap">
             <h2 className="cta-heading">Let&apos;s go<br />get it.</h2>
-            <p className="cta-body">
-              {content?.ai_closing_commentary || content?.section_closing_body || `I put this together because I think ${prospect.brand_name} is leaving real money on the table, and most of it is fixable inside 90 days. If that is worth twenty minutes, I will walk you through exactly where to start.`}
-            </p>
+            {(content?.ai_closing_commentary || content?.section_closing_body) && (
+              <p className="cta-body">
+                {content.ai_closing_commentary || content.section_closing_body}
+              </p>
+            )}
             <a href={prospect.cta_link || '/book'} className="cta-btn-new">
               <span className="arr">↗</span>
               Book your 20-minute call
