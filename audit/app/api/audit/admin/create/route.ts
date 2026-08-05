@@ -39,9 +39,10 @@ export async function POST(req: NextRequest) {
   await supabaseAdmin.from('audit_content').insert({ prospect_id: prospect.id })
   await supabaseAdmin.from('audit_data_cache').insert({ prospect_id: prospect.id })
 
+  const domain = store_url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
+
   // Auto-create outreach_log row (non-fatal)
   try {
-    const domain = store_url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
     await supabaseAdmin.from('outreach_log').insert({
       prospect_id: prospect.id,
       domain,
@@ -53,6 +54,24 @@ export async function POST(req: NextRequest) {
     })
   } catch (e: any) {
     console.error('[create] outreach_log insert failed (non-fatal):', e.message)
+  }
+
+  // If this domain is already tracked in the discovery pipeline, mark it
+  // converted here too. Previously only Pipeline's own "Create Audit &
+  // Generate Email" form did this, as a separate client-side call after
+  // creation - any other path into this endpoint (standalone New Audit,
+  // Outreach's create toggle) silently skipped it. Matches on the same
+  // domain string already computed above for outreach_log. An update
+  // against zero matching rows is a normal no-op, so this is safe to fire
+  // unconditionally rather than checking existence first.
+  try {
+    const { error } = await supabaseAdmin
+      .from('monitored_domains')
+      .update({ audit_created: true, status: 'converted', audit_slug: slug, audit_brand_name: brand_name })
+      .eq('domain', domain)
+    if (error) console.error('[create] monitored_domains mark-converted failed (non-fatal):', error.message)
+  } catch (e: any) {
+    console.error('[create] monitored_domains mark-converted failed (non-fatal):', e.message)
   }
 
   // Phase 2: fire all jobs in background without awaiting - return to browser immediately
