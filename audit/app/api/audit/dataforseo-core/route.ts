@@ -6,20 +6,6 @@ export const preferredRegion = 'syd1'
 
 const DATAFORSEO_BASE = 'https://api.dataforseo.com/v3'
 
-function getLocationCode(location: string | null | undefined): number {
-  if (!location) return 2036 // Default: Australia
-  const l = location.toLowerCase()
-  if (l.includes('sydney') || l.includes('nsw') || l.includes('new south wales')) return 21167
-  if (l.includes('melbourne') || l.includes('vic') || l.includes('victoria')) return 21182
-  if (l.includes('brisbane') || l.includes('qld') || l.includes('queensland')) return 21139
-  if (l.includes('perth') || l.includes('wa') || l.includes('western australia')) return 21188
-  if (l.includes('adelaide') || l.includes('sa') || l.includes('south australia')) return 21136
-  if (l.includes('canberra') || l.includes('act')) return 21124
-  if (l.includes('hobart') || l.includes('tas') || l.includes('tasmania')) return 21172
-  if (l.includes('darwin') || l.includes('nt') || l.includes('northern territory')) return 21128
-  return 2036 // Fallback: Australia
-}
-
 async function dfsPost(path: string, body: any[]) {
   const auth = Buffer.from(`${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`).toString('base64')
   const url = `${DATAFORSEO_BASE}${path}`
@@ -81,12 +67,21 @@ const AU_CITY_MAP = [
   { terms: ['darwin', 'northern territory'], label: 'darwin', code: 21128 },
 ]
 
-function detectNicheLocation(niche: string | null | undefined): { isLocal: boolean; cityTerm: string | null; localCode: number } {
-  if (!niche) return { isLocal: false, cityTerm: null, localCode: 2036 }
-  const n = niche.toLowerCase()
-  for (const city of AU_CITY_MAP) {
-    if (city.terms.some(t => n.includes(t))) {
-      return { isLocal: true, cityTerm: city.label, localCode: city.code }
+// location is the dedicated field for this, so a match there takes priority
+// over scanning the free-text niche - falls back to niche only when location
+// is empty or doesn't match a known AU city. Previously location was read
+// into a locationCode that was computed, logged, and never actually used -
+// every prospect's competitor discovery ran on niche-text detection alone,
+// silently going national whenever niche didn't happen to name a city even
+// if location correctly did.
+function detectLocalTarget(niche: string | null | undefined, location: string | null | undefined): { isLocal: boolean; cityTerm: string | null; localCode: number } {
+  for (const source of [location, niche]) {
+    if (!source) continue
+    const s = source.toLowerCase()
+    for (const city of AU_CITY_MAP) {
+      if (city.terms.some(t => s.includes(t))) {
+        return { isLocal: true, cityTerm: city.label, localCode: city.code }
+      }
     }
   }
   return { isLocal: false, cityTerm: null, localCode: 2036 }
@@ -164,10 +159,8 @@ export async function POST(req: NextRequest) {
     console.error('[dataforseo-core] keywords failed:', (keywordsRes as PromiseRejectedResult).reason?.message)
   }
 
-  // Brand name + location
+  // Brand name
   const brandNameRaw: string = brandNameRaw_db ?? domain
-  const locationCode = getLocationCode(location ?? null)
-  console.log('[dataforseo-core] location:', location ?? 'none', '→ code:', locationCode)
   const brandNameClean = brandNameRaw
     .toLowerCase()
     .replace(/\.com\.au$/, '')
@@ -176,9 +169,9 @@ export async function POST(req: NextRequest) {
     .trim()
   console.log('[dataforseo-core] brand name for filtering:', brandNameClean)
 
-  // ── Local niche detection ──
-  const { isLocal, cityTerm, localCode } = detectNicheLocation(niche)
-  console.log('[dataforseo-core] location focus:', isLocal ? `local (${cityTerm})` : 'national')
+  // ── Local target detection (location field, falling back to niche text) ──
+  const { isLocal, cityTerm, localCode } = detectLocalTarget(niche, location)
+  console.log('[dataforseo-core] location focus:', isLocal ? `local (${cityTerm})` : 'national', '- niche:', niche?.slice(0, 40) ?? 'none', '- location:', location ?? 'none')
 
   // ── SERP Competitors (primary competitor discovery) ──
   // When local, city-containing keywords go first so SERP competitors are geographically biased
