@@ -155,6 +155,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const seoFindings = content?.seo_findings as any[] | null
   const gmbData = cache?.gmb_data as any
+  const gmbReviews = cache?.gmb_reviews as any[] | null
+  const gmbReviewsStatus = cache?.gmb_reviews_status as string | null
+  const gmbQa = cache?.gmb_qa as any[] | null
+  const gmbUpdates = cache?.gmb_updates as any[] | null
   const backlinksSummary = cache?.backlinks_summary
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
@@ -791,6 +795,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
               </div>
 
               {gmbData.found ? (
+                <>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                   {/* Left, profile stats */}
                   <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
@@ -850,6 +855,98 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     )}
                   </div>
                 </div>
+
+                {/* Reviews */}
+                {gmbReviewsStatus === 'ready' && gmbReviews && gmbReviews.length > 0 && (() => {
+                  const topReviews = [...gmbReviews]
+                    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                    .slice(0, 3)
+                  return (
+                    <div style={{ marginTop: 24 }}>
+                      <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 4, color: S.white }}>Recent reviews</h3>
+                      <p style={{ color: S.muted, fontSize: 14, marginBottom: 16 }}>
+                        {/* Average + total reuse gmbData's own rating/review_count (Google's aggregate
+                            stat from the my_business_info lookup) rather than gmb_reviews.length, which
+                            is capped at fetch depth (100) and isn't the business's true review total. */}
+                        {gmbData.rating != null ? gmbData.rating.toFixed(1) : '-'} average
+                        {gmbData.review_count != null ? ` from ${gmbData.review_count.toLocaleString()} reviews` : ''}
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                        {topReviews.map((r: any, i: number) => (
+                          <div key={i} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 20 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                              <span style={{ color: S.white, fontWeight: 600, fontSize: 14 }}>{r.profile_name ?? 'Google user'}</span>
+                              <span style={{ fontSize: 13, letterSpacing: 1, flexShrink: 0 }}>
+                                {Array.from({ length: 5 }, (_, si) => (
+                                  <span key={si} style={{ color: S.orange }}>{si < Math.round(r.rating?.value ?? 0) ? '★' : '☆'}</span>
+                                ))}
+                              </span>
+                            </div>
+                            {r.review_text && (
+                              <p style={{
+                                color: S.muted, fontSize: 13, lineHeight: 1.6, margin: '0 0 10px',
+                                display: '-webkit-box', WebkitBoxOrient: 'vertical' as const, WebkitLineClamp: 3, overflow: 'hidden',
+                              }}>
+                                {r.review_text}
+                              </p>
+                            )}
+                            <span style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{r.time_ago}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Q&A */}
+                {(() => {
+                  const answered = (gmbQa ?? [])
+                    .filter((q: any) => Array.isArray(q.items) && q.items.length > 0)
+                    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                    .slice(0, 5)
+                  if (answered.length === 0) return null
+                  return (
+                    <div style={{ marginTop: 24 }}>
+                      <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 16, color: S.white }}>Common questions</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {answered.map((q: any, i: number) => (
+                          <div key={i} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: '16px 20px' }}>
+                            <p style={{ color: S.white, fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{q.question_text}</p>
+                            <p style={{ color: S.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{q.items[0]?.answer_text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* GBP updates */}
+                {gmbUpdates && gmbUpdates.length > 0 && (() => {
+                  const topUpdates = [...gmbUpdates]
+                    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                    .slice(0, 3)
+                  return (
+                    <div style={{ marginTop: 24 }}>
+                      <h3 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, marginBottom: 16, color: S.white }}>Recent activity</h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                        {topUpdates.map((u: any, i: number) => (
+                          <div key={i} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, overflow: 'hidden' }}>
+                            {u.images_url && (
+                              <img src={u.images_url} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+                            )}
+                            <div style={{ padding: 16 }}>
+                              {u.post_text && (
+                                <p style={{ color: S.muted, fontSize: 13, lineHeight: 1.6, margin: '0 0 10px' }}>{u.post_text}</p>
+                              )}
+                              <span style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{u.post_date}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+                </>
               ) : (
                 <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24 }}>
                   <p style={{ color: S.white, lineHeight: 1.7, fontSize: 16, margin: 0 }}>
