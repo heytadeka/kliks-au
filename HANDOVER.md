@@ -4,9 +4,19 @@
 
 ---
 
+## State as of 2026-08-07
+
+- **Everything is pushed and live on `origin/main`.** No local-only commits outstanding. Two work arcs since the last stale banner: (1) a full pass of audit-report data-integrity and admin-portal reliability fixes, and (2) the start of a Google Business features bundle (Phase 1-2 shipped, Phase 3-4 not started). Full commit list in §7, full architecture detail in §4.
+- **Both outstanding schema migrations from the old banner are now confirmed applied**: `prospects.rescan_locked_at` and `audit_data_cache.commentary_readiness_status`/`_ms`/`_at` (confirmed by real query results — 9 instrumented runs recorded, worst case 38s against the 50s readiness cap, zero timeouts). A third migration was added and confirmed applied this pass — the Google Business columns, see §4.
+- **Recurring bug shape found and fixed twice: PostgREST embedded relations reading 1:1 data are unreliable.** First seen in the original "Crawls Complete: 0" bug (predates both recent sessions, patched at the time with a shape-normalising `getCache()` helper). Resurfaced as a false-positive Pending badge on Today — same shape, same helper pattern, still broke. Both Today and the Audits dashboard are now on a direct bulk-query pattern instead; a sweep found no more embedded relations left anywhere in the app. Don't reintroduce the pattern — see §8.
+- **`NEXT_PUBLIC_SITE_URL` is hardcoded to production and used for every background job's internal fetch, regardless of which deployment is actually running.** This means a preview deployment can never exercise its own new background-job routes — only routes already shipped to production. Confirmed as the reason a fresh Google Business Phase 2 test on preview silently wrote nothing. Not yet fixed — see §6.
+- Test prospects still worth knowing about: **flo-viennoiserie** (genuine Google bot-protection 403 on its CRO crawl, confirmed externally — not a code bug, good prospect to check the CRO-failure UI against), **bakealicious-by-gabriela** (Google Business Phase 2 end-to-end test case — real reviews, Q&A, and GBP updates all landed correctly on production), **cake-in-a-box** (abandoned and left deleted after a pre-lock concurrent-rescan corrupted its data — cheaper to delete than untangle, don't recreate it as a lookalike name).
+
+---
+
 ## 1. What This Project Is
 
-**kliks.com.au** is the website for Kliks Digital — Adam Nagy's paid ads + Shopify growth agency (AU-based, also operates in Hungary).
+**kliks.com.au** is the website for Kliks Digital — Adam Nagy's paid ads + Shopify growth agency (AU-based, also operates in Hungary). A **KLIKS Patisserie** sub-brand landing funnel (bakery/patisserie vertical) was added as a separate static page set — see §3.
 
 The repo contains two things:
 
@@ -53,10 +63,13 @@ Order of routes is load-bearing. These rules must stay exactly as-is:
 5. `handle: filesystem`
 6. `/([^/.]+)$` → `/$1.html`
 
-Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gated on `process.env.VERCEL`).
+Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gated on `process.env.VERCEL`). `vercel.json` also has a `crons` block (traffic-drop monitoring for the Pipeline tab — see §4) — leave it alone unless you're deliberately changing that schedule.
 
 ### Deploy gotcha: stdout buffering
 `npx vercel --prod` stdout buffers heavily. The terminal looks frozen after "Building..." but the deploy may have already finished. Use `vercel inspect <deployment-url>` to check real status, or watch for the task completion notification. Do not kill a running deploy process.
+
+### Deploy previews
+`npx vercel` (no `--prod`) from repo root gives a preview URL without touching production — this is the normal way to visually check a rendering change before it's pushed to `main`. Confirm the target is the `kliks-au` project before running it. **Cannot verify new background-job routes** — see the `NEXT_PUBLIC_SITE_URL` gotcha in §8.
 
 ---
 
@@ -65,8 +78,12 @@ Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gat
 ### Files
 - `index.html` — main homepage
 - `ad-junkies.html` — Ad Junkies newsletter page (subscriber count JS: base 1445 on 2026-05-26, grows 4-6/day)
-- `book.html` — Booking form page (single-step, Web3Forms backend, no Calendly redirect, inline success card)
-- `booked.html` — Legacy confirmation page (no longer used)
+- `book.html` — Booking form page (single-step, Web3Forms backend, no Calendly redirect, redirects to `thanks-booking.html` on success)
+- `thanks-booking.html` — thank-you page for the strategy-call booking form
+- `booked.html` — Legacy confirmation page (no longer used, superseded by `thanks-booking.html`)
+- `patisserie.html` — KLIKS Patisserie sub-brand landing page (growth-audit funnel for the bakery/patisserie vertical), Web3Forms + GA4 + Meta Lead tracking
+- `thanks-patisserie.html` — thank-you page for the Patisserie funnel
+- `patisserie/` — design handoff reference for the Patisserie page (`Patisserie Landing.dc.html` mockup + `README.md` + `image-slot.js` helper). Not served — reference only. Same convention as the Stage Rivers design handoff used for the audit portal's Outreach board (a `.dc.html` mockup + `README.md` dropped in a feature-named folder before build).
 - `privacy.html` — privacy policy
 - `luke-index.html` / `luke-apply.html` / `luke-results.html` — Luke funnel (separate design: Bebas Neue + DM Sans, lime green `#c8f040` accent)
 
@@ -79,7 +96,7 @@ Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gat
 - **Headings:** Clash Display (Fontshare) — weights 400/500/600/700/800
 - **Body:** Satoshi (Fontshare) — weights 400/500/700
 - **Labels / mono elements:** Space Mono (Google Fonts) — weights 400/700
-- **Cards:** glass style — `rgba(255,255,255,0.03)` bg, `rgba(255,255,255,0.07)` border, 16px radius, no shadow, no left-stripe. Hover: `border-color rgba(100,75,255,0.2)`, `translateY(-6px)`
+- **Cards:** glass style — `rgba(255,255,255,0.03)` bg, `rgba(255,255,255,0.07)` border, 20px radius, `40px 36px` padding, no shadow, no left-stripe. Hover: `border-color rgba(100,75,255,0.2)`, `translateY(-6px)`
 - **Buttons:** `#ff4315`, pill shape (`border-radius: 100px`)
 - **Grain + vignette:** `position: fixed` (full-page, persistent on scroll)
 
@@ -90,7 +107,7 @@ Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gat
 - Australian spelling where relevant.
 
 ### index.html form (Web3Forms)
-Both `index.html` and `book.html` use identical field sets: split first/last name, email, phone (optional), store URL (optional), ad spend dropdown, challenge textarea. Both submit via `fetch()` POST to Web3Forms JSON API, then fire Klaviyo non-blocking. Both show an inline success card ("Got it. We'll be in touch."), no page redirect.
+Both `index.html` and `book.html` use identical field sets: split first/last name, email, phone (optional), store URL (optional), ad spend dropdown, challenge textarea. Both submit via `fetch()` POST to Web3Forms JSON API, then fire Klaviyo non-blocking. `book.html` redirects to `thanks-booking.html` on success; check `index.html`'s current behaviour before assuming it matches (it may still use the inline success card rather than a redirect).
 
 ### book.html availability slots
 Month slots auto-compute from `new Date()`. Current month = 0 spots (Fully booked). Next month = random 1-2 spots. Pattern matches index.html.
@@ -107,13 +124,13 @@ Month slots auto-compute from `new Date()`. Current month = 0 spots (Fully booke
 ## 4. Audit Portal
 
 ### What it does
-Adam creates an audit record for a prospect (slug, brand, store URL, niche, email). Background jobs run data collection. Adam emails the prospect a link. Prospect enters their email at `/audit/[slug]` → auth cookie → sees their full audit report at `/audit/[slug]/report`.
+Adam creates an audit record for a prospect (slug, brand, store URL, niche, email, optional location and Google Business ID). Background jobs run data collection. Adam emails the prospect a link. Prospect enters their email at `/audit/[slug]` → auth cookie → sees their full audit report at `/audit/[slug]/report`.
 
 ### User flow
-1. Adam hits `/audit/admin` → fills form → hits Create
-2. `POST /api/audit/admin/create` fires background jobs via `waitUntil`
-3. Jobs run in parallel: PageSpeed (Cloud Run AU), CRO crawl (Puppeteer), DataForSEO, Google Ads Planner, Meta Ads, GMB
-4. After 35s delay, `generate-commentary` fires (waits for data jobs to settle)
+1. Adam logs in at `/audit/admin` → lands on `/audit/admin/today` (the Today tab, default post-login landing page)
+2. Adam creates a prospect via `/audit/admin/new` (or the dashboard/Outreach board's own create/attach affordances, or Pipeline's own create form) → `POST /api/audit/admin/create` fires background jobs via `waitUntil`
+3. Jobs run in parallel: PageSpeed (Cloud Run AU), CRO crawl (plain `fetch()` + HTML checks, not a headless browser — see "CRO crawl" below), DataForSEO, Google Ads Planner, Meta Ads, GMB lookup, GMB Q&A, GMB reviews/updates (async, see "Google Business expansion" below)
+4. `dataforseo-enrichment` polls every 3s (up to 50s) waiting for PageSpeed + crawl + DataForSEO-core to land, then fires `generate-commentary` — **only if all three showed up in time**. If the poll times out, commentary is skipped on purpose rather than run against holes, and the prospect surfaces as **Pending** on the Today tab. Google Business data (reviews/Q&A/updates) is never part of this gate, on purpose — see below.
 5. Adam cold-emails prospect: "Your report is ready at kliks.com.au/audit/[slug]"
 6. Prospect enters email → httpOnly cookie set → redirected to `/audit/[slug]/report`
 7. Adam gets Web3Forms notification on first open
@@ -122,26 +139,71 @@ Adam creates an audit record for a prospect (slug, brand, store URL, niche, emai
 | Path | What |
 |---|---|
 | `/audit/admin` | Admin login |
-| `/audit/admin/dashboard` | Admin dashboard (list prospects, create, rescan, reset views) |
-| `/audit/admin/outreach` | Outreach tracker (add new or attach to existing audit) |
+| `/audit/admin/today` | **Default post-login landing.** Daily-3 follow-ups (by `email_sent_at`, Sydney-local "today"), "Ready to reach out" (status `audit_created` or no outreach row yet — includes a Pending-commentary badge, see below), overdue follow-ups. Has its own "+ New Audit" CTA in the empty "Ready to reach out" state, linking to `/audit/admin/new`. |
+| `/audit/admin/dashboard` | Admin dashboard (list prospects, rescan, reset views) — "Audits" in nav |
+| `/audit/admin/outreach` | **Stage Rivers** pipeline board — 4 lanes (`to_contact`, `contacted`, `engaged`, `closed`), each prospect a beeswarm-stacked dot positioned by days-since-last-touch. Click a dot for a detail modal. Also has its own "Create new audit" / "Attach to existing audit" toggle (still using `track-existing`, independent of `/admin/new`). |
+| `/audit/admin/pipeline` | Domain-discovery + traffic-drop monitoring tool, backed by `monitored_domains` (not `prospects`) — see below |
+| `/audit/admin/new` | Dedicated full-page "create new audit" form |
+| `/audit/admin/team` | Admin user list + add-user form (`admin_users`) |
+| `/audit/admin/[slug]/edit` | Edit an existing audit's content; shows AI commentary status and (if the CRO crawl failed) the real failure reason |
 | `/audit/[slug]` | Email gate page |
 | `/audit/[slug]/report` | Full report (auth-gated) |
-| `/api/audit/admin/create` | Creates prospect record + fires all jobs |
-| `/api/audit/admin/rescan` | Re-runs all data jobs for existing prospect |
+| `/api/audit/admin/auth` | Login (sets `audit_admin_auth` cookie) |
+| `/api/audit/admin/create` | Creates prospect record + fires all jobs. Also marks the matching `monitored_domains` row converted if one exists, for any creation path — not just Pipeline's own form. |
+| `/api/audit/admin/rescan` | Re-runs all data jobs for existing prospect — checks/sets `rescan_locked_at` first |
+| `/api/audit/admin/regenerate-commentary` | Recovery path for a Pending prospect: fires `generate-commentary` directly (no re-fetch) if the underlying data is actually present, otherwise returns a clear "run a full rescan instead" error. Same lock as rescan. |
 | `/api/audit/admin/prospect` | PATCH endpoint: update prospect fields (used by reset views: `access_count: 0, last_accessed_at: null`) |
-| `/api/audit/admin/track-existing` | POST: inserts outreach_log row for an existing prospect without re-running data jobs |
+| `/api/audit/admin/update` | PATCH `outreach_log` (status, notes, follow-up date, deal value, lost reason) — powers Stage Rivers' detail modal |
+| `/api/audit/admin/track-existing` | POST: inserts `outreach_log` row for an existing prospect without re-running data jobs |
+| `/api/audit/admin/team` | Admin user list/create |
 | `/api/audit/dataforseo-core` | SERP, keywords, competitors, gaps |
-| `/api/audit/dataforseo-enrichment` | Waits 35s, then triggers generate-commentary |
-| `/api/audit/dataforseo-gmb` | GMB lookup (own route, 30s timeout, 60s budget) |
-| `/api/audit/generate-commentary` | Two Anthropic API calls → 5 commentary sections + priority list |
+| `/api/audit/dataforseo-enrichment` | Polls for readiness, then triggers `generate-commentary` (or skips it and records why) |
+| `/api/audit/dataforseo-gmb` | GMB lookup (own route, 30s timeout, 60s budget). Resolves and stores `place_id` regardless of whether the admin-supplied Google Business ID field was filled in — see "Google Business expansion" below. |
+| `/api/audit/dataforseo-gmb-qa` | Google Q&A, synchronous, same shape as the GMB lookup |
+| `/api/audit/dataforseo-gmb-tasks` | Fires the async reviews + GBP-updates `task_post` calls once the GMB lookup resolves a `place_id` |
+| `/api/audit/dataforseo-gmb-reviews-webhook` | Receives DataForSEO's reviews postback |
+| `/api/audit/dataforseo-gmb-updates-webhook` | Receives DataForSEO's GBP-updates postback |
+| `/api/audit/generate-commentary` | Two Anthropic API calls → 5 commentary sections + priority list. Whole handler wrapped in try/finally that clears `rescan_locked_at` on any exit. |
 | `/api/audit/pagespeed` | Proxies to Cloud Run AU for PageSpeed |
+| `/api/audit/crawl` | CRO checklist — plain `fetch()` of the homepage (+ first product page) with a spoofed desktop Chrome user-agent, checked against ~20 regex/substring signals. No headless browser, no JS execution. |
 | `/api/audit/gate` | Validates email → sets auth cookie |
+| `/api/pipeline/discover` | DataForSEO SERP search for a query → platform-detects each result domain → upserts qualifying (Shopify/Squarespace) domains into `monitored_domains` |
+| `/api/pipeline/check-traffic` | Bulk traffic estimation for all active `monitored_domains`, flags a >15% drop, emails Adam via Web3Forms. Wired to a Vercel cron in `vercel.json`. |
+| `/api/pipeline/mark-converted` | Marks a monitored domain as converted once an audit is created for it. Still called directly by Pipeline's own create flow too — redundant with the server-side version in `admin/create`, but harmless (an update against zero matching rows is a no-op either way). |
 
 ### Background job architecture
 - Uses `waitUntil` from `@vercel/functions` — do NOT use plain fire-and-forget (Vercel kills it on response)
 - All data routes: `maxDuration = 60`, `preferredRegion = 'syd1'`
 - GMB is a dedicated route (extracted from enrichment) because it needs 5-21s
-- Enrichment fires generate-commentary after an explicit 35s `setTimeout` to give dataforseo-core (~25-30s) time to write first
+- **Every job is fired via `${NEXT_PUBLIC_SITE_URL}/api/...`, a fixed production URL — not "wherever this code is currently running."** See the gotcha in §8 before adding a new background route and testing it on a preview.
+
+**Readiness poll.** `dataforseo-enrichment/route.ts` has:
+```typescript
+const READY_POLL_INTERVAL_MS = 3_000
+const READY_MAX_WAIT_MS = 50_000
+```
+`waitForCommentaryData(prospect_id)` polls `audit_data_cache` (`pagespeed_fetched_at`, `crawled_at`, `dataforseo_overview`) every 3s up to 50s. If all three show up, it records `commentary_readiness_status: 'ready'` (+ elapsed ms) on `audit_data_cache` and `generate-commentary` fires. If the cap is hit first, it records `'timeout'` instead, explicitly clears `rescan_locked_at` (since `generate-commentary` — the thing that normally clears it — never runs on this path), and commentary is **not** fired. Better to visibly skip than to silently generate against holes. **Confirmed via the persisted data**: all instrumented runs so far (9 total) resolved `ready`, worst case 38s. No confirmed timeout yet — worth re-querying once more audits have run before concluding the cap is right-sized either way.
+
+**Rescan lock.** `prospects.rescan_locked_at` (timestamptz) prevents two rescans (or a rescan and a regenerate) from interleaving their writes on the same prospect. Checked/set in `rescan/route.ts` inline, with a 120s staleness fallback (`RESCAN_LOCK_TIMEOUT_MS`) so a crashed invocation can't orphan a prospect forever. Cleared by `generate-commentary/route.ts`'s try/finally on every exit path, or explicitly on a readiness timeout (above). `lib/rescan-lock.ts` (`checkRescanLock` / `setRescanLock` / `clearRescanLock`) is the same logic extracted for new call sites — used by `regenerate-commentary/route.ts`. `rescan/route.ts` and `generate-commentary/route.ts` keep their own working inline copies. **Note: the lock prevents new overlapping runs, it does not retroactively fix data already corrupted by a pre-lock race** — `cake-in-a-box` was abandoned rather than untangled for exactly this reason.
+
+**Pending commentary — visible and recoverable, widened this pass.** `lib/commentary-status.ts` exports `isCommentaryPending(content)`, checking four fields: `ai_opportunity_commentary`, `hook_headline`, `score_descriptions`, `ai_closing_commentary`. Previously this only checked `ai_opportunity_commentary` alone, independently re-derived in three places (Today, `EditAuditClient`, `ReportClient`'s Data Confidence row) — widened and unified into one shared helper after those other three fields turned out to have disguised-fallback risk (see below) with no Pending signal at all. The other AI fields (`ai_performance_commentary`, `ai_cro_commentary`, `ai_seo_commentary`, `ai_priority_list`) are deliberately **not** part of this check — they already degrade honestly (render nothing, or an explicit "not yet generated" state) when missing, so including them would only cause extra false-positive Pending flags. Used by:
+1. `/audit/admin/today`'s "Ready to reach out" section — Pending badge/warning + "Regenerate Commentary" button.
+2. `EditAuditClient`'s status banner.
+3. `ReportClient`'s Data Confidence table "AI Commentary" row.
+
+**Disguised-fallback fixes.** Three spots previously showed polished, brand-name-bearing text whenever the corresponding AI field was missing, with nothing signalling it wasn't written for that prospect — the report could look complete and personally written while actually being generic:
+- The closing note under Adam's signature ("I put this together because I think {brand} is leaving real money on the table...") is now omitted entirely when both `ai_closing_commentary` and the legacy `section_closing_body` are absent, rather than showing invented personal text.
+- The hero headline/subtext fallback no longer interpolates the store's domain into a sentence that implied bespoke analysis ("We ran {domain} through every signal...") — now genuinely generic when `hook_headline` is missing.
+- `SCORE_DESC_FALLBACKS` (six hardcoded one-liners, one per score card) is removed entirely. These didn't check the actual score value, so e.g. "Slow on phones" could render next to a GOOD-badged ring. `ScoreRing` already conditionally rendered its description (`{desc && <p>...}}`), so a missing `score_descriptions` value now just omits that line.
+
+**Unfounded-claims fixes.** Separately, two spots stated a specific-sounding number as if it were measured when it was actually a hardcoded constant: the CRO section's "Stores like {competitor} typically pass 17-18 of these checks" (competitor CRO scores are never actually measured anywhere in this app — reworded to a general benchmark, no longer naming the competitor) and the SEO section's "Closing even 20% of that gap is worth targeting" (the 20% was arbitrary — reworded to drop the fabricated figure). A third candidate, the "industry leaders load in under 2.5s" LCP benchmark clause, was reviewed and left alone — it's Google's real published Core Web Vitals threshold, already used the same way elsewhere on the same report.
+
+### CRO crawl (crawl/route.ts)
+Despite older documentation implying Puppeteer, this is a plain `fetch()` of the homepage (and first product page, if a `/products/` link is found) with a spoofed desktop Chrome user-agent, checked against ~20 regex/substring signals (sticky header, exit intent, reviews widget, etc.) — no headless browser, no JS execution. `puppeteer-core` and `@sparticuz/chromium` were still sitting in `package.json` from before this rewrite, unreferenced anywhere in `app/` — removed this pass.
+
+`cro_checklist.error = true` can only come from the **homepage** fetch itself failing — a non-2xx response (most commonly bot protection), the 15s timeout firing, or a network failure. The product-page fetch has its own silently-swallowed `catch {}`, so its failure alone can't produce this state. A JS-heavy storefront doesn't cause this error state either — with no JS execution, it just produces a low/mostly-failed checklist (empty static HTML), not a thrown exception.
+
+`cro_checklist.message` holds the real reason (e.g. `"Fetch failed: 403"`) and is now surfaced on the Dashboard's CRO Status column and the Edit page — previously captured but shown nowhere, which is why a real, external bot-protection block (confirmed on `flo-viennoiserie` by testing the URL directly, outside the app) took three rescans and a full diagnosis to explain instead of five seconds. The report's CRO section is now **hidden entirely** when the crawl failed (`cro?.error`), rather than showing "Automated CRO scan could not complete for this store. Manual review recommended." to the prospect — on a cold outreach report, that read as the tool getting blocked by the prospect's own site, which undermines the report rather than informing it. The ordinary "still scanning" state (no results yet, no error) is unaffected and keeps its own shell. Section numbering (`sectionNums`) skips CRO on failure too, same conditional pattern as GMB/strategy/opportunity, so numbers after it don't jump.
 
 ### AI model
 Model is centralised in `audit/lib/config.ts`:
@@ -150,97 +212,153 @@ export const ANTHROPIC_MODEL = 'claude-sonnet-4-5'
 ```
 Both call sites in `generate-commentary/route.ts` import `ANTHROPIC_MODEL`. If Anthropic retires a model, update only `lib/config.ts`. The previous model `claude-sonnet-4-20250514` was retired and caused 404s — that's why it's now centralised.
 
+### Google Business expansion (Phase 1-2 shipped, Phase 3-4 not started)
+Strategic direction: these prospects are local businesses that happen to have a store, not the reverse — Sydney bakeries live on local search and word of mouth. Reviews especially are the one part of the audit a prospect couldn't easily produce themselves (nobody reads their own 300 reviews looking for patterns).
+
+**Identifier resolution.** `buildGmbKeyword()` (in `lib/gmb-keyword.ts`, extracted from the GMB route) builds a `keyword`/`cid`/`place_id` parameter from the prospect's optional "Google Business ID" form field (`gmb_cid` — accepts a raw Place ID, a raw CID, or is left blank to fall back to brand-name search). The GMB lookup route (`dataforseo-gmb`) resolves and stores its own `place_id` in `gmb_data.place_id` regardless of which path found the match — this is reused by reviews/updates rather than each resolving independently, because a generic local-business name can match a *different* business per independent search, and reviews/updates need to describe the same business the GMB card describes. If GMB comes back not-found (or hasn't landed within a short wait window), reviews/updates are skipped entirely rather than falling back to their own brand-name match — no reviews beats someone else's reviews.
+
+**Q&A** (`dataforseo-gmb-qa`) is synchronous (`questions_and_answers/live`), fires in the same fan-out as everything else, own timeout/budget, not gated on readiness. Resolves its own identifier independently (doesn't wait on GMB) since a Q&A mismatch is low-stakes compared to reviews.
+
+**Reviews and GBP updates** (`dataforseo-gmb-tasks`) are async — DataForSEO's `task_post` endpoints take up to 45 minutes at standard priority, or about a minute at high priority (paid extra, exact multiplier over base rate not confirmed). Both are fired at **high priority**, a deliberate choice: the workflow is create-review-send, and a report sitting visibly incomplete for up to 45 minutes with no way to distinguish "still coming" from "failed" would break that. Both calls carry a `postback_url` — DataForSEO POSTs the actual result (gzip-compressed) to that URL whenever the task completes, so this route fires and returns without waiting on results. `lib/dataforseo-postback.ts` decompresses defensively (tries gzip, falls back to plain parse) since this is the one part of the integration that can't be confirmed without a live postback actually landing. Reviews are fetched at depth 100, sorted newest-first.
+
+**Webhooks** (`dataforseo-gmb-reviews-webhook`, `dataforseo-gmb-updates-webhook`) verify a purpose-built `DATAFORSEO_WEBHOOK_SECRET` (query-string param, not the Supabase service role key — DataForSEO's postback auth has no signature scheme beyond IP allowlisting, so a dedicated low-privilege secret limits the blast radius of a leak to fake review data, not DB access) and respond fast, within DataForSEO's 10s postback deadline.
+
+**None of this joins the commentary readiness gate.** Deliberate, carried through the whole build — the gate still only waits on PageSpeed, crawl, and DataForSEO core.
+
+**Verified end to end on production**: `bakealicious-by-gabriela` — real reviews (100 returned), Q&A, and GBP updates all landed correctly. (Preview deployments cannot verify this feature at all — see the `NEXT_PUBLIC_SITE_URL` gotcha in §8; a real postback also has to reach a real public URL, which a Vercel-protected preview URL structurally can't be.)
+
+**Phase 3 (render in the report) is not started.**
+
+**Phase 4 (AI commentary on reviews/Q&A) is not started. Design decisions already locked in, apply when building:**
+- Triggered by the **reviews** webhook specifically (not Q&A, which arrives earlier and synchronously) — reviews are the long-pole item, so by the time that webhook fires, Q&A is already sitting in `audit_data_cache` ready to read into the same prompt. A separate, additive Anthropic call (`ai_gmb_commentary` on `audit_content`, column already added), decoupled from the main commentary call — same precedent as the existing main + priority-list two-call pattern in `generate-commentary/route.ts`. This is what solves the timing mismatch: main commentary generates in seconds, reviews can take up to a minute even at high priority, and the two were never going to land together.
+- **Guardrail, confirmed necessary against real data**: the `bakealicious-by-gabriela` review set contained a live public dispute (a detailed delivery-mixup complaint with a long owner rebuttal). Commentary must synthesize patterns only — e.g. "delivery timing is a recurring theme" — and must never restate or summarize a specific negative review, quote a dispute, or name a reviewer. Surfacing a specific complaint back at the business in their own cold-outreach report would land very badly.
+- Also replace the hardcoded GBP copy at `ReportClient.tsx`'s Google Business section (confirmed hardcoded template text this session, not AI-generated — every store with rating ≥4.0 and ≥100 reviews sees identical wording) as part of this build. Its logic is also slightly muddled — states 4.5+ as the bar, then calls a 4.3 rating "above average" in the same breath.
+- `ai_gmb_commentary` does **not** join `isCommentaryPending` — same reasoning as the other AdamsTake-style commentary fields: it should degrade honestly (section doesn't render) rather than needing a disguised-fallback guard.
+
 ### Supabase schema
 
 **`prospects`**
-- `slug` (UNIQUE), `brand_name`, `store_url`, `prospect_email`, `prospect_name`, `niche`, `cta_link`, `created_at`, `last_accessed_at`, `access_count`, `is_active`
+- `slug` (UNIQUE), `brand_name`, `store_url`, `prospect_email`, `prospect_name`, `niche`, `cta_link`, `created_at`, `last_accessed_at`, `access_count`, `is_active`, `rescan_locked_at` (timestamptz, nullable — confirmed migrated), `location`, `gmb_cid` — **the latter two are live in the DB and used by the app but are not tracked anywhere in `supabase/schema.sql`**, same gap as `monitored_domains` below. Confirmed still missing this pass; worth adding alongside it.
 
 **`audit_content`**
-- `prospect_id` FK, legacy section fields, `ai_performance_commentary`, `ai_cro_commentary`, `ai_seo_commentary`, `ai_opportunity_commentary`, `ai_closing_commentary`, `ai_priority_list` JSONB, `hook_headline` JSONB, `score_descriptions` JSONB
+- `prospect_id` FK, legacy section fields, `ai_performance_commentary`, `ai_cro_commentary`, `ai_seo_commentary`, `ai_opportunity_commentary`, `ai_closing_commentary`, `ai_priority_list` JSONB, `hook_headline` JSONB, `score_descriptions` JSONB, `ai_gmb_commentary` (added this pass, unused until Phase 4 of the Google Business bundle is built)
 
 **`audit_data_cache`**
-- `prospect_id` FK (UNIQUE), `pagespeed_mobile`, `pagespeed_desktop`, `dataforseo_overview` JSONB (includes extra key `keywords_total_count` as of 2026-07-02 — see below), `dataforseo_keywords`, `dataforseo_gaps`, `dataforseo_competitors`, `dataforseo_serp_features` JSONB, `dataforseo_content_gap` JSONB, `dataforseo_keyword_trends` JSONB, `backlinks_summary` JSONB (always null — no subscription), `google_ads_planner`, `meta_ads`, `cro_checklist`, `gmb_data` JSONB, `crawled_at`, `pagespeed_fetched_at`
+- `prospect_id` FK (UNIQUE), `pagespeed_mobile`, `pagespeed_desktop`, `dataforseo_overview` JSONB (includes `keywords_total_count` — see "DataForSEO notes"), `dataforseo_keywords`, `dataforseo_gaps`, `dataforseo_competitors`, `dataforseo_serp_features` JSONB, `dataforseo_content_gap` JSONB, `dataforseo_keyword_trends` JSONB, `backlinks_summary` JSONB (always null — no subscription), `google_ads_planner`, `meta_ads`, `cro_checklist`, `gmb_data` JSONB (**also live but untracked in schema.sql**, see above), `crawled_at`, `pagespeed_fetched_at`, `commentary_readiness_status` / `_ms` / `_at` (text/integer/timestamptz — **confirmed applied**, no longer a no-op), and added this pass: `gmb_reviews` / `gmb_reviews_status` / `gmb_reviews_task_id` / `gmb_reviews_fetched_at`, `gmb_qa` / `gmb_qa_fetched_at`, `gmb_updates` / `gmb_updates_status` / `gmb_updates_task_id` / `gmb_updates_fetched_at` — **confirmed applied**
 
 **`admin_users`**
-- `email`, `password_hash` (bcrypt 12 rounds), `name`, `is_active`
+- `email`, `password_hash` (bcrypt 12 rounds), `name`, `created_at`, `is_active`. Managed via `/audit/admin/team`.
 
 **`outreach_log`**
-- `prospect_id` FK, `status`, `first_opened_at`, `last_opened_at`, `open_count`
+- `id`, `prospect_id` FK, `status` (`audit_created` / `email_sent` / `opened` / `no_response` / `won` / `lost` / `not_a_fit` — collapsed into the Stage Rivers board's 4 lanes via `STATUS_TO_LANE` in `OutreachClient.tsx`), `domain`, `brand_name`, `prospect_name`, `prospect_email`, `audit_slug`, `notes`, `follow_up_due_at`, `deal_value` (set on `won`), `lost_reason` (set on `lost`), `created_at`, `updated_at`, `email_sent_at` (set once, on first transition to `email_sent`), `first_opened_at`, `last_opened_at`, `open_count`
+
+**`monitored_domains`** (backs the Pipeline tab — **still not tracked in `supabase/schema.sql` at all**; it exists in the live DB but was created out-of-band, so a fresh environment would need it hand-created from this column list)
+- `id`, `domain`, `platform` (`shopify` / `squarespace` / `unknown`), `platform_detected_at`, `niche` (the discovery query that found it), `status` (`active` / `converted`), `created_at`, `traffic_current`, `traffic_previous`, `traffic_checked_at`, `traffic_drop_pct`, `flagged` (bool), `flagged_at`, `audit_created` (bool), `audit_slug`, `audit_brand_name`
 
 Test record: slug=`test-brand`, email=`wearekliks@gmail.com`
 
-### SQL migrations needed (run in Supabase SQL editor if not already done)
-```sql
-ALTER TABLE audit_content ADD COLUMN IF NOT EXISTS ai_priority_list JSONB;
-ALTER TABLE audit_content ADD COLUMN IF NOT EXISTS hook_headline JSONB;
-ALTER TABLE audit_data_cache ADD COLUMN IF NOT EXISTS dataforseo_keyword_trends JSONB;
-ALTER TABLE audit_data_cache ADD COLUMN IF NOT EXISTS backlinks_summary JSONB;
-ALTER TABLE audit_data_cache ADD COLUMN IF NOT EXISTS gmb_data JSONB;
-```
+### supabase/schema.sql — migration blocks
+The base `create table` statements only cover the original columns. Everything added since lives in comment-blocked `ALTER TABLE` sections lower in the file, applied by hand in the Supabase SQL editor (standing convention: hand over exact SQL, never attempt to run it directly). In order:
+1. AI commentary columns (`ai_performance_commentary` etc.) — long since applied.
+2. `prospects.rescan_locked_at` — confirmed applied.
+3. `audit_data_cache.commentary_readiness_status` / `_ms` / `_at` — **confirmed applied this pass** (was drafted-only as of the last banner).
+4. Google Business expansion columns (`gmb_reviews*`, `gmb_qa*`, `gmb_updates*` on `audit_data_cache`, `ai_gmb_commentary` on `audit_content`) — **confirmed applied this pass.**
+
+Still not in this file's history at all: `monitored_domains`, and `prospects.location` / `prospects.gmb_cid` / `audit_data_cache.gmb_data` (all three live in the DB, used throughout the app, discovered missing from schema.sql while building the Google Business bundle this pass). Worth a single cleanup pass adding `create table if not exists` / `ADD COLUMN IF NOT EXISTS` blocks for all of these, so a fresh DB setup doesn't silently miss them.
 
 ### AI commentary (generate-commentary/route.ts)
 - Call 1: 5-section commentary → performance, CRO, SEO, opportunity, closing
 - Call 2: priority list → `{ priorities: [{ number, title, impact, next_step }] }` (non-fatal if fails)
 - Hook headline: generated from worst score, top non-branded keyword, CRO failures — must be store-specific, never generic. Anti-convergence rules in prompt prevent identical hooks across stores.
+- Organic keyword count and monthly traffic figures used in the prompt come from `lib/organic-stats.ts`'s `resolveOrganicStats()` — the same function the report page uses (see below). Do not hand-roll a second calculation here.
+- Prompt explicitly labels which figures are visitor counts vs dollar figures, and instructs the model not to dollar-sign a traffic count in `seo_findings` — added after a real report showed a visitor count with a `$` in front of it.
+
+### Shared organic-stats resolver (lib/organic-stats.ts)
+```typescript
+export function resolveOrganicStats(overview: any, keywords: any[] | null | undefined): { keywordCount: number; monthlyTraffic: number }
+```
+Single source of truth for keyword count (`keywords_total_count` → `metrics.organic.count` → array length) and monthly traffic (`metrics.organic.etv` → sum of keyword search volumes). Used by both `ReportClient.tsx` and `generate-commentary/route.ts`. Built after a report showed contradicting organic-traffic numbers between the stat card and the AI commentary — two independently-written formulas had silently diverged. If you need organic keyword/traffic numbers anywhere else, call this function; don't recompute — this exact "recomputed in more than one place" shape is the single most recurring bug type across both recent sessions (this resolver, the revenue formula below, and GMB competitor self-exclusion were all instances of it).
+
+### Revenue model (ReportClient.tsx)
+Module-level constants, shared by every place revenue impact is shown:
+```typescript
+const ASSUMED_CONVERSION_RATE = 0.015
+const ASSUMED_AOV = 150
+```
+`revCalc`'s three initiatives and the inline "What this costs you" box both compute `traffic × CR × AOV × 12` from these. They used to be two independently-hand-written copies that had drifted **~67x apart** — one was missing the `× 0.015` conversion-rate factor entirely, treating AOV as revenue-per-visitor rather than revenue-per-order. Confirmed by hand-working the arithmetic: the inflation factor was exactly `1/0.015`, matching the missing term precisely. Revenue figures are only shown when real DataForSEO overview data (`dfsOverview`) is present — no hardcoded traffic fallback. If `dfsOverview` is null, those UI elements are skipped entirely rather than showing a number computed from an invented baseline (a prior version defaulted to 500 visitors in three separate call sites, producing an identical headline figure across genuinely different stores — also removed).
+
+**Already-sent audits carrying the old inflated figure**: Enze, Cake Mail, and Miss Lilly's were flagged for a rescan to correct this. Not confirmed whether that rescan actually happened — check before assuming it's resolved, this is the most urgent item in §6.
 
 ### DataForSEO notes
 - `domain_overview/live` returns 404 on this plan — use `domain_rank_overview/live`
 - `keyword_gap/live` returns 404 — use `keywords_for_site/live`
 - `backlinks/summary/live` returns 40204 — separate subscription required, disabled
 - AU location code: `2036` (national), city codes: Sydney `21167`, Melbourne `21182`, Brisbane `21139`, Perth `21188`, Adelaide `21136`, Canberra `21124`, Hobart `21172`, Darwin `21128`
-- Local city detection: reads `niche` field for city terms, uses city-level location code in SERP calls, filters out other-city competitor domains
+- **Local city detection** (`detectLocalTarget()` in `dataforseo-core/route.ts`): checks the prospect's `location` field first, falls back to scanning the free-text `niche` field for a city name if `location` is empty or doesn't match. Previously `location` was read into a `locationCode` that was computed, logged, and never actually used anywhere — competitor discovery depended entirely on `niche` happening to contain a city name, silently going national otherwise. Confirmed on a real prospect: `niche` had no "Sydney" in it, top competitor came back as an unrelated `.com`. Fixed this pass; confirmed working afterward on a different prospect with no city in its niche text, which correctly returned local `.com.au` competitors via the primary discovery path.
 - Content gap: no `filters` param (causes 40501 error)
+- The `serp_competitors` API (primary competitor-discovery path) sets `avg_position`/`visibility`/`intersections` per competitor. Its fallback path (niche-search, triggered when fewer than 3 clean competitors come back) only ever sets `{ domain, niche_source: true }`. `ReportClient.tsx`'s competitor table hides each of those columns independently if no competitor in the top 5 has that field, rather than showing empty cells.
+- Competitor domain normalisation (`normalise()` in `dataforseo-core/route.ts`) strips protocol, `www.`, and everything after the first `/`, `?`, or `#` before comparing against the audited domain — strengthened to catch a store listing itself as its own competitor when the store URL had a trailing path or query string.
+- `ranked_keywords` has an explicit `limit: 50`. `total_count` (merged into `dataforseo_overview.keywords_total_count`) is the only source of the true count. **Parked, unresolved**: comes back null intermittently — confirmed happening on some prospects and not others (one got a real 1,950, others got the capped-50 fallback presented as a real count) — root cause not investigated.
+- `maxDuration = 60` on the dataforseo route, longer than the readiness poll's 50s cap (intentional headroom). PageSpeed's own allowance (55s) is close enough to the poll's cap that a slow PageSpeed run is the most likely way a prospect ends up Pending — not yet investigated further given zero confirmed timeouts so far (see readiness-poll note above).
 
-### Organic Keywords count (dataforseo-core fix, 2026-07-02)
-The `ranked_keywords/live` endpoint returns `total_count` (real domain total) and `items` (capped at `limit`, default 50). The old code was displaying `items.length` (always 50) as the Organic Keywords stat, not the real total.
+### Organic Keywords count (dataforseo-core fix)
+The `ranked_keywords/live` endpoint returns `total_count` (real domain total) and `items` (capped at `limit`, default 50). Fixed by reading `total_count` and merging it as `keywords_total_count` into `dataforseo_overview` before upsert. Only prospects rescanned after this fix landed have it populated — older audits fall back through `resolveOrganicStats()`'s chain.
 
-Fix: `dataforseo-core/route.ts` now reads `total_count` from the response and merges it as `keywords_total_count` into the `dataforseo_overview` JSONB before upsert — no new DB column needed. `ReportClient.tsx` reads `dfsOverview.keywords_total_count` first, falls back to `metrics.organic.count` or array length.
-
-**Important:** only prospects rescanned AFTER commit `9f305ea` (2026-07-02) will have `keywords_total_count` populated. Older audits will show the fallback until rescanned.
-
-### Referring Domains card (ReportClient.tsx, 2026-07-02)
-The card is now conditionally rendered. If `backlinks_summary` is null or empty, the card is omitted entirely and the grid becomes 3-column (Organic Keywords, Est. Monthly Traffic, Est. Traffic Value). When a DataForSEO backlinks subscription is added and `backlinks_summary` starts populating, the card will automatically appear and the grid switches back to 2x2.
+### Referring Domains card (ReportClient.tsx)
+Conditionally rendered. If `backlinks_summary` is null or empty, the card is omitted entirely and the grid becomes 3-column. Will auto-reappear once a DataForSEO backlinks subscription is added and `backlinks_summary` starts populating — no code change needed then.
 
 ### PageSpeed architecture
 Vercel US servers are blocked by AU-hosted Shopify stores. Solution: Cloud Run microservice in `australia-southeast1`.
 - Cloud Run URL: `https://pagespeed-service-981518713562.australia-southeast1.run.app`
-- Flow: `/api/audit/pagespeed` (Vercel syd1) → Cloud Run → PSI API (mobile + desktop, 55s timeout, all 4 categories)
+- Flow: `/api/audit/pagespeed` (Vercel syd1) → Cloud Run → PSI API (mobile + desktop, 55s timeout, all 4 categories) → `savePagespeedData()` in `lib/pagespeed.ts` writes `pagespeed_fetched_at` and the score data in one atomic upsert.
 - Must pass all 4 categories: `category=performance&category=seo&category=accessibility&category=best-practices`
+- `app/api/audit/pagespeed-save/route.ts` exists but is dead code — not called from anywhere in the app.
+
+### Report scorecards (ReportClient.tsx)
+Mobile Performance, Desktop Performance, SEO Score, and Accessibility all display `null` (renders as `--`) only when the underlying value is genuinely absent — not when it's a real `0`. Now `X != null ? Math.round(X) : null` (was previously `X != null && X > 0 ? ... : null`, which silently mapped a real zero score to `--`).
 
 ### Report sections (render order in ReportClient.tsx)
 1. Intro card (brand, date, niche, confidential)
 2. Audit Scores strip (Mobile Perf, Desktop Perf, SEO Score, Accessibility, CRO Score /20, Overall CRO grade)
 3. CRO Score Summary (passed/20, critical issues, warnings, opportunities)
-4. Section 01 — Core Web Vitals (LCP, FCP, CLS, TBT, Speed Index, TTI) + speed/money callout + AI commentary
-5. Section 02 — CRO Checklist (20-point crawl, grouped) + AI commentary
-6. Section 03 — Ads and Creative (Meta Ad Library)
-7. Section 04 — Ad Strategy (legacy manual, hidden if empty)
-8. Section 05 — SEO Audit (DataForSEO: stats, keywords, Winning/Close/Money buckets, competitor gap, competitors table, content gap, Google Ads Planner) + AI commentary
-9. Priority Actions (3 AI cards: title, impact, next step)
-10. Section 06 — Search Opportunity (legacy manual, hidden if empty)
-11. Section 07 — Biggest Opportunity (AI orange glow card)
-12. Section 08 — Revenue Opportunity Summary (auto-calculated bars)
-13. Section 09 — Data Confidence Summary (appendix)
-14. Section 10 — What Happens Next (AI closing + book a call CTA)
+4. Section — Core Web Vitals (LCP, FCP, CLS, TBT, Speed Index, TTI) + speed/money callout + AI commentary
+5. Section — CRO Checklist (20-point crawl, grouped) + AI commentary — **hidden entirely if the crawl failed**, see "CRO crawl" above
+6. Section — Google Business (rating, review count, category, address, claimed status) — currently hardcoded right-hand commentary, see "Google Business expansion" above for the Phase 4 plan to replace it
+7. Section — Ads and Creative (Meta Ad Library)
+8. Section — Ad Strategy (legacy manual, hidden if empty)
+9. Section — SEO Audit (DataForSEO: stats, keywords, Winning/Close/Money buckets, competitor gap, competitors table, content gap, Google Ads Planner) + AI commentary
+10. Priority Actions (3 AI cards: title, impact, next step)
+11. Section — Search Opportunity (legacy manual, hidden if empty)
+12. Section — Biggest Opportunity (AI orange glow card)
+13. Section — Revenue Opportunity Summary (auto-calculated bars — see "Revenue model" above for the gating rule)
+14. Section — Data Confidence Summary (appendix)
+15. Section — What Happens Next (AI closing + book a call CTA — omitted if no closing text, see "Disguised-fallback fixes" above)
+
+Section numbers (`sectionNums`) are computed to skip any conditionally-hidden section, so the visible numbering never has a gap.
 
 ### Keyword buckets (computed in ReportClient.tsx)
 - **Winning:** pos 1-5, volume >= 100, no /blog/ URLs, sort pos asc, cap 15
 - **Close:** pos 6-15, volume >= 100, no /blog/ URLs, sort volume desc, cap 10
 - **Money (gap):** `dfsGaps` if available, else `dfsContentGap`, top 10 by volume
 
-### Admin dashboard features
-- Per-row "Reset views" button: confirms with brand name, PATCHes `access_count: 0, last_accessed_at: null` via `/api/audit/admin/prospect`
-- Per-row "Rescan" button: re-runs all background data jobs
-- Both desktop Actions column and mobile card view have these buttons
+### Admin — Today tab (`/audit/admin/today`)
+Default landing page after login. Fetches `audit_content` and `outreach_log` via direct bulk queries keyed on `prospect_id` (not embedded through `prospects`, see §8). Three sections:
+1. **Daily-3** — up to 3 follow-ups due today, computed from `email_sent_at` (not `created_at`) against Sydney-local "today" (`isSydneyToday()`, Intl-based, DST-safe).
+2. **Ready to reach out** — prospects with `outreach_log.status === 'audit_created'` or no outreach row at all yet. Each card shows a Pending badge/warning + "Regenerate Commentary" button when `isCommentaryPending()` is true (see above). Empty-state has a "+ New Audit" CTA to `/audit/admin/new`.
+3. **Overdue follow-ups** — reuses the dashboard's existing overdue filter.
 
-### Outreach form (admin/outreach)
-Two modes via toggle:
-1. **Create new** — standard new prospect form including optional Google Place ID field (`ChI...` = place_id, numeric = CID). Fires all background jobs.
-2. **Attach to existing** — dropdown of existing prospects (name + domain), inserts `outreach_log` row only via `track-existing` API route. No data jobs fired, no duplicate check at prospect level.
+### Admin — Stage Rivers board (`/audit/admin/outreach`)
+4 lanes (`to_contact`, `contacted`, `engaged`, `closed`), driven by `STATUS_TO_LANE` mapping every real `outreach_log.status` value onto one of the four. Within a non-closed lane, each prospect is a dot positioned on an x-axis by days-since-last-touch, y-stacked via a beeswarm layout (`layoutBeeswarm()`) so same-day touches fan out instead of overlapping. Click a dot for a detail modal. Still has its own "Create new audit" / "Attach to existing audit" toggle, independent of the dedicated `/admin/new` page.
+
+### Admin — Pipeline tab (`/audit/admin/pipeline`)
+Prospect *discovery* and churn monitoring, backed by `monitored_domains`, not `prospects`. `/api/pipeline/discover` runs a DataForSEO SERP search, platform-detects each result domain, upserts qualifying (Shopify/Squarespace) domains as `active`. A Vercel cron hits `/api/pipeline/check-traffic` on a schedule, bulk-estimates traffic for every active domain, flags a >15% drop, emails Adam. `/api/pipeline/mark-converted` flips a domain to `converted` once an audit is created for it — this now also happens server-side from `admin/create/route.ts` directly, so any creation path marks it, not just Pipeline's own form.
+
+### Admin — Team tab (`/audit/admin/team`)
+Lists `admin_users`, lets Adam add a new admin login. Backed by `/api/audit/admin/team`.
 
 ### Admin auth
-- `audit_admin_auth` httpOnly cookie gates all admin routes
-- Password hash (bcrypt 12 rounds) must be inserted into `admin_users` table — Adam still needs to do this
+- `audit_admin_auth` httpOnly cookie gates all admin routes, set by `/api/audit/admin/auth`
+- Admin login is live and working — the `admin_users` table has at least one active row with a bcrypt hash.
 
 ### Env vars (set in Vercel project settings)
 ```
@@ -251,6 +369,7 @@ PAGESPEED_API_KEY
 NEXT_PUBLIC_PAGESPEED_API_KEY
 DATAFORSEO_LOGIN
 DATAFORSEO_PASSWORD
+DATAFORSEO_WEBHOOK_SECRET          (added this pass — Google Business reviews/updates postback auth, Preview + Production)
 GOOGLE_ADS_DEVELOPER_TOKEN
 GOOGLE_ADS_CLIENT_ID
 GOOGLE_ADS_CLIENT_SECRET
@@ -262,42 +381,47 @@ NEXT_PUBLIC_SITE_URL=https://kliks.com.au
 ADMIN_JWT_SECRET
 PAGESPEED_SERVICE_URL
 ```
-`SUPABASE_SERVICE_ROLE_KEY` is marked Sensitive in Vercel — pulling env vars via CLI returns it empty. Use Vercel dashboard to read it if needed.
+`SUPABASE_SERVICE_ROLE_KEY` is marked Sensitive in Vercel — pulling env vars via CLI returns it empty. Use Vercel dashboard to read it if needed. **Standing rule: never attempt to work around this or pull the key another way.**
 
 ---
 
-## 5. Current Prospects (as of 2026-07-02)
+## 5. Current Prospects
+
+Not independently re-verified — treat as approximate and check the admin dashboard (`/audit/admin/dashboard`) for the live list rather than trusting this table blindly.
 
 | Slug | Brand | Notes |
 |---|---|---|
-| `enze` | Enze | Cake shop |
+| `enze` | Enze | Cake shop. Carried the ~67x-inflated revenue figure; flagged for a rescan, not confirmed done — see §6 item 1. |
 | `oh-my-days` | Oh My Days | Vegan cakes, Sydney-local |
-| `miss-lillys` (approx) | Miss Lilly's | Used for organic keywords testing — rescanned 2026-07-02 |
-| `cake-mail` (approx) | Cake Mail | Mentioned alongside Enze for view reset |
+| `miss-lillys` (approx) | Miss Lilly's | Also flagged for the revenue-figure rescan, see §6 item 1 |
+| `cake-mail` (approx) | Cake Mail | Also flagged for the revenue-figure rescan, see §6 item 1 |
+| `flo-viennoiserie` (approx) | Flo Viennoiserie | Genuine Google bot-protection 403 on its CRO crawl, confirmed externally — good prospect to check the CRO-failure UI against, not a bug to chase further |
+| `bakealicious-by-gabriela` (approx) | Bakealicious by Gabriela | Google Business Phase 2 end-to-end test case — reviews, Q&A, updates all confirmed landing on production |
+| — | Little Cake Box | Used for an earlier data-error diagnosis, still live |
+| — | Cake In a Box | **Deleted.** Corrupted by a pre-rescan-lock concurrent-rescan race, abandoned rather than untangled. Don't recreate a similarly-named prospect assuming it's the same one. |
+| — | Cupcake Factory | Real audit created via a path that skipped `mark-converted` at the time — now fixed for all paths, but this specific prospect's `monitored_domains` row may still show un-actioned unless manually corrected or re-triggered |
 | `test-brand` | Test | Dev testing, email: wearekliks@gmail.com |
-
-Exact slugs for Miss Lilly's and Cake Mail: check admin dashboard.
 
 ---
 
-## 6. Pending Tasks (as of 2026-07-02)
+## 6. Pending Tasks
 
-### Adam must do (requires admin/DB access)
-- [ ] Verify Miss Lilly's report: Organic Keywords shows real number (not 50), Referring Domains card gone, 3-card row
-- [ ] Rescan a second prospect, confirm its Organic Keywords differs from Miss Lilly's (proves fix is working across audits, not just one)
-- [ ] Reset views for Enze and Cake Mail via admin dashboard (hit the per-row "Reset views" button)
-- [ ] Insert admin password hash (bcrypt 12 rounds) into `admin_users` table — admin login is currently blocked without this
+### Priority order (as of this pass)
+1. **Confirm whether Enze, Cake Mail, and Miss Lilly's were actually rescanned** to correct the ~67x revenue-formula error. If not, this is the most urgent remaining item — those reports are live at their URLs and any of those prospects could reopen them.
+2. **Google Business Phase 3 (render) and Phase 4 (AI commentary)** — design decisions already locked in, see §4.
+3. **Fix `NEXT_PUBLIC_SITE_URL` for background jobs** before it causes the same "nothing fired, no error anywhere" confusion on the next new route. Proposed shape: use `VERCEL_URL` (Vercel's own automatically-provided current-deployment URL) for internal job-to-job calls, but keep `postback_url` (anything an external service like DataForSEO needs to reach) pointed at production regardless — an external service can't reach a protected preview URL no matter what this env var says.
+4. **Re-query `commentary_readiness_status`/`_ms`/`_at`** once more audits have run — zero timeouts confirmed so far, worth checking again before concluding the 50s cap doesn't need raising.
+5. Add `create table if not exists` / `ADD COLUMN IF NOT EXISTS` blocks to `supabase/schema.sql` for everything confirmed live-but-untracked this pass: `monitored_domains`, `prospects.location`, `prospects.gmb_cid`, `audit_data_cache.gmb_data`.
+6. `keywords_total_count` null root cause — confirmed intermittent (some prospects get a real count, others the capped-50 fallback), not yet root-caused.
+7. Store URL normalization on save — a pasted ad-click URL currently surfaces as-is in a client-facing report rather than being cleaned to a bare domain.
+8. Re-check whether the DataForSEO `40501 Invalid Field: location_code` error and `dataforseo-enrichment`'s own ~60s Vercel timeout warning still recur — both flagged early on, neither addressed, both may be stale given how much has changed since.
+9. Danielle's onboarding — blocked on the above being solid; revisit once Phase 3/4 land and a few more real audits have been sent.
 
 ### Infrastructure
-- [ ] Run SQL migrations above in Supabase if not already done
 - [ ] Add `PAGESPEED_SERVICE_URL` as proper Vercel env var (hardcoded fallback works but is untidy)
 
 ### Copy / URLs
 - [ ] AU Calendly URL — replace `https://calendly.com/kliks-hu/30min` in `book.html` and `ad-junkies.html`
-
-### Design — approved but not built
-- [ ] Core Web Vitals cards redesign to `.vital` style (coloured icon box, large coloured value, status label, animated meter bar)
-- [ ] SEO stats to 4-column horizontal bar layout
 
 ### When DataForSEO backlinks subscription is added
 - [ ] Re-enable `backlinks/summary/live` calls in dataforseo routes
@@ -309,34 +433,77 @@ Exact slugs for Miss Lilly's and Cake Mail: check admin dashboard.
 - [ ] Adam GIF re-hosting — profile GIF at Shopify CDN will break when account closes
 - [ ] Re-enable `/lukewood` and `/oh-my-days` routes in `vercel.json` (currently redirect to `/`)
 - [ ] Historical keyword trends — check if `dataforseo_keyword_trends` populates after rescans (plan tier may not support it)
+- [ ] `puppeteer-core`/`@sparticuz/chromium` — already removed this pass, listed here as done for continuity with the prior version of this doc
+
+### GEO / AI-search visibility (separate workstream, not started)
+Kliks doesn't currently appear in any Shopify/digital-marketing-agency roundup an LLM would cite for "recommend an agency in Sydney" (Clutch, GoodFirms, Sortlist, DesignRush, Mayple all list competitors instead), and "Kliks Digital" collides with unrelated same-named agencies in Madrid and the Netherlands. Blog content doesn't move this metric — it's a third-party-citation problem, not a crawl problem.
+- [ ] Create/claim Kliks profiles on Clutch, GoodFirms, Sortlist, DesignRush (Sydney/Shopify categories)
+- [ ] Collect real client reviews on those profiles + Google Business Profile
+- [ ] Add LocalBusiness/ProfessionalService schema to the kliks.com.au homepage (currently only the blog has structured data)
+- [ ] Get 1-2 genuine third-party mentions (guest post, podcast, partner case study)
+- [ ] Consistently pair "Kliks Digital" with "Shopify" + "Australia"/"Sydney" + "Adam Nagy" in external mentions to disambiguate from the Madrid/Netherlands agencies
 
 ---
 
-## 7. Recent Commits (most recent first)
+## 7. Recent Commits
+
+All confirmed live on `origin/main`, most recent first. Verified against `git log` directly rather than carried forward from memory.
+
+**This pass:**
 
 | Hash | Message |
 |---|---|
-| `9f305ea` | audit report: real Organic Keywords count, hide empty Referring Domains |
-| `27b84a8` | audit: fix 404 from retired claude-sonnet-4-20250514 model |
-| `6978326` | audit admin: New Outreach Place ID field, attach to existing audit |
-| `3e48edd` | audit admin: add per-audit reset views action |
-| `7956040` | book.html: single-step form, Web3Forms backend, no Calendly redirect |
-| `37a921f` | book.html: fix marquee logos (Cloudinary), add Space Mono for labels |
-| `2ea574b` | book.html: dynamic months + random spots to match index.html |
-| `248c2a6` | GMB dedicated route, hook anti-convergence, local competitor filter, CSS polish |
+| `e99ad59` | fix(audit): log Supabase write errors in dataforseo-gmb-tasks |
+| `2ffdd80` | feat(audit): Google Business Phase 2 - fetch and store reviews, Q&A, updates |
+| `eedfe56` | fix(admin): stop Audits dashboard reading audit_data_cache as an embed |
+| `d567095` | fix(report): reword two claims that read as measured, aren't |
+| `ffe581b` | chore: remove unused puppeteer-core and @sparticuz/chromium |
+| `edf16f3` | fix(audit): wire prospect.location into competitor geo-targeting |
+| `d5995a7` | fix(report): hide CRO section entirely when the crawl failed |
+| `38b9a81` | fix(admin): surface the real CRO crawl failure reason in admin UI |
+| `b1f0174` | fix(admin): stop Today reading audit_content/outreach_log as embeds |
+| `27517f9` | fix(pipeline): mark monitored_domains converted on any audit creation |
+| `e4b141c` | fix(report): stop fallback copy from impersonating personal AI commentary |
+| `e563adb` | docs: add refreshed audit portal backlog and DataForSEO pricing/GBP concept |
 
-All commits are on `main`, pushed to `heytadeka/kliks-au`.
+**Previous pass:**
+
+| Hash | Message |
+|---|---|
+| `51097bb` | feat(audit): make incomplete commentary visible and recoverable |
+| `bf525fa` | fix(report): three independent template/prompt fixes (items 6, 7, 8) |
+| `ea2ee8a` | fix(report): drop hardcoded 500-visitor fallback, gate revenue figures on real data |
+| `da32a42` | fix(audit): strengthen competitor domain normalisation to catch self-listing |
+| `63731ec` | fix(report): correct ~67x error in revenue-impact formula |
+| `fa49db7` | fix(audit): stop commentary firing into incomplete data on a readiness timeout |
+| `c284119` | fix(audit): lock rescan to prevent overlapping runs on the same prospect |
+| `02bbc3d` | fix(report): unify organic keyword/traffic resolution into one shared function |
+| `479af0d` | fix(report): stop treating a genuine zero score as missing data |
+| `a5d6066` | fix(audit): replace fixed 35s commentary delay with a real readiness check |
+
+Everything before `a5d6066` (Stage Rivers board, Today tab, the original "Crawls Complete: 0" fix, the KLIKS Patisserie work) predates both of the last two passes — treat as stable baseline, check `git log` directly if older context is needed rather than extending this table indefinitely.
 
 ---
 
 ## 8. Known Gotchas
 
+- **`NEXT_PUBLIC_SITE_URL` is a fixed production URL used by every background job's internal fetch**, regardless of which deployment is actually running. A preview deployment testing a brand-new background route will silently write nothing — the fetch 404s against production (where the new route doesn't exist yet), and `waitUntil(fetch(...))` never surfaces a failed fetch anywhere. Only bites on genuinely *new* routes tested via preview (anything already shipped to production works fine either way, since the URL resolves there regardless of which deployment triggered it). Not yet fixed — see §6.
+- **Vercel preview URLs sit behind Vercel's own deployment-protection SSO**, separate from the app's own admin login. This can never be clicked through by an agent, and it also means an external service's webhook (e.g. DataForSEO's postback) can never reach a preview URL — some things can only be verified on production.
+- **PostgREST embedded relations reading 1:1 data are unreliable** — caused the same bug shape twice (the original "Crawls Complete: 0" bug, then Today's Pending badge false-positive), even with a shape-normalising helper in place both times. Root cause not fully pinned down; the fix both times was switching to a direct bulk query (`.in(prospect_id)`, join in JS) rather than trying to make the embed reliable. A sweep this pass found no more embedded relations left anywhere in the app — don't reintroduce the pattern.
+- **The single most recurring bug shape across recent work: the same number computed in more than one place, independently, silently drifting apart.** The organic traffic/keyword resolver, the revenue formula (drifted ~67x), and GMB competitor self-exclusion normalisation were all instances of this. Any value shown in more than one place should go through one shared function, not be recomputed per call site.
+- **The rescan lock prevents new overlapping runs, it does not retroactively fix data already corrupted by a pre-lock race.** `cake-in-a-box` was abandoned rather than debugged for this reason — cheaper to delete and recreate under a different name than untangle interleaved writes.
+- **DataForSEO `task_post` endpoints are async and don't publish a fixed turnaround**: standard priority up to 45 minutes, high priority (paid extra) about a minute, via a `postback_url` webhook DataForSEO calls when done (gzip-compressed POST body, 10s response deadline or it falls back to the polled `tasks_ready` list). No built-in signature scheme — auth via a custom secret in the postback URL's query string, not the Supabase service role key.
+- **No output beats output that's wrong or misleading** — the throughline of nearly every fix this pass. Missing data should hide its section or suppress its line, never render a plausible-looking fallback, and especially never one that reads as personally written when it wasn't.
 - **Vercel stdout buffering:** deploy output freezes after "Building..." — deploy may already be done. Check with `vercel inspect <url>` rather than killing the process.
 - **npx concurrency.lock:** if a deploy process is killed, subsequent `npx vercel` calls may hang on a stale lock at `/tmp/npm-cache-audit/_npx/*/concurrency.lock`. Fix: `find /tmp/npm-cache-audit/_npx -name "concurrency.lock" -delete`
-- **`SUPABASE_SERVICE_ROLE_KEY` is Sensitive:** pulling env via CLI returns empty string. Can't curl Supabase admin endpoints in dev without knowing the key.
-- **Vercel function logs:** `waitUntil` background jobs complete after the HTTP response, so Vercel logs for them appear in a separate "background" log entry. They may not appear at all in the response trace.
-- **`generate-commentary` returns 200 immediately** but the AI call runs async. Check `audit_content.ai_seo_commentary` in Supabase (or the report page) to confirm it actually ran.
-- **Existing audits won't show real Organic Keywords count** until they're rescanned — `keywords_total_count` isn't populated in older `dataforseo_overview` records.
+- **`git push` can hang silently** on a macOS Keychain credential prompt that never surfaces in a non-interactive session. If a push hangs with no output, kill it (`pkill -f "git push"`, `pkill -f "git-remote-https"`, `pkill -f "git-credential-osxkeychain"`) and retry. Confirmed this pass that it can take more than one retry — don't assume the first retry succeeding is guaranteed, check `git status`/`git log origin/main..HEAD` after each attempt rather than trusting exit code alone if the command was backgrounded.
+- **`SUPABASE_SERVICE_ROLE_KEY` is Sensitive:** pulling env via CLI returns empty string. Can't curl Supabase admin endpoints in dev without knowing the key. Never attempt to work around this.
+- **Vercel log retention is short and volume-sensitive, not just time-based.** A specific background-job log line can rotate out within minutes on this project. Prefer a persisted DB column over a log line for anything you'll need to check later — this is why `commentary_readiness_*` and the various `gmb_*_status`/`_fetched_at` columns exist as columns rather than just console output.
+- **`waitUntil` background jobs complete after the HTTP response** — Vercel logs for them appear in a separate "background" log entry and may not appear at all in the response trace.
+- **`generate-commentary` returns 200 immediately** but the AI call runs async. Check `audit_content.ai_opportunity_commentary` in Supabase, or the Today tab's Pending badge, to confirm it actually ran — don't infer success from the 200.
+- **Existing audits won't show a real Organic Keywords count** until they're rescanned — `keywords_total_count` isn't populated in older `dataforseo_overview` records.
+- **The `lib/supabase.ts` Supabase client is untyped** (`SupabaseClient`, no generated `Database` type). A new column that hasn't been migrated yet will never cause a TypeScript error — it'll compile fine and only fail (or silently no-op, depending on whether the call site checks `{ error }`) at runtime. Don't take a clean `tsc` as proof a schema-dependent change actually works end-to-end. Check the write side explicitly logs `{ error }` too — found and fixed one call site this pass (`dataforseo-gmb-tasks`) that didn't.
+- **No credentials, ever.** Standing rule across every session on this project: never log into the admin dashboard, never attempt to obtain or work around `SUPABASE_SERVICE_ROLE_KEY`. Verification that needs the live admin UI or a live DB query has to go through Adam — say so plainly rather than guessing at what a screen would show.
 
 ---
 
@@ -344,4 +511,4 @@ All commits are on `main`, pushed to `heytadeka/kliks-au`.
 
 **Adam Nagy** — `adam.nagy.mm@gmail.com` / `wearekliks@gmail.com`
 Founder, Kliks Digital. Not a full-stack dev. Can push to git, edit Supabase SQL, use Vercel dashboard.
-Communication style: direct, short, no fluff. Hyphens not em dashes. No bullet-point copy.
+Communication style: direct, short, no fluff. Hyphens not em dashes. No bullet-point copy. Sends tightly-scoped, single-purpose requests — one bug or one feature per message, often with an explicit build order and an explicit instruction to stop and report back rather than guess when a diagnosis is ambiguous. Diagnose-first: expects a confirmed root cause (not a plausible one) before a fix is proposed, and expects "propose before building" to mean an actual stop, not a formality.
