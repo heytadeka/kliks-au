@@ -129,6 +129,22 @@ function cleanDomain(d: string): string {
   return out
 }
 
+// -webkit-line-clamp truncates by line/pixel boundary, not word boundary -
+// it can cut mid-word (confirmed on a real review card: "so rushed ho…").
+// This does the actual truncation in JS instead, on a real word boundary,
+// before line-clamp ever gets a chance to clip anything. Character count is
+// an estimate for a ~3-line review card at the current grid width/font size
+// (13px, 1.6 line-height, 3-column grid) - line-clamp stays on as a safety
+// net in case that estimate runs long on a narrower viewport.
+const REVIEW_TEXT_MAX_CHARS = 150
+function truncateReviewText(text: string, maxLen: number = REVIEW_TEXT_MAX_CHARS): string {
+  if (text.length <= maxLen) return text
+  const sliced = text.slice(0, maxLen)
+  const lastSpace = sliced.lastIndexOf(' ')
+  const trimmed = lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced
+  return `${trimmed}…`
+}
+
 function AdamsTake({ text }: { text?: string | null }) {
   if (!text) return null
   return (
@@ -887,7 +903,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                                 color: S.muted, fontSize: 13, lineHeight: 1.6, margin: '0 0 10px',
                                 display: '-webkit-box', WebkitBoxOrient: 'vertical' as const, WebkitLineClamp: 3, overflow: 'hidden',
                               }}>
-                                {r.review_text}
+                                {truncateReviewText(r.review_text)}
                               </p>
                             )}
                             <span style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{r.time_ago}</span>
