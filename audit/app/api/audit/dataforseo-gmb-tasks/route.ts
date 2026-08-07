@@ -72,13 +72,14 @@ export async function POST(req: NextRequest) {
   const placeId = await waitForPlaceId(prospect_id)
 
   if (!placeId) {
-    await supabaseAdmin
+    const { error: noPlaceIdError } = await supabaseAdmin
       .from('audit_data_cache')
       .upsert({
         prospect_id,
         gmb_reviews_status: 'no_place_id',
         gmb_updates_status: 'no_place_id',
       }, { onConflict: 'prospect_id' })
+    if (noPlaceIdError) console.error('[dataforseo-gmb-tasks] Supabase write error (no_place_id):', JSON.stringify(noPlaceIdError))
     return NextResponse.json({ success: true, fired: false, reason: 'no_place_id' })
   }
 
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
     }),
   ])
 
-  await supabaseAdmin
+  const { error: fireError } = await supabaseAdmin
     .from('audit_data_cache')
     .upsert({
       prospect_id,
@@ -117,6 +118,8 @@ export async function POST(req: NextRequest) {
       gmb_updates_status: updates.ok ? 'pending' : 'failed',
       gmb_updates_task_id: updates.taskId,
     }, { onConflict: 'prospect_id' })
+  if (fireError) console.error('[dataforseo-gmb-tasks] Supabase write error (post-fire):', JSON.stringify(fireError))
+  else console.log('[dataforseo-gmb-tasks] stored, reviews:', reviews.ok, 'updates:', updates.ok)
 
   return NextResponse.json({ success: true, fired: true, reviews: reviews.ok, updates: updates.ok })
 }
