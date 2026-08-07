@@ -81,8 +81,12 @@ export async function POST(req: NextRequest) {
 
   // Fire all background jobs independently.
   // dataforseo-core: overview, keywords, SERP competitors, content gap (~25-30s)
-  // dataforseo-enrichment: fires commentary after a 35s delay (buffer for core to finish)
+  // dataforseo-enrichment: polls for pagespeed/crawl/dataforseo-core readiness, then fires commentary
   // dataforseo-gmb: dedicated GMB route with 30s timeout and its own 60s budget
+  // dataforseo-gmb-qa: synchronous Q&A, same shape as dataforseo-gmb
+  // dataforseo-gmb-tasks: fires the async reviews + GBP-updates task_post calls once
+  //   dataforseo-gmb resolves a place_id (polls audit_data_cache internally, see its own
+  //   comments) - postback-driven, not part of the readiness gate, does not block commentary
   // Each dataforseo route fetches the prospect record itself — only prospect_id needed.
   console.log('[create] firing background jobs for prospect_id:', pid, 'base:', base)
   waitUntil(fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }))
@@ -90,6 +94,8 @@ export async function POST(req: NextRequest) {
   waitUntil(fetch(`${base}/api/audit/dataforseo-core`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
   waitUntil(fetch(`${base}/api/audit/dataforseo-enrichment`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
   waitUntil(fetch(`${base}/api/audit/dataforseo-gmb`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
+  waitUntil(fetch(`${base}/api/audit/dataforseo-gmb-qa`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
+  waitUntil(fetch(`${base}/api/audit/dataforseo-gmb-tasks`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
   waitUntil(fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, niche, store_url }) }))
   waitUntil(fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, brand_name, store_url }) }))
 

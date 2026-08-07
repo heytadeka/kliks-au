@@ -113,3 +113,32 @@ on conflict do nothing;
 insert into audit_data_cache (prospect_id)
 select id from prospects where slug = 'test-brand'
 on conflict do nothing;
+
+-- Google Business expansion: reviews, Q&A, GBP posting activity (added for
+-- the local-first reframe - these prospects are local businesses that
+-- happen to have a store, not stores that happen to be local). Reviews and
+-- updates are fetched async via DataForSEO task_post + postback_url, so
+-- each gets its own _status/_task_id/_fetched_at trio to track an in-flight
+-- task independent of whether it has landed yet - same shape as
+-- commentary_readiness_status/_ms/_at below, reused rather than inventing a
+-- new one. Q&A is synchronous (task_get not required), so it only needs a
+-- fetched_at timestamp, same as pagespeed_fetched_at/crawled_at.
+-- ai_gmb_commentary is unused until the AI pattern-finding phase of this
+-- bundle is built, added now so this is the only migration this bundle
+-- needs. Run this block in Supabase SQL editor if upgrading an existing
+-- database:
+--
+-- ALTER TABLE audit_data_cache
+--   ADD COLUMN IF NOT EXISTS gmb_reviews jsonb,
+--   ADD COLUMN IF NOT EXISTS gmb_reviews_status text,
+--   ADD COLUMN IF NOT EXISTS gmb_reviews_task_id text,
+--   ADD COLUMN IF NOT EXISTS gmb_reviews_fetched_at timestamptz,
+--   ADD COLUMN IF NOT EXISTS gmb_qa jsonb,
+--   ADD COLUMN IF NOT EXISTS gmb_qa_fetched_at timestamptz,
+--   ADD COLUMN IF NOT EXISTS gmb_updates jsonb,
+--   ADD COLUMN IF NOT EXISTS gmb_updates_status text,
+--   ADD COLUMN IF NOT EXISTS gmb_updates_task_id text,
+--   ADD COLUMN IF NOT EXISTS gmb_updates_fetched_at timestamptz;
+--
+-- ALTER TABLE audit_content
+--   ADD COLUMN IF NOT EXISTS ai_gmb_commentary text;

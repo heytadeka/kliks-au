@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { buildGmbKeyword } from '@/lib/gmb-keyword'
 
 export const maxDuration = 60
 export const preferredRegion = 'syd1'
 
 const DATAFORSEO_BASE = 'https://api.dataforseo.com/v3'
-
-function buildGmbKeyword(gmbId: string | null, brandName: string | null, domain: string): string {
-  if (!gmbId) return brandName ?? domain
-  const trimmed = gmbId.trim()
-  if (trimmed.startsWith('cid:') || trimmed.startsWith('place_id:')) return trimmed
-  if (trimmed.startsWith('ChI')) return `place_id:${trimmed}`
-  return `cid:${trimmed}`
-}
 
 export async function POST(req: NextRequest) {
   const { prospect_id } = await req.json()

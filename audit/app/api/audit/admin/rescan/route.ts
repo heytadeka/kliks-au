@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
   // dataforseo-enrichment: polls audit_data_cache until pagespeed/crawl/dataforseo-core
   // have all written, then fires commentary - see that route for details.
   // dataforseo-gmb: dedicated GMB route with 30s timeout and its own 60s budget
+  // dataforseo-gmb-qa / dataforseo-gmb-tasks: Google Business reviews/Q&A/updates -
+  //   see create/route.ts's fan-out comment, same routes, same reasoning
   // Each route fetches the prospect record itself — only prospect_id needed in the payload.
   // generate-commentary clears rescan_locked_at when it finishes, success or failure -
   // that's what actually releases this lock, not a timer here.
@@ -67,6 +69,8 @@ export async function POST(req: NextRequest) {
   waitUntil(fetch(`${base}/api/audit/dataforseo-core`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id }) }))
   waitUntil(fetch(`${base}/api/audit/dataforseo-enrichment`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id }) }))
   waitUntil(fetch(`${base}/api/audit/dataforseo-gmb`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id }) }))
+  waitUntil(fetch(`${base}/api/audit/dataforseo-gmb-qa`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id }) }))
+  waitUntil(fetch(`${base}/api/audit/dataforseo-gmb-tasks`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id }) }))
   waitUntil(fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id, niche: prospect.niche, store_url: prospect.store_url }) }))
   waitUntil(fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id, brand_name: prospect.brand_name, store_url: prospect.store_url }) }))
 
