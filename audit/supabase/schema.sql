@@ -142,3 +142,13 @@ on conflict do nothing;
 --
 -- ALTER TABLE audit_content
 --   ADD COLUMN IF NOT EXISTS ai_gmb_commentary text;
+
+-- Google Business Phase 4 (AI commentary): ai_gmb_commentary was declared
+-- text above, but this phase stores two distinct generated fields
+-- (rating_framing, review_patterns) as one object - jsonb, not text. Column
+-- is unwritten by any code as of this migration, so this is a safe type
+-- change with no existing data to convert. Run this block in Supabase SQL
+-- editor if upgrading an existing database:
+--
+-- ALTER TABLE audit_content
+--   ALTER COLUMN ai_gmb_commentary TYPE jsonb USING ai_gmb_commentary::jsonb;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { waitUntil } from '@vercel/functions'
 import { verifyWebhookSecret, getProspectIdFromPostback, parsePostbackBody } from '@/lib/dataforseo-postback'
 
 export const maxDuration = 30
@@ -9,14 +10,15 @@ export const maxDuration = 30
 // dataforseo-gmb-tasks/route.ts for why place_id is resolved once there and
 // reused, rather than this route re-resolving its own identifier). Must
 // respond well within DataForSEO's 10s postback deadline, so this only
-// parses and stores - nothing else happens inline.
+// parses, stores, and fires the commentary trigger without waiting on it -
+// nothing else happens inline.
 //
-// Phase 4 hook point: once real review data lands here, this is where a
-// separate, additive AI commentary call for the Google Business section
-// gets triggered (waitUntil, non-blocking) - reviews are the long-pole
+// Once real review data lands, this fires the separate, additive AI
+// commentary call for the Google Business section (waitUntil, non-blocking,
+// never part of the commentary readiness gate). Reviews are the long-pole
 // item in this bundle, so by the time this fires, gmb_qa (synchronous,
 // arrives earlier) is already sitting in audit_data_cache ready to read
-// into the same prompt. Not built yet - Phase 2 is fetch-and-store only.
+// into the same prompt.
 export async function POST(req: NextRequest) {
   const prospect_id = getProspectIdFromPostback(req)
   console.log('[dataforseo-gmb-reviews-webhook] hit — prospect_id:', prospect_id ?? 'missing')
@@ -50,7 +52,18 @@ export async function POST(req: NextRequest) {
   if (dbError) console.error('[dataforseo-gmb-reviews-webhook] Supabase write error:', JSON.stringify(dbError))
   else console.log('[dataforseo-gmb-reviews-webhook] stored, count:', items?.length ?? 0)
 
-  // Phase 4: trigger the separate GBP-commentary generation here once built.
+  if (items && items.length > 0) {
+    const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://kliks.com.au'
+    waitUntil(
+      fetch(`${base}/api/audit/generate-gmb-commentary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-service-key': process.env.SUPABASE_SERVICE_ROLE_KEY! },
+        body: JSON.stringify({ prospect_id }),
+      })
+        .then(r => console.log('[dataforseo-gmb-reviews-webhook] gmb commentary triggered, status:', r.status))
+        .catch((e: any) => console.error('[dataforseo-gmb-reviews-webhook] gmb commentary trigger failed:', e.message))
+    )
+  }
 
   return NextResponse.json({ success: true })
 }

@@ -180,6 +180,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const metaAds = cache?.meta_ads
   const scoreDescs = content?.score_descriptions as Record<string, string> | null
   const hookHeadline = content?.hook_headline as { line1: string; line2: string; subtext?: string } | null
+  const gmbCommentary = content?.ai_gmb_commentary as { rating_framing: string | null; review_patterns: string | null } | null
 
   const auditDate = new Date(prospect.created_at)
   const issuedMonth = auditDate.toLocaleString('en-US', { month: 'short' }).toUpperCase()
@@ -812,7 +813,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
 
               {gmbData.found ? (
                 <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: gmbCommentary?.rating_framing ? '1fr 1fr' : '1fr', gap: 20 }}>
                   {/* Left, profile stats */}
                   <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
                     <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 48, fontWeight: 700, color: S.white, lineHeight: 1 }}>
@@ -846,30 +847,20 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                     </div>
                   </div>
 
-                  {/* Right, benchmark context */}
-                  <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <p style={{ color: S.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
-                      Stores with 4.5+ stars convert 28% better than those below 4.0.{' '}
-                      {gmbData.rating != null
-                        ? <>Your rating of <strong style={{ color: S.white }}>{gmbData.rating.toFixed(1)}</strong> puts you {gmbData.rating >= 4.0 ? 'above' : 'below'} the ecommerce average.</>
-                        : 'Connect your Google account for precise conversion benchmarks.'
-                      }
-                    </p>
-                    {gmbData.review_count != null && gmbData.review_count < 50 && (
-                      <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.15)', borderLeft: `3px solid ${S.orange}`, borderRadius: 8, padding: '12px 16px' }}>
-                        <p style={{ color: S.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-                          Fewer than 50 reviews limits your local search visibility. Most category leaders have 100+.
-                        </p>
-                      </div>
-                    )}
-                    {gmbData.review_count != null && gmbData.review_count >= 100 && (
-                      <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.15)', borderLeft: '3px solid #22c55e', borderRadius: 8, padding: '12px 16px' }}>
-                        <p style={{ color: S.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-                          Strong review count. This is a trust signal worth highlighting in your ads.
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  {/* Right, AI rating framing - honest, per-prospect, generated from the
+                      real rating and review count (see generate-gmb-commentary/route.ts).
+                      Replaces the old static "4.5+ stars convert 28% better" line, which
+                      cited an unsourced percentage and contradicted itself (stated 4.5 as
+                      the bar, then called a 4.3 "above average"). Renders nothing, not a
+                      placeholder, when not yet generated - the grid collapses to one
+                      column via gridTemplateColumns above so there's no empty box. */}
+                  {gmbCommentary?.rating_framing && (
+                    <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <p style={{ color: S.muted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+                        {gmbCommentary.rating_framing}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Reviews */}
@@ -887,6 +878,14 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         {gmbData.rating != null ? gmbData.rating.toFixed(1) : '-'} average
                         {gmbData.review_count != null ? ` from ${gmbData.review_count.toLocaleString()} reviews` : ''}
                       </p>
+                      {/* AI-synthesized pattern across the review sample, not a specific review -
+                          see generate-gmb-commentary/route.ts's guardrails. Renders nothing when
+                          not yet generated or when no genuine pattern emerged, no placeholder. */}
+                      {gmbCommentary?.review_patterns && (
+                        <p style={{ color: S.white, fontSize: 14, lineHeight: 1.6, marginBottom: 16, fontStyle: 'italic' }}>
+                          {gmbCommentary.review_patterns}
+                        </p>
+                      )}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
                         {topReviews.map((r: any, i: number) => (
                           <div key={i} style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 20 }}>
