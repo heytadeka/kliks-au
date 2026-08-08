@@ -125,7 +125,7 @@ Respond with only valid JSON. No markdown. No explanation.`
   }
 
   try {
-    let attempt = await generateOnce()
+    const attempt = await generateOnce()
 
     // Guardrail check (second layer, after generation). Each field checked
     // independently against the actual review sample. Any failure on either
