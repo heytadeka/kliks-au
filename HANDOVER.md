@@ -4,13 +4,16 @@
 
 ---
 
-## State as of 2026-08-07
+## State as of 2026-08-09
 
-- **Everything is pushed and live on `origin/main`.** No local-only commits outstanding. Two work arcs since the last stale banner: (1) a full pass of audit-report data-integrity and admin-portal reliability fixes, and (2) the start of a Google Business features bundle (Phase 1-2 shipped, Phase 3-4 not started). Full commit list in §7, full architecture detail in §4.
-- **Both outstanding schema migrations from the old banner are now confirmed applied**: `prospects.rescan_locked_at` and `audit_data_cache.commentary_readiness_status`/`_ms`/`_at` (confirmed by real query results — 9 instrumented runs recorded, worst case 38s against the 50s readiness cap, zero timeouts). A third migration was added and confirmed applied this pass — the Google Business columns, see §4.
+- **Everything committed is pushed and live on `origin/main`.** No local-only commits outstanding. The Google Business bundle is now fully shipped end to end: Phase 1 (diagnosis), Phase 2 (fetch/store), Phase 3 (render reviews/Q&A/updates in the report), and Phase 4 (AI commentary on reviews + honest rating framing, hardcoded copy fully removed) are all built and pushed. Full commit list in §7, full architecture detail in §4.
+- **One thing genuinely unverified right now: whether Phase 4's schema migration (`ai_gmb_commentary` text → jsonb) has actually been run.** Unlike every other migration this bundle needed, there's no confirmation on record that this one was applied, or that a real `generate-gmb-commentary` run has been checked against production. Don't assume it works end to end until that's confirmed — see §6 item 2.
+- **There is currently an uncommitted, temporary diagnostic route sitting in the working tree**: `audit/app/api/diag-ai-visibility-temp/route.ts`. Built to fire live `ai_optimization/llm_responses` and `serp/google/organic` (AI Overview) calls for a pure-discovery task, deployed to preview, never committed on purpose. Delete it once that diagnostic is done being used — see §6 item 1. If you're reading this and don't know what it is, it's safe to delete; nothing else depends on it.
 - **Recurring bug shape found and fixed twice: PostgREST embedded relations reading 1:1 data are unreliable.** First seen in the original "Crawls Complete: 0" bug (predates both recent sessions, patched at the time with a shape-normalising `getCache()` helper). Resurfaced as a false-positive Pending badge on Today — same shape, same helper pattern, still broke. Both Today and the Audits dashboard are now on a direct bulk-query pattern instead; a sweep found no more embedded relations left anywhere in the app. Don't reintroduce the pattern — see §8.
 - **`NEXT_PUBLIC_SITE_URL` is hardcoded to production and used for every background job's internal fetch, regardless of which deployment is actually running.** This means a preview deployment can never exercise its own new background-job routes — only routes already shipped to production. Confirmed as the reason a fresh Google Business Phase 2 test on preview silently wrote nothing. Not yet fixed — see §6.
-- Test prospects still worth knowing about: **flo-viennoiserie** (genuine Google bot-protection 403 on its CRO crawl, confirmed externally — not a code bug, good prospect to check the CRO-failure UI against), **bakealicious-by-gabriela** (Google Business Phase 2 end-to-end test case — real reviews, Q&A, and GBP updates all landed correctly on production), **cake-in-a-box** (abandoned and left deleted after a pre-lock concurrent-rescan corrupted its data — cheaper to delete than untangle, don't recreate it as a lookalike name).
+- **Vercel CLI deploys intermittently fail with a bare `"Not authorized"` before any upload progress shows.** Happened three separate times this pass, on a CLI session that had already deployed successfully many times before and after. `vercel whoami` confirmed auth was never actually broken - a plain retry succeeded every single time, no re-login or other fix needed. Don't spend time diagnosing this one, just retry once. See §8.
+- **`npx tsc --noEmit` passing is not proof `next build` will succeed.** A real `prefer-const` ESLint error shipped past a clean `tsc --noEmit` check this pass and only surfaced as a failed Vercel deploy. `npm run build` locally (the full build, not just the type check) is now the standard pre-deploy check on this project - see §8.
+- Test prospects still worth knowing about: **flo-viennoiserie** (genuine Google bot-protection 403 on its CRO crawl, confirmed externally — not a code bug, good prospect to check the CRO-failure UI against), **bakealicious-by-gabriela** (the Google Business bundle's test case throughout — real reviews at depth 100, Q&A, and GBP updates all confirmed landing on production for Phase 2; also the source of the real data shapes Phase 3 was built against and the review sample Phase 4's guardrails were checked against), **cake-in-a-box** (abandoned and left deleted after a pre-lock concurrent-rescan corrupted its data — cheaper to delete than untangle, don't recreate it as a lookalike name).
 
 ---
 
@@ -212,7 +215,7 @@ export const ANTHROPIC_MODEL = 'claude-sonnet-4-5'
 ```
 Both call sites in `generate-commentary/route.ts` import `ANTHROPIC_MODEL`. If Anthropic retires a model, update only `lib/config.ts`. The previous model `claude-sonnet-4-20250514` was retired and caused 404s — that's why it's now centralised.
 
-### Google Business expansion (Phase 1-2 shipped, Phase 3-4 not started)
+### Google Business expansion (all four phases shipped)
 Strategic direction: these prospects are local businesses that happen to have a store, not the reverse — Sydney bakeries live on local search and word of mouth. Reviews especially are the one part of the audit a prospect couldn't easily produce themselves (nobody reads their own 300 reviews looking for patterns).
 
 **Identifier resolution.** `buildGmbKeyword()` (in `lib/gmb-keyword.ts`, extracted from the GMB route) builds a `keyword`/`cid`/`place_id` parameter from the prospect's optional "Google Business ID" form field (`gmb_cid` — accepts a raw Place ID, a raw CID, or is left blank to fall back to brand-name search). The GMB lookup route (`dataforseo-gmb`) resolves and stores its own `place_id` in `gmb_data.place_id` regardless of which path found the match — this is reused by reviews/updates rather than each resolving independently, because a generic local-business name can match a *different* business per independent search, and reviews/updates need to describe the same business the GMB card describes. If GMB comes back not-found (or hasn't landed within a short wait window), reviews/updates are skipped entirely rather than falling back to their own brand-name match — no reviews beats someone else's reviews.
@@ -225,14 +228,19 @@ Strategic direction: these prospects are local businesses that happen to have a 
 
 **None of this joins the commentary readiness gate.** Deliberate, carried through the whole build — the gate still only waits on PageSpeed, crawl, and DataForSEO core.
 
-**Verified end to end on production**: `bakealicious-by-gabriela` — real reviews (100 returned), Q&A, and GBP updates all landed correctly. (Preview deployments cannot verify this feature at all — see the `NEXT_PUBLIC_SITE_URL` gotcha in §8; a real postback also has to reach a real public URL, which a Vercel-protected preview URL structurally can't be.)
+**Phase 2 verified end to end on production**: `bakealicious-by-gabriela` — real reviews (100 returned), Q&A, and GBP updates all landed correctly. (Preview deployments cannot verify this feature at all — see the `NEXT_PUBLIC_SITE_URL` gotcha in §8; a real postback also has to reach a real public URL, which a Vercel-protected preview URL structurally can't be.)
 
-**Phase 3 (render in the report) is not started.**
+**Phase 3 (render in the report) — shipped.** Three new subsections render below the existing GBP profile card (`ReportClient.tsx`, still nested inside `gmbData.found`):
+- **Recent reviews** — header stat (average rating + total count, sourced from `gmbData.rating`/`gmbData.review_count`, i.e. Google's own aggregate from the Phase 1 lookup, deliberately *not* `gmb_reviews.length` which is just the fetch-depth cap of 100). Top 3 by `timestamp`, no rating filtering shown as-is. Review text truncated in JS (`truncateReviewText()`, ~150 chars, trims back to the last full word before appending `…`) rather than relying on CSS `-webkit-line-clamp` alone — confirmed on real data that line-clamp cuts mid-word, since it truncates by pixel/line boundary, not word boundary. Line-clamp stays on as a secondary safety net for narrower viewports.
+- **Common questions** — up to 5 answered Q&A pairs by `timestamp`, unanswered questions filtered out entirely.
+- **Recent activity** — up to 3 GBP posts by `timestamp`, image shown only when `images_url` is present.
+- All three hide entirely (no placeholder) when their underlying status/array says there's nothing to show — same principle as everywhere else. Confirmed the real DataForSEO response shapes for all three against `bakealicious-by-gabriela` before writing any render logic (reviews: `rating.value`, `time_ago`, `timestamp`, `review_text`, `owner_answer`, `profile_name`, `profile_image_url`; Q&A: `question_text`, `timestamp`, `items[].answer_text`/`timestamp`; updates: `post_text`, `post_date`, `timestamp`, `images_url`, `links`).
 
-**Phase 4 (AI commentary on reviews/Q&A) is not started. Design decisions already locked in, apply when building:**
-- Triggered by the **reviews** webhook specifically (not Q&A, which arrives earlier and synchronously) — reviews are the long-pole item, so by the time that webhook fires, Q&A is already sitting in `audit_data_cache` ready to read into the same prompt. A separate, additive Anthropic call (`ai_gmb_commentary` on `audit_content`, column already added), decoupled from the main commentary call — same precedent as the existing main + priority-list two-call pattern in `generate-commentary/route.ts`. This is what solves the timing mismatch: main commentary generates in seconds, reviews can take up to a minute even at high priority, and the two were never going to land together.
-- **Guardrail, confirmed necessary against real data**: the `bakealicious-by-gabriela` review set contained a live public dispute (a detailed delivery-mixup complaint with a long owner rebuttal). Commentary must synthesize patterns only — e.g. "delivery timing is a recurring theme" — and must never restate or summarize a specific negative review, quote a dispute, or name a reviewer. Surfacing a specific complaint back at the business in their own cold-outreach report would land very badly.
-- Also replace the hardcoded GBP copy at `ReportClient.tsx`'s Google Business section (confirmed hardcoded template text this session, not AI-generated — every store with rating ≥4.0 and ≥100 reviews sees identical wording) as part of this build. Its logic is also slightly muddled — states 4.5+ as the bar, then calls a 4.3 rating "above average" in the same breath.
+**Phase 4 (AI commentary on reviews, honest rating framing) — shipped. Not yet confirmed working end to end — see the migration note in the State-as-of banner above and §6 item 2.**
+- Triggered by the **reviews** webhook specifically (not Q&A, which arrives earlier and synchronously) — by the time that webhook fires, Q&A is already sitting in `audit_data_cache` ready to read into the same prompt. `generate-gmb-commentary/route.ts` is a separate, additive Anthropic call (`ai_gmb_commentary` on `audit_content`), decoupled from the main commentary call — same precedent as the existing main + priority-list two-call pattern in `generate-commentary/route.ts`. Sample size: 25 most recent reviews (`REVIEW_SAMPLE_SIZE`), rating + text only.
+- **Two-layer guardrail against surfacing a specific review or reviewer.** Input layer: `profile_name`, `profile_image_url`, and `owner_answer` are stripped before the prompt is ever built - the model structurally never sees them. Output layer (`lib/gmb-commentary-guardrails.ts`): after generation, both output fields (`rating_framing`, `review_patterns`) are scanned for an 8+ consecutive word run matching any source review verbatim, and for any reviewer name leaking through anyway. One regeneration on failure; whichever field still fails after that is suppressed (stored `null`), never retried indefinitely or stored risky. Verified the guardrail functions actually catch a deliberately bad case (a sentence restating a review, a sentence naming a reviewer) before wiring them into the real route - this was a real, necessary check, not just plausible-looking logic. Real-data confirmation this was needed at all: the `bakealicious-by-gabriela` review set contained a live public dispute (a detailed delivery-mixup complaint with a long owner rebuttal).
+- **Schema**: `ai_gmb_commentary` had to move from `text` (how it was declared in the Phase 2 migration) to `jsonb`, since this phase stores two fields (`rating_framing`, `review_patterns`) as one object. New migration block in `supabase/schema.sql` - **not confirmed run**, see §6.
+- Replaced the hardcoded GBP copy at `ReportClient.tsx`'s Google Business section entirely, not just conditionally overridden - confirmed via grep that none of the old strings remain anywhere in the file. That copy (confirmed hardcoded template text, not AI-generated - every store with rating ≥4.0 and ≥100 reviews saw identical wording) also had a self-contradicting logic bug: stated 4.5+ as the bar, then called a 4.3 rating "above average" in the same breath. `rating_framing` renders only when generated (the profile-stats grid collapses to one column when it's absent, so there's no empty box); the raw rating number and review count are not AI-dependent and always render regardless. `review_patterns` renders as an intro line above Recent Reviews, same hide-when-null rule.
 - `ai_gmb_commentary` does **not** join `isCommentaryPending` — same reasoning as the other AdamsTake-style commentary fields: it should degrade honestly (section doesn't render) rather than needing a disguised-fallback guard.
 
 ### Supabase schema
@@ -241,7 +249,7 @@ Strategic direction: these prospects are local businesses that happen to have a 
 - `slug` (UNIQUE), `brand_name`, `store_url`, `prospect_email`, `prospect_name`, `niche`, `cta_link`, `created_at`, `last_accessed_at`, `access_count`, `is_active`, `rescan_locked_at` (timestamptz, nullable — confirmed migrated), `location`, `gmb_cid` — **the latter two are live in the DB and used by the app but are not tracked anywhere in `supabase/schema.sql`**, same gap as `monitored_domains` below. Confirmed still missing this pass; worth adding alongside it.
 
 **`audit_content`**
-- `prospect_id` FK, legacy section fields, `ai_performance_commentary`, `ai_cro_commentary`, `ai_seo_commentary`, `ai_opportunity_commentary`, `ai_closing_commentary`, `ai_priority_list` JSONB, `hook_headline` JSONB, `score_descriptions` JSONB, `ai_gmb_commentary` (added this pass, unused until Phase 4 of the Google Business bundle is built)
+- `prospect_id` FK, legacy section fields, `ai_performance_commentary`, `ai_cro_commentary`, `ai_seo_commentary`, `ai_opportunity_commentary`, `ai_closing_commentary`, `ai_priority_list` JSONB, `hook_headline` JSONB, `score_descriptions` JSONB, `ai_gmb_commentary` JSONB (`{ rating_framing, review_patterns }` — declared `text` in the Phase 2 migration, changed to `jsonb` in a later migration block once Phase 4 needed two fields — **schema change not confirmed run**, see §6)
 
 **`audit_data_cache`**
 - `prospect_id` FK (UNIQUE), `pagespeed_mobile`, `pagespeed_desktop`, `dataforseo_overview` JSONB (includes `keywords_total_count` — see "DataForSEO notes"), `dataforseo_keywords`, `dataforseo_gaps`, `dataforseo_competitors`, `dataforseo_serp_features` JSONB, `dataforseo_content_gap` JSONB, `dataforseo_keyword_trends` JSONB, `backlinks_summary` JSONB (always null — no subscription), `google_ads_planner`, `meta_ads`, `cro_checklist`, `gmb_data` JSONB (**also live but untracked in schema.sql**, see above), `crawled_at`, `pagespeed_fetched_at`, `commentary_readiness_status` / `_ms` / `_at` (text/integer/timestamptz — **confirmed applied**, no longer a no-op), and added this pass: `gmb_reviews` / `gmb_reviews_status` / `gmb_reviews_task_id` / `gmb_reviews_fetched_at`, `gmb_qa` / `gmb_qa_fetched_at`, `gmb_updates` / `gmb_updates_status` / `gmb_updates_task_id` / `gmb_updates_fetched_at` — **confirmed applied**
@@ -261,8 +269,9 @@ Test record: slug=`test-brand`, email=`wearekliks@gmail.com`
 The base `create table` statements only cover the original columns. Everything added since lives in comment-blocked `ALTER TABLE` sections lower in the file, applied by hand in the Supabase SQL editor (standing convention: hand over exact SQL, never attempt to run it directly). In order:
 1. AI commentary columns (`ai_performance_commentary` etc.) — long since applied.
 2. `prospects.rescan_locked_at` — confirmed applied.
-3. `audit_data_cache.commentary_readiness_status` / `_ms` / `_at` — **confirmed applied this pass** (was drafted-only as of the last banner).
-4. Google Business expansion columns (`gmb_reviews*`, `gmb_qa*`, `gmb_updates*` on `audit_data_cache`, `ai_gmb_commentary` on `audit_content`) — **confirmed applied this pass.**
+3. `audit_data_cache.commentary_readiness_status` / `_ms` / `_at` — confirmed applied.
+4. Google Business Phase 2 columns (`gmb_reviews*`, `gmb_qa*`, `gmb_updates*` on `audit_data_cache`, `ai_gmb_commentary` on `audit_content` as `text`) — confirmed applied.
+5. Google Business Phase 4: `ALTER COLUMN ai_gmb_commentary TYPE jsonb` — **drafted, not confirmed applied.** This is the one outstanding migration as of this writing. `ai_gmb_commentary` was never written to by any code before this block existed, so this is a safe type change with no data to convert whenever it does get run.
 
 Still not in this file's history at all: `monitored_domains`, and `prospects.location` / `prospects.gmb_cid` / `audit_data_cache.gmb_data` (all three live in the DB, used throughout the app, discovered missing from schema.sql while building the Google Business bundle this pass). Worth a single cleanup pass adding `create table if not exists` / `ADD COLUMN IF NOT EXISTS` blocks for all of these, so a fresh DB setup doesn't silently miss them.
 
@@ -300,6 +309,8 @@ const ASSUMED_AOV = 150
 - Competitor domain normalisation (`normalise()` in `dataforseo-core/route.ts`) strips protocol, `www.`, and everything after the first `/`, `?`, or `#` before comparing against the audited domain — strengthened to catch a store listing itself as its own competitor when the store URL had a trailing path or query string.
 - `ranked_keywords` has an explicit `limit: 50`. `total_count` (merged into `dataforseo_overview.keywords_total_count`) is the only source of the true count. **Parked, unresolved**: comes back null intermittently — confirmed happening on some prospects and not others (one got a real 1,950, others got the capped-50 fallback presented as a real count) — root cause not investigated.
 - `maxDuration = 60` on the dataforseo route, longer than the readiness poll's 50s cap (intentional headroom). PageSpeed's own allowance (55s) is close enough to the poll's cap that a slow PageSpeed run is the most likely way a prospect ends up Pending — not yet investigated further given zero confirmed timeouts so far (see readiness-poll note above).
+- **Endpoint audit (discovery pass, no code changes)**: grepped every DataForSEO call site in the codebase — 12 unique endpoints called from 6 files. `business_data/google/*` (My Business Info live, Reviews `task_post`, Q&A live, Updates `task_post`) confirmed as exactly 4 endpoints, no 5th in use anywhere. Backlinks, On-Page, and AI Optimization products confirmed entirely absent from the codebase — never called. `pagespeed/route.ts` calls Google's own PageSpeed Insights API directly, not DataForSEO's `on_page`/lighthouse endpoints, despite living under `/api/audit/`. `keyword-planner/route.ts` also lives under `/api/audit/` but calls the Google Ads API directly (`google-ads-api` package, `customer.keywordPlanIdeas.generateKeywordIdeas`) — not DataForSEO at all. Naming trap: DataForSEO Labs' `serp_competitors` (the primary competitor-discovery path used by `dataforseo-core/route.ts`, see above) is a different product from `competitors_domain`, which this codebase does not use.
+- **AI Overview / LLM-visibility mechanics (documentation-researched; live verification still pending)**: `ai_optimization/llm_responses` has no unified endpoint — it's per-provider (`chat_gpt`, `claude`, `gemini`, `perplexity`), each with its own `.../models` (GET) and `.../live` (POST) under `ai_optimization/{provider}/llm_responses/`. Google's native AI Overview (with real citation data under `ai_overview`/`ai_overview_element.references`) comes back inline within `serp/google/organic/live/advanced` automatically whenever Google decides to show one for that query — it is not a separate call. `serp/ai_summary` is a wholly different, unrelated DataForSEO product: their own LLM synthesis of SERP snippets, requiring a prior organic task id, not Google's AI Overview and not derived from it. A temporary, deliberately uncommitted diagnostic route (`app/api/diag-ai-visibility-temp/route.ts`, deployed to preview) exercises all of this live against `bakealicious-by-gabriela` to confirm the real shapes before any feature design starts — **Adam has not yet pasted back the JSON output; delete the route once he has.**
 
 ### Organic Keywords count (dataforseo-core fix)
 The `ranked_keywords/live` endpoint returns `total_count` (real domain total) and `items` (capped at `limit`, default 50). Fixed by reading `total_count` and merging it as `keywords_total_count` into `dataforseo_overview` before upsert. Only prospects rescanned after this fix landed have it populated — older audits fall back through `resolveOrganicStats()`'s chain.
@@ -323,7 +334,7 @@ Mobile Performance, Desktop Performance, SEO Score, and Accessibility all displa
 3. CRO Score Summary (passed/20, critical issues, warnings, opportunities)
 4. Section — Core Web Vitals (LCP, FCP, CLS, TBT, Speed Index, TTI) + speed/money callout + AI commentary
 5. Section — CRO Checklist (20-point crawl, grouped) + AI commentary — **hidden entirely if the crawl failed**, see "CRO crawl" above
-6. Section — Google Business (rating, review count, category, address, claimed status) — currently hardcoded right-hand commentary, see "Google Business expansion" above for the Phase 4 plan to replace it
+6. Section — Google Business (rating, review count, category, address, claimed status) + AI-generated rating framing, plus Recent reviews / Common questions / Recent activity subsections — all four phases shipped, see "Google Business expansion" above
 7. Section — Ads and Creative (Meta Ad Library)
 8. Section — Ad Strategy (legacy manual, hidden if empty)
 9. Section — SEO Audit (DataForSEO: stats, keywords, Winning/Close/Money buckets, competitor gap, competitors table, content gap, Google Ads Planner) + AI commentary
@@ -408,14 +419,16 @@ Not independently re-verified — treat as approximate and check the admin dashb
 
 ### Priority order (as of this pass)
 1. **Confirm whether Enze, Cake Mail, and Miss Lilly's were actually rescanned** to correct the ~67x revenue-formula error. If not, this is the most urgent remaining item — those reports are live at their URLs and any of those prospects could reopen them.
-2. **Google Business Phase 3 (render) and Phase 4 (AI commentary)** — design decisions already locked in, see §4.
-3. **Fix `NEXT_PUBLIC_SITE_URL` for background jobs** before it causes the same "nothing fired, no error anywhere" confusion on the next new route. Proposed shape: use `VERCEL_URL` (Vercel's own automatically-provided current-deployment URL) for internal job-to-job calls, but keep `postback_url` (anything an external service like DataForSEO needs to reach) pointed at production regardless — an external service can't reach a protected preview URL no matter what this env var says.
-4. **Re-query `commentary_readiness_status`/`_ms`/`_at`** once more audits have run — zero timeouts confirmed so far, worth checking again before concluding the 50s cap doesn't need raising.
-5. Add `create table if not exists` / `ADD COLUMN IF NOT EXISTS` blocks to `supabase/schema.sql` for everything confirmed live-but-untracked this pass: `monitored_domains`, `prospects.location`, `prospects.gmb_cid`, `audit_data_cache.gmb_data`.
-6. `keywords_total_count` null root cause — confirmed intermittent (some prospects get a real count, others the capped-50 fallback), not yet root-caused.
-7. Store URL normalization on save — a pasted ad-click URL currently surfaces as-is in a client-facing report rather than being cleaned to a bare domain.
-8. Re-check whether the DataForSEO `40501 Invalid Field: location_code` error and `dataforseo-enrichment`'s own ~60s Vercel timeout warning still recur — both flagged early on, neither addressed, both may be stale given how much has changed since.
-9. Danielle's onboarding — blocked on the above being solid; revisit once Phase 3/4 land and a few more real audits have been sent.
+2. **Confirm the Phase 4 `ai_gmb_commentary` jsonb migration has actually been run** (`ALTER COLUMN ai_gmb_commentary TYPE jsonb USING ai_gmb_commentary::jsonb`, handed to Adam, not confirmed applied) and verify `generate-gmb-commentary` produces real output end-to-end against production data — without this the GBP rating-framing section will silently stay empty (no output beats wrong output, so it won't error, just never render).
+3. **Get Adam's pasted-back JSON output from the AI-visibility diagnostic route** (`https://kliks-q1rzgp5zr-adams-projects-fc0efc7d.vercel.app/api/diag-ai-visibility-temp`), write up the clean findings report he asked for (raw shapes only, no feature design), then **delete `app/api/diag-ai-visibility-temp/route.ts`** — it's deliberately uncommitted and must never land in git.
+4. **Fix `NEXT_PUBLIC_SITE_URL` for background jobs** before it causes the same "nothing fired, no error anywhere" confusion on the next new route. Proposed shape: use `VERCEL_URL` (Vercel's own automatically-provided current-deployment URL) for internal job-to-job calls, but keep `postback_url` (anything an external service like DataForSEO needs to reach) pointed at production regardless — an external service can't reach a protected preview URL no matter what this env var says.
+5. **Re-query `commentary_readiness_status`/`_ms`/`_at`** once more audits have run — zero timeouts confirmed so far, worth checking again before concluding the 50s cap doesn't need raising.
+6. Add `create table if not exists` / `ADD COLUMN IF NOT EXISTS` blocks to `supabase/schema.sql` for everything confirmed live-but-untracked this pass: `monitored_domains`, `prospects.location`, `prospects.gmb_cid`, `audit_data_cache.gmb_data`.
+7. `keywords_total_count` null root cause — confirmed intermittent (some prospects get a real count, others the capped-50 fallback), not yet root-caused.
+8. Store URL normalization on save — a pasted ad-click URL currently surfaces as-is in a client-facing report rather than being cleaned to a bare domain.
+9. Re-check whether the DataForSEO `40501 Invalid Field: location_code` error and `dataforseo-enrichment`'s own ~60s Vercel timeout warning still recur — both flagged early on, neither addressed, both may be stale given how much has changed since.
+10. Danielle's onboarding — blocked on the above being solid; revisit once the Phase 4 migration is confirmed and a few more real audits have been sent.
+11. Decide whether to add a root-level `CLAUDE.md` so a fresh thread can orient itself without a full HANDOVER.md read — discussed this pass (pointing it at this file plus a short "read this first" map), not yet built, waiting on Adam to confirm he wants it.
 
 ### Infrastructure
 - [ ] Add `PAGESPEED_SERVICE_URL` as proper Vercel env var (hardcoded fallback works but is untidy)
@@ -453,6 +466,15 @@ All confirmed live on `origin/main`, most recent first. Verified against `git lo
 
 | Hash | Message |
 |---|---|
+| `a906a00` | fix(audit): let to const in generate-gmb-commentary (prefer-const) |
+| `cd7d5c5` | feat(report): Google Business Phase 4 - AI commentary on reviews, honest rating framing |
+| `f795d21` | fix(report): truncate GBP review text on a word boundary, not mid-word |
+| `6b8f4e1` | feat(report): Google Business Phase 3 - render reviews, Q&A, updates |
+
+**Previous pass:**
+
+| Hash | Message |
+|---|---|
 | `e99ad59` | fix(audit): log Supabase write errors in dataforseo-gmb-tasks |
 | `2ffdd80` | feat(audit): Google Business Phase 2 - fetch and store reviews, Q&A, updates |
 | `eedfe56` | fix(admin): stop Audits dashboard reading audit_data_cache as an embed |
@@ -466,7 +488,7 @@ All confirmed live on `origin/main`, most recent first. Verified against `git lo
 | `e4b141c` | fix(report): stop fallback copy from impersonating personal AI commentary |
 | `e563adb` | docs: add refreshed audit portal backlog and DataForSEO pricing/GBP concept |
 
-**Previous pass:**
+**Earlier:**
 
 | Hash | Message |
 |---|---|
@@ -481,7 +503,7 @@ All confirmed live on `origin/main`, most recent first. Verified against `git lo
 | `479af0d` | fix(report): stop treating a genuine zero score as missing data |
 | `a5d6066` | fix(audit): replace fixed 35s commentary delay with a real readiness check |
 
-Everything before `a5d6066` (Stage Rivers board, Today tab, the original "Crawls Complete: 0" fix, the KLIKS Patisserie work) predates both of the last two passes — treat as stable baseline, check `git log` directly if older context is needed rather than extending this table indefinitely.
+Everything before `a5d6066` (Stage Rivers board, Today tab, the original "Crawls Complete: 0" fix, the KLIKS Patisserie work) predates all three passes above — treat as stable baseline, check `git log` directly if older context is needed rather than extending this table indefinitely.
 
 ---
 
@@ -504,6 +526,10 @@ Everything before `a5d6066` (Stage Rivers board, Today tab, the original "Crawls
 - **Existing audits won't show a real Organic Keywords count** until they're rescanned — `keywords_total_count` isn't populated in older `dataforseo_overview` records.
 - **The `lib/supabase.ts` Supabase client is untyped** (`SupabaseClient`, no generated `Database` type). A new column that hasn't been migrated yet will never cause a TypeScript error — it'll compile fine and only fail (or silently no-op, depending on whether the call site checks `{ error }`) at runtime. Don't take a clean `tsc` as proof a schema-dependent change actually works end-to-end. Check the write side explicitly logs `{ error }` too — found and fixed one call site this pass (`dataforseo-gmb-tasks`) that didn't.
 - **No credentials, ever.** Standing rule across every session on this project: never log into the admin dashboard, never attempt to obtain or work around `SUPABASE_SERVICE_ROLE_KEY`. Verification that needs the live admin UI or a live DB query has to go through Adam — say so plainly rather than guessing at what a screen would show.
+- **`npx vercel` deploys intermittently fail with an immediate `"Not authorized"` JSON error and no upload progress, even though auth is fine.** Confirmed three separate times this pass via `vercel whoami` (correct account, correct project link every time). Not a real auth problem — a direct retry of the exact same `npx vercel` command succeeds. Don't try to "fix" auth when this happens, just retry.
+- **`npx tsc --noEmit` passing is not sufficient proof a change will build on Vercel.** An ESLint error (`prefer-const` on a `let` that's never reassigned) passed type-checking cleanly but failed the real `npm run build`. Run `npm run build` locally as the standard pre-deploy check going forward, not just `tsc --noEmit`.
+- **A leading-underscore folder under `app/` (e.g. `app/api/_foo/`) is excluded from Next.js App Router routing entirely** — it never appears in the build's route list, and hitting its intended URL just 404s with no other signal. Rename without the underscore to route it at all.
+- **A GET route handler with no dynamic API usage (no `cookies()`, no request-derived branching, etc.) gets statically pre-rendered and cached at build time by default — even if its body fires live external `fetch` calls.** It'll show `○ (Static)` in the build output instead of `ƒ (Dynamic)`, meaning it actually ran once at build time and every later hit just replays that same cached response. Add `export const dynamic = 'force-dynamic'` to any route that must execute fresh on every request.
 
 ---
 
