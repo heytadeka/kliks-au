@@ -87,6 +87,8 @@ export async function POST(req: NextRequest) {
   // dataforseo-gmb-tasks: fires the async reviews + GBP-updates task_post calls once
   //   dataforseo-gmb resolves a place_id (polls audit_data_cache internally, see its own
   //   comments) - postback-driven, not part of the readiness gate, does not block commentary
+  // dataforseo-llm-visibility: synchronous chat_gpt/claude/perplexity llm_responses/live
+  //   calls, same shape as dataforseo-gmb-qa - not part of the readiness gate either
   // Each dataforseo route fetches the prospect record itself — only prospect_id needed.
   console.log('[create] firing background jobs for prospect_id:', pid, 'base:', base)
   waitUntil(fetch(`${base}/api/audit/pagespeed`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, store_url }) }))
@@ -96,6 +98,7 @@ export async function POST(req: NextRequest) {
   waitUntil(fetch(`${base}/api/audit/dataforseo-gmb`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
   waitUntil(fetch(`${base}/api/audit/dataforseo-gmb-qa`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
   waitUntil(fetch(`${base}/api/audit/dataforseo-gmb-tasks`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
+  waitUntil(fetch(`${base}/api/audit/dataforseo-llm-visibility`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid }) }))
   waitUntil(fetch(`${base}/api/audit/keyword-planner`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, niche, store_url }) }))
   waitUntil(fetch(`${base}/api/audit/meta-ads`, { method: 'POST', headers: h, body: JSON.stringify({ prospect_id: pid, brand_name, store_url }) }))
 

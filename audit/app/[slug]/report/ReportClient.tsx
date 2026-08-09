@@ -145,6 +145,53 @@ function truncateReviewText(text: string, maxLen: number = REVIEW_TEXT_MAX_CHARS
   return `${trimmed}…`
 }
 
+// Long AI response text (a few hundred to 1000+ chars) - the truncation bug
+// caught in GBP reviews (line-clamp cutting mid-word) rules out CSS
+// line-clamp here too. Genuine expand/collapse instead: full text always
+// exists in the DOM, only the visible slice changes, and the collapsed slice
+// itself is cut on a word boundary the same way truncateReviewText does it,
+// not by a fixed character count landing mid-word.
+const LLM_RESPONSE_PREVIEW_CHARS = 400
+function LlmVisibilityCard({ result }: { result: any }) {
+  const [expanded, setExpanded] = useState(false)
+  const text: string = result.response_text ?? ''
+  const isLong = text.length > LLM_RESPONSE_PREVIEW_CHARS
+  const preview = isLong ? truncateReviewText(text, LLM_RESPONSE_PREVIEW_CHARS) : text
+  return (
+    <div style={{ background: S.bg, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 14, flexWrap: 'wrap' as const }}>
+        <div>
+          <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, color: S.white }}>{result.label}</span>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: S.muted, marginLeft: 10 }}>{result.model}</span>
+        </div>
+        {result.found
+          ? <span style={{ fontFamily: MONO, background: 'rgba(34,197,94,0.12)', color: '#22c55e', borderRadius: 99, padding: '4px 14px', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', whiteSpace: 'nowrap' as const }}>✓ MENTIONED</span>
+          : <span style={{ fontFamily: MONO, background: 'rgba(239,68,68,0.12)', color: '#ef4444', borderRadius: 99, padding: '4px 14px', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', whiteSpace: 'nowrap' as const }}>! NOT MENTIONED</span>
+        }
+      </div>
+      <p style={{ color: S.muted, fontSize: 13, fontStyle: 'italic', margin: '0 0 16px' }}>
+        Asked: &ldquo;{result.query}&rdquo;
+      </p>
+      {result.matched_snippet && (
+        <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderLeft: '3px solid #22c55e', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
+          <p style={{ color: S.white, fontSize: 13, lineHeight: 1.6, margin: 0 }}>&ldquo;{result.matched_snippet}&rdquo;</p>
+        </div>
+      )}
+      <p style={{ color: S.white, fontSize: 14, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' as const }}>
+        {expanded ? text : preview}
+      </p>
+      {isLong && (
+        <button
+          onClick={() => setExpanded(v => !v)}
+          style={{ marginTop: 12, background: 'none', border: 'none', color: S.purple, fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', cursor: 'pointer', padding: 0 }}
+        >
+          {expanded ? 'SHOW LESS' : 'READ FULL RESPONSE →'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function AdamsTake({ text }: { text?: string | null }) {
   if (!text) return null
   return (
@@ -175,6 +222,9 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const gmbReviewsStatus = cache?.gmb_reviews_status as string | null
   const gmbQa = cache?.gmb_qa as any[] | null
   const gmbUpdates = cache?.gmb_updates as any[] | null
+  const llmVisibilityResults = cache?.llm_visibility_results as any[] | null
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const hasLlmVisibility = useMemo(() => (llmVisibilityResults ?? []).some((r: any) => r.response_text && !r.error), [llmVisibilityResults])
   const backlinksSummary = cache?.backlinks_summary
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
@@ -297,6 +347,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     // same as any other conditionally-rendered section.
     if (!cro?.error) map.cro = pad(n++)
     if (gmbData) map.gmb = pad(n++)
+    if (hasLlmVisibility) map.llmVisibility = pad(n++)
     map.ads = pad(n++)
     if (content?.section_strategy_headline || content?.section_strategy_body) map.strategy = pad(n++)
     map.seo = pad(n++)
@@ -307,7 +358,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     map.appendix = pad(n++)
     return map
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cro?.error, gmbData, content?.section_strategy_headline, content?.section_strategy_body, content?.section_seo_headline, content?.ai_opportunity_commentary, content?.section_opportunity_headline, revCalc.length])
+  }, [cro?.error, gmbData, hasLlmVisibility, content?.section_strategy_headline, content?.section_strategy_body, content?.section_seo_headline, content?.ai_opportunity_commentary, content?.section_opportunity_headline, revCalc.length])
 
   // ── Score ring animation ──
   const [scoresRevealed, setScoresRevealed] = useState(false)
@@ -971,6 +1022,32 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   </p>
                 </div>
               )}
+            </div>
+          </section>
+          <div className="divider" /></>
+        )}
+
+        {/* ── LLM Visibility Check ── */}
+        {hasLlmVisibility && (
+          <><section className="section-pad bg2-section" id="llm-visibility">
+            <div className="wrap">
+              <div className="sec-head">
+                <div className="eyebrow-row">
+                  <span className="sec-num-label">{sectionNums.llmVisibility}</span>
+                  <span className="kicker"><span className="dot" />AI Search Visibility</span>
+                </div>
+                <h2 className="sec-title">What AI Assistants Say About You</h2>
+                <p style={{ color: S.muted, fontSize: 15, lineHeight: 1.7, marginTop: 12, maxWidth: 640 }}>
+                  Shoppers are starting to ask ChatGPT, Claude, and Perplexity for recommendations instead of searching Google. Here&apos;s exactly what each one said, word for word, when asked about your category.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {llmVisibilityResults!
+                  .filter((r: any) => r.response_text && !r.error)
+                  .map((r: any) => (
+                    <LlmVisibilityCard key={r.provider} result={r} />
+                  ))}
+              </div>
             </div>
           </section>
           <div className="divider" /></>

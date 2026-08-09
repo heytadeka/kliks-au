@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { normaliseDomain } from '@/lib/domain-normalise'
+import { detectLocalTarget } from '@/lib/local-target'
 
 export const maxDuration = 60
 export const preferredRegion = 'syd1'
@@ -56,36 +58,9 @@ function isJunk(domain: string) {
   return JUNK_DOMAINS.some(junk => d.includes(junk))
 }
 
-const AU_CITY_MAP = [
-  { terms: ['sydney', 'nsw', 'new south wales'], label: 'sydney', code: 21167 },
-  { terms: ['melbourne', 'vic', 'victoria'], label: 'melbourne', code: 21182 },
-  { terms: ['brisbane', 'qld', 'queensland'], label: 'brisbane', code: 21139 },
-  { terms: ['perth', 'western australia'], label: 'perth', code: 21188 },
-  { terms: ['adelaide', 'south australia'], label: 'adelaide', code: 21136 },
-  { terms: ['canberra', 'act'], label: 'canberra', code: 21124 },
-  { terms: ['hobart', 'tasmania'], label: 'hobart', code: 21172 },
-  { terms: ['darwin', 'northern territory'], label: 'darwin', code: 21128 },
-]
-
-// location is the dedicated field for this, so a match there takes priority
-// over scanning the free-text niche - falls back to niche only when location
-// is empty or doesn't match a known AU city. Previously location was read
-// into a locationCode that was computed, logged, and never actually used -
-// every prospect's competitor discovery ran on niche-text detection alone,
-// silently going national whenever niche didn't happen to name a city even
-// if location correctly did.
-function detectLocalTarget(niche: string | null | undefined, location: string | null | undefined): { isLocal: boolean; cityTerm: string | null; localCode: number } {
-  for (const source of [location, niche]) {
-    if (!source) continue
-    const s = source.toLowerCase()
-    for (const city of AU_CITY_MAP) {
-      if (city.terms.some(t => s.includes(t))) {
-        return { isLocal: true, cityTerm: city.label, localCode: city.code }
-      }
-    }
-  }
-  return { isLocal: false, cityTerm: null, localCode: 2036 }
-}
+// AU_CITY_MAP / detectLocalTarget extracted to lib/local-target.ts so the
+// LLM Visibility Check's query builder can reuse the exact same city
+// detection instead of a second copy.
 
 // Returns true if the domain clearly signals a different AU city than the prospect's
 function isOtherCityDomain(domain: string, cityTerm: string): boolean {
@@ -120,12 +95,9 @@ export async function POST(req: NextRequest) {
   // version only stripped www., so a competitor domain returned by DataForSEO
   // in a slightly different string shape than store_url's own normalisation
   // could silently fail the equality check and let the prospect's own domain
-  // through as a "competitor."
-  const normalise = (d: string) => d
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
-    .split(/[/?#]/)[0]
+  // through as a "competitor." Extracted to lib/domain-normalise.ts so other
+  // call sites (LLM-visibility mention detection) share the same function.
+  const normalise = normaliseDomain
   const normalisedDomain = normalise(domain)
 
   console.log('[dataforseo-core] prospect_id:', prospect_id, 'domain:', domain, 'niche:', niche?.slice(0, 60))

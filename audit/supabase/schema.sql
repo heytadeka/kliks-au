@@ -152,3 +152,18 @@ on conflict do nothing;
 --
 -- ALTER TABLE audit_content
 --   ALTER COLUMN ai_gmb_commentary TYPE jsonb USING ai_gmb_commentary::jsonb;
+
+-- LLM Visibility Check: fires chat_gpt/claude/perplexity ai_optimization
+-- llm_responses/live in parallel during the create/rescan fan-out (same
+-- synchronous pattern as gmb_qa, not the task_post/webhook pattern used for
+-- gmb_reviews/gmb_updates), asking a natural question built from the
+-- prospect's niche/location and checking whether the response mentions the
+-- prospect. This is raw fetched data (query, full response, mention
+-- detection, cost, timestamp per provider), not AI-generated commentary -
+-- belongs on audit_data_cache, not audit_content. Declared jsonb from the
+-- start this time, not text - the Phase 4 ai_gmb_commentary migration above
+-- was a lesson learned. Run this block in Supabase SQL editor if upgrading
+-- an existing database:
+--
+-- ALTER TABLE audit_data_cache
+--   ADD COLUMN IF NOT EXISTS llm_visibility_results jsonb;
