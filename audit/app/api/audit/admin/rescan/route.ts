@@ -44,10 +44,21 @@ export async function POST(req: NextRequest) {
     .update({ rescan_locked_at: new Date().toISOString() })
     .eq('id', prospect_id)
 
-  // Reset cache
+  // Reset the readiness-gate fields the enrichment poll checks for presence
+  // (see dataforseo-enrichment/route.ts's waitForCommentaryData). Previously
+  // only crawled_at was cleared here - pagespeed_fetched_at and
+  // dataforseo_overview kept their prior-scan values, so the poll's
+  // "non-null" check was satisfied almost immediately by stale leftover
+  // data (crawl finishes fastest, ~15-20s) instead of by this rescan's own
+  // fresh writes. Confirmed via commentary_readiness_at landing 19-55s
+  // before pagespeed_fetched_at on 12 real prospects - commentary was
+  // generated from stale PageSpeed numbers that got silently overwritten
+  // moments later, while the score cards (reading the cache live) showed
+  // the new numbers. Clearing all three restores the same guarantee a
+  // first-time create already has: non-null genuinely means fresh.
   await supabaseAdmin
     .from('audit_data_cache')
-    .update({ crawled_at: null })
+    .update({ crawled_at: null, pagespeed_fetched_at: null, dataforseo_overview: null })
     .eq('prospect_id', prospect_id)
 
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://kliks.com.au'
