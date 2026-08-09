@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { resolveOrganicStats } from '@/lib/organic-stats'
 import { isCommentaryPending } from '@/lib/commentary-status'
 
@@ -145,18 +146,72 @@ function truncateReviewText(text: string, maxLen: number = REVIEW_TEXT_MAX_CHARS
   return `${trimmed}…`
 }
 
-// Long AI response text (a few hundred to 1000+ chars) - the truncation bug
-// caught in GBP reviews (line-clamp cutting mid-word) rules out CSS
-// line-clamp here too. Genuine expand/collapse instead: full text always
-// exists in the DOM, only the visible slice changes, and the collapsed slice
-// itself is cut on a word boundary the same way truncateReviewText does it,
-// not by a fixed character count landing mid-word.
-const LLM_RESPONSE_PREVIEW_CHARS = 400
+// All three providers can return markdown (#, ##, **, lists) - confirmed on
+// production that Claude does, ChatGPT's clean-looking test response was
+// incidental, not guaranteed. Rendered via react-markdown rather than shown
+// as plain text; headers/bold/lists are the only cases these responses
+// actually use, no remark-gfm plugin needed for that. Element styles kept
+// inline (via the `components` prop) rather than a stylesheet, matching this
+// file's existing convention of styling everything inline.
+// react-markdown passes a `node` prop (the mdast/hast source node) into every
+// custom component, on top of the real HTML props - spreading it straight
+// onto a native element renders it as a literal node="[object Object]"
+// attribute. Every override below destructures node out first.
+const llmMarkdownComponents = {
+  p: ({ node, ...props }: any) => <p style={{ color: S.white, fontSize: 14, lineHeight: 1.7, margin: '0 0 12px' }} {...props} />,
+  h1: ({ node, ...props }: any) => <h4 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600, color: S.white, margin: '14px 0 8px' }} {...props} />,
+  h2: ({ node, ...props }: any) => <h4 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 16, fontWeight: 600, color: S.white, margin: '14px 0 8px' }} {...props} />,
+  h3: ({ node, ...props }: any) => <h5 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 15, fontWeight: 600, color: S.white, margin: '12px 0 6px' }} {...props} />,
+  h4: ({ node, ...props }: any) => <h5 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 15, fontWeight: 600, color: S.white, margin: '12px 0 6px' }} {...props} />,
+  strong: ({ node, ...props }: any) => <strong style={{ fontWeight: 700, color: S.white }} {...props} />,
+  em: ({ node, ...props }: any) => <em style={{ fontStyle: 'italic' as const }} {...props} />,
+  ul: ({ node, ...props }: any) => <ul style={{ margin: '4px 0 12px', paddingLeft: 20 }} {...props} />,
+  ol: ({ node, ...props }: any) => <ol style={{ margin: '4px 0 12px', paddingLeft: 20 }} {...props} />,
+  li: ({ node, ...props }: any) => <li style={{ color: S.white, fontSize: 14, lineHeight: 1.6, marginBottom: 4 }} {...props} />,
+  a: ({ node, ...props }: any) => <a style={{ color: S.purple, textDecoration: 'underline' as const }} target="_blank" rel="noopener noreferrer" {...props} />,
+}
+// The matched-snippet quote sits inline between literal curly quote marks
+// (see below), so every block-level element renders inline instead - a
+// short "context around the match" quote should never contain a block
+// heading or list to begin with, but on a short enough response the
+// snippet radius can end up covering nearly the whole thing (see
+// SNIPPET_NEAR_FULL_RATIO below), so this is a defensive second layer, not
+// the primary fix.
+const llmSnippetMarkdownComponents = {
+  ...llmMarkdownComponents,
+  p: ({ node, ...props }: any) => <span {...props} />,
+  h1: ({ node, ...props }: any) => <strong {...props} />,
+  h2: ({ node, ...props }: any) => <strong {...props} />,
+  h3: ({ node, ...props }: any) => <strong {...props} />,
+  h4: ({ node, ...props }: any) => <strong {...props} />,
+}
+
+// The old approach truncated the raw response string on a word boundary and
+// appended an ellipsis - safe for plain text, but slicing raw markdown mid-
+// syntax can leave an unclosed `**` or `#` with no text after it, which is
+// exactly the kind of literal-character leakage this fix exists to remove.
+// Full markdown is now always rendered (never sliced); the collapsed state
+// just clips the rendered block's visible height via CSS and a bottom fade,
+// same "genuine expand/collapse, not lossy truncation" principle as before,
+// just applied to a rendered block instead of a raw string. isLong is only
+// a heuristic for whether to bother offering the toggle at all.
+const LLM_RESPONSE_LONG_THRESHOLD = 400
+const LLM_RESPONSE_COLLAPSED_HEIGHT = 220
+// extractSnippet() (lib/llm-visibility.ts) grabs a fixed radius of context
+// around the match - on a short enough response, that radius covers nearly
+// the entire text, and the "quick highlight" box ends up rendering the same
+// header/list content as the full response right below it. Found on a real
+// test render: a ~480-char response produced a "snippet" that was 90%+ of
+// the whole thing. If it's not meaningfully shorter than the full response,
+// showing it separately is pure duplication - skip the box, the full
+// response already covers it.
+const SNIPPET_NEAR_FULL_RATIO = 0.85
 function LlmVisibilityCard({ result }: { result: any }) {
   const [expanded, setExpanded] = useState(false)
   const text: string = result.response_text ?? ''
-  const isLong = text.length > LLM_RESPONSE_PREVIEW_CHARS
-  const preview = isLong ? truncateReviewText(text, LLM_RESPONSE_PREVIEW_CHARS) : text
+  const isLong = text.length > LLM_RESPONSE_LONG_THRESHOLD
+  const snippet: string | null = result.matched_snippet ?? null
+  const showSnippet = !!snippet && text.length > 0 && snippet.length < text.length * SNIPPET_NEAR_FULL_RATIO
   return (
     <div style={{ background: S.bg, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 14, flexWrap: 'wrap' as const }}>
@@ -172,14 +227,19 @@ function LlmVisibilityCard({ result }: { result: any }) {
       <p style={{ color: S.muted, fontSize: 13, fontStyle: 'italic', margin: '0 0 16px' }}>
         Asked: &ldquo;{result.query}&rdquo;
       </p>
-      {result.matched_snippet && (
+      {showSnippet && (
         <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderLeft: '3px solid #22c55e', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
-          <p style={{ color: S.white, fontSize: 13, lineHeight: 1.6, margin: 0 }}>&ldquo;{result.matched_snippet}&rdquo;</p>
+          <div style={{ color: S.white, fontSize: 13, lineHeight: 1.6 }}>
+            &ldquo;<ReactMarkdown components={llmSnippetMarkdownComponents}>{snippet}</ReactMarkdown>&rdquo;
+          </div>
         </div>
       )}
-      <p style={{ color: S.white, fontSize: 14, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' as const }}>
-        {expanded ? text : preview}
-      </p>
+      <div style={{ position: 'relative', maxHeight: expanded || !isLong ? 'none' : LLM_RESPONSE_COLLAPSED_HEIGHT, overflow: 'hidden' }}>
+        <ReactMarkdown components={llmMarkdownComponents}>{text}</ReactMarkdown>
+        {!expanded && isLong && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 56, background: `linear-gradient(transparent, ${S.bg})`, pointerEvents: 'none' as const }} />
+        )}
+      </div>
       {isLong && (
         <button
           onClick={() => setExpanded(v => !v)}
