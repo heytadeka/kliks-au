@@ -84,6 +84,50 @@ const GENERIC_PLACE_TERMS = new Set<string>(
 )
 const GENERIC_NON_COMPETITOR_TERMS = new Set(['chatgpt', 'claude', 'perplexity', 'openai', 'anthropic', 'google'])
 
+// Confirmed live on production (bakealicious-by-gabriela's real report):
+// "Strawberry Watermelon Cake" and "Metro Sydney" both passed
+// looksLikeProperNounPhrase (every word capitalised, no connector issue)
+// but are a dish name and a delivery zone, not businesses. Not solvable by
+// capitalisation shape alone - these words are generic regardless of case.
+// Rejects a candidate only when EVERY word in it is generic (see
+// isAllGenericWords below) - "Black Star Pastry" and "Adora Handmade
+// Chocolates" keep the real business intact because "Black"/"Star"/"Adora"
+// aren't generic, even though "Pastry"/"Chocolates" are. Deliberately
+// biased toward under-extraction per explicit direction: a real business
+// whose every word happens to be generic ("CBD Cakes" - both words are
+// generic on their own) gets filtered out too. Accepted cost - a missed
+// competitor is a minor loss, a fake entry in a list titled "the AI's pick,
+// instead" is a real credibility problem. List isn't exhaustive, same
+// disclosed-heuristic spirit as the connector/leading-stopword fixes.
+// Deliberately excludes business-TYPE words ("bakery", "cakery", "patisserie",
+// "cafe") even though they're food-adjacent - those are a positive signal of
+// a real business (e.g. "The Cupcake Bakery", confirmed extractable in
+// testing), not a dish descriptor. Only actual food/flavour/occasion words
+// that describe an ITEM rather than a BUSINESS belong in this list.
+const GENERIC_FOOD_TERMS = new Set([
+  'cake', 'cakes', 'cupcake', 'cupcakes', 'pastry', 'pastries', 'dessert', 'desserts',
+  'chocolate', 'chocolates', 'cookie', 'cookies', 'brownie', 'brownies', 'tart', 'tarts',
+  'muffin', 'muffins', 'donut', 'donuts', 'doughnut', 'doughnuts', 'bread', 'slice', 'slices',
+  'sweet', 'sweets', 'treat', 'treats',
+  'watermelon', 'strawberry', 'vanilla', 'caramel', 'custard', 'cream', 'icing', 'frosting',
+  'fudge', 'macaron', 'macarons', 'macaroon', 'macaroons', 'sponge', 'velvet', 'lemon', 'lime',
+  'mango', 'red', 'wedding', 'birthday', 'engagement', 'celebration', 'celebrations',
+  'gourmet', 'artisan', 'handmade', 'homemade', 'custom', 'signature', 'classic', 'traditional',
+])
+const GENERIC_GEO_TERMS = new Set([
+  'metro', 'cbd', 'area', 'areas', 'suburb', 'suburbs', 'delivery', 'region', 'regions',
+  'zone', 'zones', 'district', 'districts', 'city', 'town', 'local', 'nationwide', 'national',
+])
+function isGenericWord(word: string): boolean {
+  const lower = word.toLowerCase()
+  return GENERIC_FOOD_TERMS.has(lower) || GENERIC_GEO_TERMS.has(lower) || GENERIC_PLACE_TERMS.has(lower) || GENERIC_NON_COMPETITOR_TERMS.has(lower)
+}
+function isAllGenericWords(phrase: string): boolean {
+  const words = phrase.split(/\s+/).filter(Boolean)
+  if (words.length === 0) return true
+  return words.every(w => NAME_CONNECTOR_WORDS_SET.has(w.toLowerCase()) || isGenericWord(w))
+}
+
 // Shared with looksLikeProperNounPhrase below - one list, not two, so a name
 // like "Cakes by Kate" (real example from this exact design handoff's own
 // reference copy) is recognised consistently by both the Title-Case regex's
@@ -174,6 +218,7 @@ export function extractCandidateNames(text: string | null | undefined, brandName
     const key = candidate.toLowerCase().replace(/\s+/g, ' ').trim()
     if (!key || seen.has(key) || isGenericTerm(key)) continue
     if (!looksLikeProperNounPhrase(candidate)) continue
+    if (isAllGenericWords(candidate)) continue
     if (brandLower && (key === brandLower || key.includes(brandLower) || brandLower.includes(key))) continue
     if (domain && key.replace(/[^a-z]/g, '').length > 3 && domain.includes(key.replace(/[^a-z]/g, ''))) continue
     seen.add(key)
