@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { resolveOrganicStats } from '@/lib/organic-stats'
 import { isCommentaryPending } from '@/lib/commentary-status'
+import { extractCandidateNames, extractCompetitorRanking, buildResponseSummary } from '@/lib/llm-visibility'
 
 const S = {
   bg: '#0e0d1a',
@@ -170,84 +171,79 @@ const llmMarkdownComponents = {
   li: ({ node, ...props }: any) => <li style={{ color: S.white, fontSize: 14, lineHeight: 1.6, marginBottom: 4 }} {...props} />,
   a: ({ node, ...props }: any) => <a style={{ color: S.purple, textDecoration: 'underline' as const }} target="_blank" rel="noopener noreferrer" {...props} />,
 }
-// The matched-snippet quote sits inline between literal curly quote marks
-// (see below), so every block-level element renders inline instead - a
-// short "context around the match" quote should never contain a block
-// heading or list to begin with, but on a short enough response the
-// snippet radius can end up covering nearly the whole thing (see
-// SNIPPET_NEAR_FULL_RATIO below), so this is a defensive second layer, not
-// the primary fix.
-const llmSnippetMarkdownComponents = {
-  ...llmMarkdownComponents,
-  p: ({ node, ...props }: any) => <span {...props} />,
-  h1: ({ node, ...props }: any) => <strong {...props} />,
-  h2: ({ node, ...props }: any) => <strong {...props} />,
-  h3: ({ node, ...props }: any) => <strong {...props} />,
-  h4: ({ node, ...props }: any) => <strong {...props} />,
+
+// Design handoff 1b's provider identity - letter marks, no logos (legal
+// constraint per the handoff), and the good/mixed/poor colour tiering used
+// by both the hero stat and each card's pill. good/mixed reuse this app's
+// existing GOOD/NEEDS-WORK score colours (S / SCORE_COLORS elsewhere in this
+// file) rather than inventing a new pair - poor uses the handoff's own exact
+// tokens since that's the one state the design actually specified.
+const AI_VIS_BADGES: Record<string, { letter: string; color: string }> = {
+  chat_gpt: { letter: 'G', color: '#10a37f' },
+  claude: { letter: 'C', color: '#da7756' },
+  perplexity: { letter: 'P', color: '#20b8cd' },
+}
+const AI_VIS_TIERS = {
+  poor: { label: '#ff8a75', tint: 'rgba(255,67,21,0.12)', tintBorder: 'rgba(255,67,21,0.3)' },
+  mixed: { label: '#f5a623', tint: 'rgba(245,166,35,0.12)', tintBorder: 'rgba(245,166,35,0.3)' },
+  good: { label: '#34d296', tint: 'rgba(52,210,150,0.12)', tintBorder: 'rgba(52,210,150,0.3)' },
 }
 
-// The old approach truncated the raw response string on a word boundary and
-// appended an ellipsis - safe for plain text, but slicing raw markdown mid-
-// syntax can leave an unclosed `**` or `#` with no text after it, which is
-// exactly the kind of literal-character leakage this fix exists to remove.
-// Full markdown is now always rendered (never sliced); the collapsed state
-// just clips the rendered block's visible height via CSS and a bottom fade,
-// same "genuine expand/collapse, not lossy truncation" principle as before,
-// just applied to a rendered block instead of a raw string. isLong is only
-// a heuristic for whether to bother offering the toggle at all.
-const LLM_RESPONSE_LONG_THRESHOLD = 400
-const LLM_RESPONSE_COLLAPSED_HEIGHT = 220
-// extractSnippet() (lib/llm-visibility.ts) grabs a fixed radius of context
-// around the match - on a short enough response, that radius covers nearly
-// the entire text, and the "quick highlight" box ends up rendering the same
-// header/list content as the full response right below it. Found on a real
-// test render: a ~480-char response produced a "snippet" that was 90%+ of
-// the whole thing. If it's not meaningfully shorter than the full response,
-// showing it separately is pure duplication - skip the box, the full
-// response already covers it.
-const SNIPPET_NEAR_FULL_RATIO = 0.85
-function LlmVisibilityCard({ result }: { result: any }) {
+function joinWithAnd(items: string[]): string {
+  if (items.length === 0) return ''
+  if (items.length === 1) return items[0]
+  if (items.length === 2) return `${items[0]} and ${items[1]}`
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+}
+
+// Denominator is how many providers actually answered, not a fixed 3 - a
+// failed provider (hidden entirely, same rule as everywhere else in this
+// report) shouldn't make the stat imply a call was made that never
+// completed.
+function buildAiVisibilityHeadline(foundCount: number, respondedCount: number, brandName: string, query: string, respondedLabels: string[]): string {
+  const who = joinWithAnd(respondedLabels)
+  if (foundCount === 0) return `Asked “${query},” ${who} all answered — none named ${brandName}.`
+  if (foundCount === respondedCount) {
+    return respondedCount === 1 ? `Asked “${query},” ${who} named ${brandName}.` : `Asked “${query},” ${who} all named ${brandName}.`
+  }
+  return `Asked “${query},” ${foundCount} of ${respondedCount} AI assistants recommended ${brandName}.`
+}
+
+// Collapsed state shows only a deterministic one-line summary (built from
+// the same per-response name extraction used for the hero's competitor
+// ranking, no separate AI call) - "read full response" reveals the complete
+// markdown-rendered text for the first time, so there's no truncation of
+// real response content anywhere in this card, collapsed or expanded.
+function LlmVisibilityCard({ result, brandName, storeUrl }: { result: any; brandName?: string | null; storeUrl?: string | null }) {
   const [expanded, setExpanded] = useState(false)
   const text: string = result.response_text ?? ''
-  const isLong = text.length > LLM_RESPONSE_LONG_THRESHOLD
-  const snippet: string | null = result.matched_snippet ?? null
-  const showSnippet = !!snippet && text.length > 0 && snippet.length < text.length * SNIPPET_NEAR_FULL_RATIO
+  const badge = AI_VIS_BADGES[result.provider] ?? { letter: '?', color: S.purple }
+  const tier = result.found ? AI_VIS_TIERS.good : AI_VIS_TIERS.poor
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const candidateNames = useMemo(() => extractCandidateNames(text, brandName, storeUrl), [text, brandName, storeUrl])
+  const summary = buildResponseSummary(candidateNames, !!result.found)
+
   return (
-    <div style={{ background: S.bg, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 14, flexWrap: 'wrap' as const }}>
-        <div>
-          <span style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, color: S.white }}>{result.label}</span>
-          <span style={{ fontFamily: MONO, fontSize: 11, color: S.muted, marginLeft: 10 }}>{result.model}</span>
-        </div>
-        {result.found
-          ? <span style={{ fontFamily: MONO, background: 'rgba(34,197,94,0.12)', color: '#22c55e', borderRadius: 99, padding: '4px 14px', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', whiteSpace: 'nowrap' as const }}>✓ MENTIONED</span>
-          : <span style={{ fontFamily: MONO, background: 'rgba(239,68,68,0.12)', color: '#ef4444', borderRadius: 99, padding: '4px 14px', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', whiteSpace: 'nowrap' as const }}>! NOT MENTIONED</span>
-        }
+    <div style={{ padding: '22px 22px 20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <span style={{ width: 28, height: 28, borderRadius: 8, background: badge.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontWeight: 700, fontSize: 11, color: '#0e0d1a', flexShrink: 0 }}>{badge.letter}</span>
+        <span style={{ fontFamily: '"Clash Display", sans-serif', fontWeight: 600, fontSize: 16, color: S.white }}>{result.label}</span>
       </div>
-      <p style={{ color: S.muted, fontSize: 13, fontStyle: 'italic', margin: '0 0 16px' }}>
-        Asked: &ldquo;{result.query}&rdquo;
-      </p>
-      {showSnippet && (
-        <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderLeft: '3px solid #22c55e', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
-          <div style={{ color: S.white, fontSize: 13, lineHeight: 1.6 }}>
-            &ldquo;<ReactMarkdown components={llmSnippetMarkdownComponents}>{snippet}</ReactMarkdown>&rdquo;
-          </div>
+      <span style={{ display: 'inline-block', fontFamily: MONO, fontWeight: 700, fontSize: 9, letterSpacing: '0.06em', color: tier.label, background: tier.tint, border: `1px solid ${tier.tintBorder}`, padding: '5px 10px', borderRadius: 20, marginBottom: 14 }}>
+        {result.found ? '✓ MENTIONED' : '! NOT MENTIONED'}
+      </span>
+      <div style={{ fontSize: 13, lineHeight: 1.5, color: 'rgba(245,244,251,0.5)' }}>{summary}</div>
+      {expanded && (
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <ReactMarkdown components={llmMarkdownComponents}>{text}</ReactMarkdown>
         </div>
       )}
-      <div style={{ position: 'relative', maxHeight: expanded || !isLong ? 'none' : LLM_RESPONSE_COLLAPSED_HEIGHT, overflow: 'hidden' }}>
-        <ReactMarkdown components={llmMarkdownComponents}>{text}</ReactMarkdown>
-        {!expanded && isLong && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 56, background: `linear-gradient(transparent, ${S.bg})`, pointerEvents: 'none' as const }} />
-        )}
-      </div>
-      {isLong && (
-        <button
-          onClick={() => setExpanded(v => !v)}
-          style={{ marginTop: 12, background: 'none', border: 'none', color: S.purple, fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', cursor: 'pointer', padding: 0 }}
-        >
-          {expanded ? 'SHOW LESS' : 'READ FULL RESPONSE →'}
-        </button>
-      )}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        style={{ display: 'block', marginTop: 12, background: 'none', border: 'none', color: '#a99bff', fontFamily: MONO, fontWeight: 700, fontSize: 10, letterSpacing: '0.06em', cursor: 'pointer', padding: 0 }}
+      >
+        {expanded ? 'SHOW LESS' : 'READ FULL RESPONSE →'}
+      </button>
     </div>
   )
 }
@@ -283,8 +279,19 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const gmbQa = cache?.gmb_qa as any[] | null
   const gmbUpdates = cache?.gmb_updates as any[] | null
   const llmVisibilityResults = cache?.llm_visibility_results as any[] | null
+  // Failed/empty providers are excluded up front (same "hide, don't show a
+  // placeholder" rule as everywhere else) - everything downstream (the hero
+  // stat's denominator, the competitor ranking, the card row) only ever
+  // sees providers that actually responded.
+  const llmVisibilityStats = useMemo(() => {
+    const responded = (llmVisibilityResults ?? []).filter((r: any) => r.response_text && !r.error)
+    if (responded.length === 0) return null
+    const foundCount = responded.filter((r: any) => r.found).length
+    const ranking = extractCompetitorRanking(responded, prospect.brand_name, prospect.store_url)
+    return { responded, foundCount, ranking }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const hasLlmVisibility = useMemo(() => (llmVisibilityResults ?? []).some((r: any) => r.response_text && !r.error), [llmVisibilityResults])
+  }, [llmVisibilityResults, prospect.brand_name, prospect.store_url])
+  const hasLlmVisibility = !!llmVisibilityStats
   const backlinksSummary = cache?.backlinks_summary
   const gads = cache?.google_ads_planner
   const metaAds = cache?.meta_ads
@@ -583,6 +590,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           .cro-mk.no { background: rgba(255,67,21,.13); color: #ff4315; border: 1px solid rgba(255,67,21,.35); }
           .cro-item-h { color: #fff; font-weight: 500; font-size: 16.5px; margin-bottom: 3px; }
           .cro-item-p { font-size: 14.5px; color: rgba(255,255,255,0.55); line-height: 1.45; margin: 0; }
+          /* AI Visibility hero + evidence cards */
+          .ai-vis-hero { display: grid; grid-template-columns: 340px 1px 1fr; gap: 48px; }
+          .ai-vis-divider { background: rgba(255,255,255,0.08); }
+          .ai-vis-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
           /* Revenue summary */
           .rev { background: linear-gradient(160deg, #171430, #0e0d1a 70%); border: 1px solid rgba(255,255,255,0.14); border-radius: 28px; padding: 64px; position: relative; overflow: hidden; }
           .rev::before { content: ""; position: absolute; width: 560px; height: 560px; border-radius: 50%; top: -260px; right: -160px; background: radial-gradient(circle, rgba(100,75,255,.3), transparent 62%); filter: blur(10px); }
@@ -639,6 +650,9 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
             .fig-note { text-align: left; max-width: 40ch; }
             .section-pad { padding: 84px 0; }
             .topmeta { display: none; }
+            .ai-vis-hero { grid-template-columns: 1fr; gap: 28px; }
+            .ai-vis-divider { display: none; }
+            .ai-vis-cards { grid-template-columns: 1fr; }
           }
           @media (max-width: 600px) {
             .scores-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1087,8 +1101,8 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
           <div className="divider" /></>
         )}
 
-        {/* ── LLM Visibility Check ── */}
-        {hasLlmVisibility && (
+        {/* ── AI Search Visibility (design handoff 1b) ── */}
+        {llmVisibilityStats && (
           <><section className="section-pad bg2-section" id="llm-visibility">
             <div className="wrap">
               <div className="sec-head">
@@ -1097,16 +1111,67 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   <span className="kicker"><span className="dot" />AI Search Visibility</span>
                 </div>
                 <h2 className="sec-title">What AI Assistants Say About You</h2>
-                <p style={{ color: S.muted, fontSize: 15, lineHeight: 1.7, marginTop: 12, maxWidth: 640 }}>
-                  Shoppers are starting to ask ChatGPT, Claude, and Perplexity for recommendations instead of searching Google. Here&apos;s exactly what each one said, word for word, when asked about your category.
-                </p>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {llmVisibilityResults!
-                  .filter((r: any) => r.response_text && !r.error)
-                  .map((r: any) => (
-                    <LlmVisibilityCard key={r.provider} result={r} />
-                  ))}
+
+              {(() => {
+                const { responded, foundCount, ranking } = llmVisibilityStats
+                const respondedCount = responded.length
+                const proportion = foundCount / respondedCount
+                const tier = proportion === 0 ? AI_VIS_TIERS.poor : proportion === 1 ? AI_VIS_TIERS.good : AI_VIS_TIERS.mixed
+                const respondedLabels = responded.map((r: any) => r.label)
+                const query = responded[0]?.query ?? ''
+                const headline = buildAiVisibilityHeadline(foundCount, respondedCount, prospect.brand_name, query, respondedLabels)
+                const topCount = ranking[0]?.count ?? 0
+                const visibleRanking = ranking.slice(0, 3)
+                const restRanking = ranking.slice(3)
+
+                return (
+                  <div className="ai-vis-hero" style={{ padding: 44, borderRadius: 20, border: '1px solid rgba(255,255,255,0.07)', background: 'radial-gradient(circle at 15% 20%, rgba(100,75,255,0.16), transparent 60%), rgba(255,255,255,0.03)', marginBottom: 48 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <div style={{ fontFamily: '"Clash Display", sans-serif', fontWeight: 700, fontSize: 100, lineHeight: 0.9, color: S.white }}>
+                        {foundCount}<span style={{ color: 'rgba(245,244,251,0.3)', fontSize: 44 }}>/{respondedCount}</span>
+                      </div>
+                      <div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 13, letterSpacing: '0.1em', color: tier.label, marginTop: 12 }}>RECOMMENDED YOU</div>
+                      <div style={{ fontSize: 15, lineHeight: 1.6, color: 'rgba(245,244,251,0.6)', marginTop: 16 }}>{headline}</div>
+                    </div>
+                    <div className="ai-vis-divider" />
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 12, letterSpacing: '0.1em', color: '#a99bff', marginBottom: 18 }}>THE AI&apos;S PICK, INSTEAD</div>
+                      {visibleRanking.length === 0 ? (
+                        <p style={{ color: 'rgba(245,244,251,0.4)', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+                          The responses didn&apos;t name a specific competitor clearly enough to rank.
+                        </p>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {visibleRanking.map((entry: any, i: number) => {
+                            const isTop = i === 0
+                            const widthPct = topCount > 0 ? Math.round((entry.count / topCount) * 100) : 0
+                            return (
+                              <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                                <span style={{ width: 150, flexShrink: 0, fontWeight: isTop ? 600 : 500, fontSize: 14, color: isTop ? S.white : 'rgba(245,244,251,0.75)' }}>{entry.name}</span>
+                                <div style={{ flex: 1, height: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 6, overflow: 'hidden' }}>
+                                  <div style={{ width: `${widthPct}%`, height: '100%', background: isTop ? S.purple : 'rgba(100,75,255,0.4)', borderRadius: 6 }} />
+                                </div>
+                                <span style={{ width: 60, flexShrink: 0, textAlign: 'right' as const, fontFamily: MONO, fontWeight: 700, fontSize: 11, color: isTop ? '#a99bff' : 'rgba(245,244,251,0.4)' }}>{entry.count} of {respondedCount}</span>
+                              </div>
+                            )
+                          })}
+                          {restRanking.length > 0 && (
+                            <div style={{ fontSize: 13, color: 'rgba(245,244,251,0.4)', marginTop: 4 }}>
+                              + {restRanking.map((r: any) => r.name).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              <div className="ai-vis-cards">
+                {llmVisibilityStats.responded.map((r: any) => (
+                  <LlmVisibilityCard key={r.provider} result={r} brandName={prospect.brand_name} storeUrl={prospect.store_url} />
+                ))}
               </div>
             </div>
           </section>
