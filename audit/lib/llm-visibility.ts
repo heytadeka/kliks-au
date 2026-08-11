@@ -113,14 +113,41 @@ const GENERIC_FOOD_TERMS = new Set([
   'fudge', 'macaron', 'macarons', 'macaroon', 'macaroons', 'sponge', 'velvet', 'lemon', 'lime',
   'mango', 'red', 'wedding', 'birthday', 'engagement', 'celebration', 'celebrations',
   'gourmet', 'artisan', 'handmade', 'homemade', 'custom', 'signature', 'classic', 'traditional',
+  // Added after auditing every real llm_visibility_results row in the DB
+  // (not just the two cases first reported) - miss-lillys-bakery-cafe's
+  // dish-specific query ("best sydney order carrot cake") surfaced a
+  // cluster of dish/flavour words this list didn't cover yet: "Carrot &
+  // Walnut", "Vanilla Bean", "Carrot Cake Loaf", etc. all slipped through
+  // because "carrot"/"walnut"/"bean"/"loaf"/"layer"/"tall"/"vegan" weren't
+  // here. Same principle as before, just more coverage.
+  'carrot', 'walnut', 'bean', 'beans', 'coconut', 'banana', 'pecan', 'pecans', 'pineapple',
+  'cinnamon', 'raspberry', 'blueberry', 'passionfruit', 'salted', 'buttercream', 'fondant',
+  'ganache', 'meringue', 'praline', 'loaf', 'loaves', 'layer', 'layers', 'tier', 'tiered', 'tall',
+  'vegan', 'gluten-free', 'nut-free', 'dairy-free', 'eggless',
 ])
 const GENERIC_GEO_TERMS = new Set([
   'metro', 'cbd', 'area', 'areas', 'suburb', 'suburbs', 'delivery', 'region', 'regions',
   'zone', 'zones', 'district', 'districts', 'city', 'town', 'local', 'nationwide', 'national',
 ])
+// Common bolded/capitalised list-topic labels found live in real responses
+// structured as "**Label** - description" or "**Label:** description"
+// ("**Occasion** - Birthday, wedding...", "**Best for Sydney:** Cake
+// Mail..."). These aren't dish or geography words, they're meta-vocabulary
+// about the LIST ITSELF, a third category the food/geo lists don't cover.
+// Checking "does a colon/dash follow the match" was considered and
+// rejected - real business names are followed by " - description" just as
+// often ("**Black Star Pastry** - Famous for..."), so position alone can't
+// distinguish a label from a name; only the word itself can.
+const GENERIC_LABEL_TERMS = new Set([
+  'best', 'top', 'good', 'great',
+  'occasion', 'occasions', 'reviews', 'review', 'tips', 'tip', 'considerations', 'consideration',
+  'notes', 'note', 'summary', 'options', 'option', 'ordering', 'order', 'website', 'websites',
+  'location', 'locations', 'hours', 'contact', 'highlights', 'highlight', 'pricing', 'price',
+  'prices', 'shipping', 'availability', 'menu', 'ingredients', 'allergens', 'dietary', 'choosing',
+])
 function isGenericWord(word: string): boolean {
-  const lower = word.toLowerCase()
-  return GENERIC_FOOD_TERMS.has(lower) || GENERIC_GEO_TERMS.has(lower) || GENERIC_PLACE_TERMS.has(lower) || GENERIC_NON_COMPETITOR_TERMS.has(lower)
+  const lower = word.toLowerCase().replace(/[:.,;]+$/, '')
+  return GENERIC_FOOD_TERMS.has(lower) || GENERIC_GEO_TERMS.has(lower) || GENERIC_PLACE_TERMS.has(lower) || GENERIC_NON_COMPETITOR_TERMS.has(lower) || GENERIC_LABEL_TERMS.has(lower)
 }
 function isAllGenericWords(phrase: string): boolean {
   const words = phrase.split(/\s+/).filter(Boolean)
@@ -160,7 +187,7 @@ const LEADING_STOPWORDS = new Set([
   'named', 'recommended', 'recommends', 'try', 'consider', 'pointed', 'pick',
   'some', 'several', 'other', 'others', 'both', 'many', 'most',
   'here', 'this', 'that', 'these', 'those',
-  'for', 'if', 'when', 'while', 'since', 'because', 'so', 'also',
+  'for', 'from', 'if', 'when', 'while', 'since', 'because', 'so', 'also',
   'you', 'your', 'i', 'we', 'they', 'it',
 ])
 function stripLeadingStopword(phrase: string): string | null {
@@ -172,9 +199,13 @@ function stripLeadingStopword(phrase: string): string | null {
   return phrase
 }
 
+// Character class includes the Latin-1 accented range (À-ÿ) - found live on
+// production: "Lopé Cake Studio" was truncating to "Cake Studio" because
+// the accented "é" fell outside the original [a-zA-Z] class, breaking the
+// match mid-word and dropping the actual business name's first word.
 function extractTitleCasePhrases(text: string): string[] {
   const stripped = text.replace(/\*\*/g, '')
-  const regex = new RegExp(`\\b[A-Z][a-zA-Z'&]*(?:\\s+(?:${NAME_CONNECTOR_ALTERNATION})?\\s*[A-Z][a-zA-Z'&]*){1,3}\\b`, 'g')
+  const regex = new RegExp(`\\b[A-Z][a-zA-Z'&À-ÿ]*(?:\\s+(?:${NAME_CONNECTOR_ALTERNATION})?\\s*[A-Z][a-zA-Z'&À-ÿ]*){1,3}\\b`, 'g')
   const raw = Array.from(stripped.matchAll(regex)).map(m => m[0].trim())
   return raw.map(stripLeadingStopword).filter((m): m is string => m !== null)
 }
@@ -210,7 +241,12 @@ export function extractCandidateNames(text: string | null | undefined, brandName
   const domain = storeUrl ? normaliseDomain(storeUrl) : null
 
   const bold = extractBoldSpans(text)
-  const raw = bold.length > 0 ? bold : extractTitleCasePhrases(text)
+  const rawList = bold.length > 0 ? bold : extractTitleCasePhrases(text)
+  // A bold span can end with punctuation still attached from its source
+  // sentence ("**Best for Sydney:**") - strip trailing colon/comma/period
+  // before any check runs, both so the genericness check matches cleanly
+  // and so a kept candidate never displays with stray punctuation.
+  const raw = rawList.map(c => c.replace(/[:.,;]+$/, '').trim()).filter(Boolean)
 
   const seen = new Set<string>()
   const out: string[] = []
