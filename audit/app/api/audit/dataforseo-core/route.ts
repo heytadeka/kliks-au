@@ -108,11 +108,25 @@ export async function POST(req: NextRequest) {
   let competitors: any[] = []
   let serpFeatures = null
   let contentGap: any[] = []
+  let relevantPages: any[] = []
 
-  // ── Phase 1: overview + keywords in parallel ──
-  const [overviewRes, keywordsRes] = await Promise.allSettled([
+  // ── Phase 1: overview + keywords + relevant pages in parallel ──
+  // relevant_pages doesn't depend on anything computed later (topKwStrings,
+  // isLocal/cityTerm, topCompetitor) - same shape of independence as
+  // overview/keywords, so it belongs in this same parallel batch rather
+  // than a new standalone route (this is the same category of Labs call as
+  // the six others already in this file).
+  const [overviewRes, keywordsRes, relevantPagesRes] = await Promise.allSettled([
     dfsPost('/dataforseo_labs/google/domain_rank_overview/live', [{ target: domain, location_code: 2036, language_code: 'en' }]),
     dfsPost('/dataforseo_labs/google/ranked_keywords/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 50, order_by: ['ranked_serp_element.serp_item.rank_group,asc'] }]),
+    // location_code 2036 (national) matches the scope overview/keywords already
+    // use, kept consistent so the concentration stat this feeds reconciles with
+    // the report's other organic-traffic numbers rather than mixing scopes.
+    // limit 100 (DataForSEO's own default) - items are sorted by count/etv desc
+    // by default, so the tail beyond 100 pages (if any) contributes the least to
+    // any concentration total; see lib/relevant-pages.ts for how the resulting
+    // percentage is computed and what it's actually scoped to.
+    dfsPost('/dataforseo_labs/google/relevant_pages/live', [{ target: domain, location_code: 2036, language_code: 'en', limit: 100, order_by: ['metrics.organic.etv,desc'] }]),
   ])
 
   if (overviewRes.status === 'fulfilled') {
@@ -129,6 +143,13 @@ export async function POST(req: NextRequest) {
     console.log('[dataforseo-core] keywords count:', keywords.length, 'total_count:', keywordsTotalCount)
   } else {
     console.error('[dataforseo-core] keywords failed:', (keywordsRes as PromiseRejectedResult).reason?.message)
+  }
+
+  if (relevantPagesRes.status === 'fulfilled') {
+    relevantPages = relevantPagesRes.value?.tasks?.[0]?.result?.[0]?.items ?? []
+    console.log('[dataforseo-core] relevant pages count:', relevantPages.length)
+  } else {
+    console.error('[dataforseo-core] relevant pages failed:', (relevantPagesRes as PromiseRejectedResult).reason?.message)
   }
 
   // Brand name
@@ -381,6 +402,7 @@ export async function POST(req: NextRequest) {
       dataforseo_competitors: competitors.length > 0 ? competitors : [],
       dataforseo_serp_features: serpFeatures,
       dataforseo_content_gap: contentGap.length > 0 ? contentGap : null,
+      dataforseo_relevant_pages: relevantPages.length > 0 ? relevantPages : null,
       backlinks_summary: null, // disabled - requires separate DataForSEO subscription
     }, { onConflict: 'prospect_id' })
 
@@ -392,5 +414,6 @@ export async function POST(req: NextRequest) {
     keywords: keywords.length,
     competitors: competitors.length,
     contentGap: contentGap.length,
+    relevantPages: relevantPages.length,
   })
 }

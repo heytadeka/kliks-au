@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import { resolveOrganicStats } from '@/lib/organic-stats'
 import { isCommentaryPending } from '@/lib/commentary-status'
 import { extractCandidateNames, extractCompetitorRanking, buildResponseSummary } from '@/lib/llm-visibility'
+import { resolveRelevantPagesConcentration, isHomepageUrl } from '@/lib/relevant-pages'
 
 const S = {
   bg: '#0e0d1a',
@@ -271,6 +272,10 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
   const dfsCompetitors: any[] = useMemo(() => cache?.dataforseo_competitors ?? [], [cache?.dataforseo_competitors])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const dfsContentGap: any[] = useMemo(() => cache?.dataforseo_content_gap ?? [], [cache?.dataforseo_content_gap])
+  const relevantPagesData = useMemo(
+    () => resolveRelevantPagesConcentration(cache?.dataforseo_relevant_pages),
+    [cache?.dataforseo_relevant_pages]
+  )
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const seoFindings = content?.seo_findings as any[] | null
   const gmbData = cache?.gmb_data as any
@@ -418,6 +423,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     map.ads = pad(n++)
     if (content?.section_strategy_headline || content?.section_strategy_body) map.strategy = pad(n++)
     map.seo = pad(n++)
+    if (relevantPagesData) map.relevantPages = pad(n++)
     map.priorities = pad(n++)
     if (content?.section_seo_headline) map.seoCommentary = pad(n++)
     if (content?.ai_opportunity_commentary || content?.section_opportunity_headline) map.opportunity = pad(n++)
@@ -425,7 +431,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     map.appendix = pad(n++)
     return map
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cro?.error, gmbData, hasLlmVisibility, content?.section_strategy_headline, content?.section_strategy_body, content?.section_seo_headline, content?.ai_opportunity_commentary, content?.section_opportunity_headline, revCalc.length])
+  }, [cro?.error, gmbData, hasLlmVisibility, relevantPagesData, content?.section_strategy_headline, content?.section_strategy_body, content?.section_seo_headline, content?.ai_opportunity_commentary, content?.section_opportunity_headline, revCalc.length])
 
   // ── Score ring animation ──
   const [scoresRevealed, setScoresRevealed] = useState(false)
@@ -1712,6 +1718,67 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
         </section>
 
         <div className="divider" />
+
+        {/* ── Relevant Pages (traffic concentration) ── */}
+        {relevantPagesData && (
+          <><section className="section-pad" id="relevant-pages">
+            <div className="wrap">
+              <div className="sec-head">
+                <div className="eyebrow-row">
+                  <span className="sec-num-label">{sectionNums.relevantPages}</span>
+                  <span className="kicker"><span className="dot" />Page-Level Visibility</span>
+                </div>
+                <h2 className="sec-title">Where your search visibility actually lives.</h2>
+              </div>
+
+              {(() => {
+                const { topPage, totalKeywordCount, pages } = relevantPagesData
+                const sharePctRounded = Math.round(topPage.sharePct)
+                const topPagePath = isHomepageUrl(topPage.url) ? 'Your homepage' : topPage.url.replace(/^https?:\/\/[^/]+/, '')
+                const thStyle = { padding: '10px 14px', textAlign: 'left' as const, color: S.orange, fontSize: 11, fontWeight: 600, fontFamily: MONO, letterSpacing: '0.16em', textTransform: 'uppercase' as const, borderBottom: `1px solid ${S.border}` }
+                return (
+                  <>
+                    <div style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 16, padding: 32, marginBottom: 32, display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap' as const }}>
+                      <div style={{ fontFamily: '"Clash Display", sans-serif', fontWeight: 700, fontSize: 64, lineHeight: 1, color: sharePctRounded >= 70 ? S.orange : S.white, flexShrink: 0 }}>
+                        {sharePctRounded}%
+                      </div>
+                      <div style={{ flex: 1, minWidth: 240 }}>
+                        <p style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: S.muted, margin: '0 0 8px' }}>
+                          Of your organic visibility
+                        </p>
+                        <p style={{ color: S.white, fontSize: 16, lineHeight: 1.6, margin: 0 }}>
+                          {topPagePath} earns {topPage.keywordCount.toLocaleString()} of your {totalKeywordCount.toLocaleString()} ranking keywords. Everything else on your site is splitting what is left.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                        <thead>
+                          <tr style={{ background: S.bg }}>
+                            <th style={thStyle}>Page</th>
+                            <th style={thStyle}>Keywords</th>
+                            <th style={thStyle}>Est. Traffic</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pages.slice(0, 10).map((p, i) => (
+                            <tr key={p.url} style={{ background: i % 2 === 0 ? S.bg2 : S.bg }}>
+                              <td style={{ padding: '10px 14px', color: S.white }}>{isHomepageUrl(p.url) ? '/ (homepage)' : p.url.replace(/^https?:\/\/[^/]+/, '')}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted }}>{p.keywordCount.toLocaleString()}</td>
+                              <td style={{ padding: '10px 14px', color: S.muted }}>{p.etv > 0 ? fmtNum(p.etv) : '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          </section>
+          <div className="divider" /></>
+        )}
 
         {/* ── Priority Actions ── */}
         <section className="section-pad bg2-section" id="priorities">

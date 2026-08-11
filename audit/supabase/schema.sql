@@ -167,3 +167,17 @@ on conflict do nothing;
 --
 -- ALTER TABLE audit_data_cache
 --   ADD COLUMN IF NOT EXISTS llm_visibility_results jsonb;
+
+-- Relevant Pages: dataforseo_labs/google/relevant_pages/live, fetched
+-- alongside domain_rank_overview/ranked_keywords in dataforseo-core's
+-- existing Phase 1 parallel batch (same category of Labs call as the other
+-- six already in that route). Raw per-page items array (page_address,
+-- metrics.organic.etv/count) - the traffic-concentration stat this feeds is
+-- computed at render time from this raw data (lib/relevant-pages.ts), same
+-- "store raw, compute derived stats in one shared place" pattern as
+-- resolveOrganicStats(), not pre-baked into a second column that could
+-- drift from the render logic. Declared jsonb from the start. Run this
+-- block in Supabase SQL editor if upgrading an existing database:
+--
+-- ALTER TABLE audit_data_cache
+--   ADD COLUMN IF NOT EXISTS dataforseo_relevant_pages jsonb;
