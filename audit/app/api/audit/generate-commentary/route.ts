@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { ANTHROPIC_MODEL } from '@/lib/config'
 import { resolveOrganicStats } from '@/lib/organic-stats'
+import { extractCompetitorRanking } from '@/lib/llm-visibility'
+import { resolveRelevantPagesConcentration } from '@/lib/relevant-pages'
 
 export const maxDuration = 60
 
@@ -345,6 +347,32 @@ Respond with only valid JSON. No markdown. No explanation.`
         .slice(0, 3)
         .map((c: any) => c.label)
 
+      // AI Search Visibility - heavily weighted per explicit product decision
+      // (see prioritySystemPrompt rule below), reuses the same extraction/
+      // ranking logic the AI Visibility report section itself uses
+      // (extractCompetitorRanking) so this can't independently diverge from
+      // what the prospect actually sees on their own report. Omitted from
+      // the prompt entirely (not "N/A") when there's no data yet or every
+      // provider call failed - an absent block degrades gracefully, an
+      // "N/A" string risks the model treating it as a bad result.
+      const llmResponded: any[] = (cache.llm_visibility_results ?? []).filter((r: any) => r.response_text && !r.error)
+      let aiVisibilitySection = ''
+      if (llmResponded.length > 0) {
+        const llmFoundCount = llmResponded.filter((r: any) => r.found).length
+        const llmRanking = extractCompetitorRanking(llmResponded, prospect.brand_name, prospect.store_url)
+        const namedInstead = llmFoundCount < llmResponded.length && llmRanking.length > 0
+          ? ` Named instead: ${llmRanking.slice(0, 3).map((r: any) => r.name).join(', ')}.`
+          : ''
+        aiVisibilitySection = `\nAI Search Visibility: ${llmFoundCount} of ${llmResponded.length} AI assistants (ChatGPT, Claude, Perplexity) mentioned this business when asked a real customer question.${namedInstead}`
+      }
+
+      // Relevant Pages concentration - context only (see prioritySystemPrompt
+      // rule below), one line, not the raw page list.
+      const relevantPagesConcentration = resolveRelevantPagesConcentration(cache.dataforseo_relevant_pages)
+      const relevantPagesSection = relevantPagesConcentration
+        ? `\nTraffic concentration: ${Math.round(relevantPagesConcentration.topPage.sharePct)}% of organic visibility sits on one page.`
+        : ''
+
       const prioritySystemPrompt = `You are Adam Nagy, founder of Kliks Digital, a Shopify growth agency. You have just analysed a Shopify store and have real data. Your job is to produce a brutally honest, specific priority action list for this store owner.
 
 Rules:
@@ -356,7 +384,9 @@ Rules:
 - Sound like a founder giving honest advice, not an agency pitch
 - Never use em dashes
 - Never use bullet points in the next step
-- Tone: direct, calm, specific`
+- Tone: direct, calm, specific
+- If AI Search Visibility data is present and shows this business was mentioned by few or none of the AI assistants asked, treat that as generally the top-priority finding. It is current, concrete, and highly relevant given how much attention AI-assisted search is getting right now. Rank it first unless something else in the data is genuinely more urgent, such as a critically broken mobile experience.
+- If traffic concentration data is present, treat it as background context only. Weave it into another priority if relevant rather than making it its own standalone item.`
 
       const priorityUserPrompt = `Store: ${prospect.brand_name}
 Mobile Performance: ${ps?.performance_score ?? 'N/A'}/100
@@ -369,7 +399,7 @@ Monthly traffic: ${monthlyTraffic.toLocaleString()}
 Top competitor: ${topCompetitor} with ${topCompetitorTraffic.toLocaleString()} monthly visits
 Keyword gaps (top 3): ${moneyKeywords.length > 0 ? moneyKeywords.join(', ') : 'None available'}
 SEO score: ${ps?.seo_score ?? 'N/A'}/100
-Accessibility: ${ps?.accessibility_score ?? 'N/A'}/100
+Accessibility: ${ps?.accessibility_score ?? 'N/A'}/100${aiVisibilitySection}${relevantPagesSection}
 
 Generate exactly 3 priorities as JSON only, no other text:
 {
