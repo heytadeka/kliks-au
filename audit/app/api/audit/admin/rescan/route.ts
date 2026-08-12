@@ -27,22 +27,50 @@ export async function POST(req: NextRequest) {
 
   if (!prospect) return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
 
-  if (prospect.rescan_locked_at) {
-    const lockedAgoMs = Date.now() - new Date(prospect.rescan_locked_at).getTime()
-    if (lockedAgoMs < RESCAN_LOCK_TIMEOUT_MS) {
-      const secondsAgo = Math.max(1, Math.round(lockedAgoMs / 1000))
-      return NextResponse.json({
-        success: false,
-        error: `A rescan is already in progress for this prospect (started ${secondsAgo}s ago). Wait for it to finish before starting another.`,
-      }, { status: 409 })
-    }
-    console.warn('[rescan] found a lock older than the timeout for prospect_id:', prospect_id, '- treating as orphaned and taking over')
-  }
-
-  await supabaseAdmin
+  // Atomic conditional lock acquisition - a single UPDATE...WHERE, not the
+  // previous SELECT-then-check-then-UPDATE. That separation left a real
+  // window: two near-simultaneous rescan requests (double-click, a retry)
+  // could both read rescan_locked_at as clear before either committed its
+  // own update, and both proceed to fire independent fan-outs. Confirmed as
+  // the root cause of a real production mismatch on bakealicious-by-gabriela
+  // (commentary_readiness_at landing 2.3s before pagespeed_fetched_at - too
+  // small to be the original 19-55s stale-data bug, consistent with a second
+  // overlapping PageSpeed write landing just after the first commentary
+  // generation had already read its data).
+  //
+  // Postgres only lets one of two concurrent UPDATE...WHERE statements
+  // against the same row actually match when the WHERE clause depends on
+  // that row's own current state - whichever commits first changes
+  // rescan_locked_at, so the second statement's WHERE condition no longer
+  // matches and it affects zero rows instead of racing ahead. Checking the
+  // returned row (not a separate read) is what makes this safe.
+  const staleThreshold = new Date(Date.now() - RESCAN_LOCK_TIMEOUT_MS).toISOString()
+  const { data: lockedRows, error: lockError } = await supabaseAdmin
     .from('prospects')
     .update({ rescan_locked_at: new Date().toISOString() })
     .eq('id', prospect_id)
+    .or(`rescan_locked_at.is.null,rescan_locked_at.lt.${staleThreshold}`)
+    .select('id')
+
+  if (lockError) {
+    console.error('[rescan] lock acquisition failed:', JSON.stringify(lockError))
+    return NextResponse.json({ success: false, error: 'Failed to acquire rescan lock' }, { status: 500 })
+  }
+
+  if (!lockedRows || lockedRows.length === 0) {
+    // Someone else holds a live lock right now. secondsAgo is derived from
+    // our own earlier read above purely for a human-readable message - in a
+    // genuine race that read could be a few milliseconds stale, which is
+    // fine here since it's not what gated the decision above.
+    const lockedAgoMs = prospect.rescan_locked_at ? Date.now() - new Date(prospect.rescan_locked_at).getTime() : null
+    const secondsAgo = lockedAgoMs != null ? Math.max(1, Math.round(lockedAgoMs / 1000)) : null
+    return NextResponse.json({
+      success: false,
+      error: secondsAgo != null
+        ? `A rescan is already in progress for this prospect (started ${secondsAgo}s ago). Wait for it to finish before starting another.`
+        : `A rescan is already in progress for this prospect. Wait for it to finish before starting another.`,
+    }, { status: 409 })
+  }
 
   // Reset the readiness-gate fields the enrichment poll checks for presence
   // (see dataforseo-enrichment/route.ts's waitForCommentaryData). Previously
