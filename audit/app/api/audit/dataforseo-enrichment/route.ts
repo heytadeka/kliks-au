@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { waitUntil } from '@vercel/functions'
+import { COMMENTARY_READY_MAX_WAIT_MS, isDataReadyForCommentary } from '@/lib/commentary-status'
 
 export const maxDuration = 60
 export const preferredRegion = 'syd1'
 
 const READY_POLL_INTERVAL_MS = 3_000
-const READY_MAX_WAIT_MS = 50_000 // leaves headroom inside this route's own 60s budget
+const READY_MAX_WAIT_MS = COMMENTARY_READY_MAX_WAIT_MS // shared with the admin UI's stalled-state threshold - see lib/commentary-status.ts
 
 // Persists the poll's outcome to a column instead of only console.log/warn.
 // Log retention on this project has repeatedly closed before this exact
@@ -62,7 +63,7 @@ async function waitForCommentaryData(prospect_id: string): Promise<boolean> {
       .eq('prospect_id', prospect_id)
       .single()
 
-    if (cache?.pagespeed_fetched_at && cache?.crawled_at && cache?.dataforseo_overview != null) {
+    if (isDataReadyForCommentary(cache)) {
       const elapsedMs = Date.now() - start
       console.log('[dataforseo-enrichment] data ready after', elapsedMs, 'ms')
       await recordReadinessOutcome(prospect_id, 'ready', elapsedMs, cache.pagespeed_fetched_at)

@@ -1,8 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { isCommentaryPending } from '@/lib/commentary-status'
+import { isCommentaryPending, getCommentaryReadinessState } from '@/lib/commentary-status'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', orangeDark: '#c42f08', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)', purple: '#644bff' }
 
@@ -42,10 +42,22 @@ export default function EditAuditClient({ prospect, content, cache }: { prospect
 
   const [loading, setLoading] = useState(false)
   const [rescanning, setRescanning] = useState(false)
+  const [retrying, setRetrying] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [nicheError, setNicheError] = useState('')
+
+  const readinessState = getCommentaryReadinessState(cache, prospect.rescan_locked_at)
+
+  // Re-pulls prospect/cache from the server while a scan looks like it's in
+  // flight, so "Scanning..." actually resolves to "Updated" or "Scan
+  // stalled" on its own instead of requiring a manual page reload.
+  useEffect(() => {
+    if (readinessState !== 'scanning') return
+    const id = setInterval(() => router.refresh(), 5000)
+    return () => clearInterval(id)
+  }, [readinessState, router])
 
   function set(field: string) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -97,11 +109,30 @@ export default function EditAuditClient({ prospect, content, cache }: { prospect
       })
       const data = await res.json()
       if (!data.success) setError(data.error || 'Rescan failed')
-      else alert('Rescan started. Data will update in the background.')
+      else router.refresh() // picks up the new rescan_locked_at so the status banner shows "Scanning..." immediately
     } catch {
       setError('Network error')
     } finally {
       setRescanning(false)
+    }
+  }
+
+  async function handleRetryCommentary() {
+    setRetrying(true)
+    setError('')
+    try {
+      const res = await fetch('/api/audit/admin/retry-commentary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospect_id: prospect.id }),
+      })
+      const data = await res.json()
+      if (!data.success) setError(data.error || 'Retry failed')
+      else router.refresh()
+    } catch {
+      setError('Network error')
+    } finally {
+      setRetrying(false)
     }
   }
 
@@ -158,15 +189,38 @@ export default function EditAuditClient({ prospect, content, cache }: { prospect
 
         <p style={{ color: S.muted, fontSize: 13, marginBottom: 40 }}>/{prospect.slug} &middot; {prospect.access_count ?? 0} views &middot; {prospect.is_active ? 'Active' : 'Inactive'}</p>
 
-        {/* AI commentary status */}
-        {!isCommentaryPending(content) ? (
+        {/* AI commentary status - see getCommentaryReadinessState in lib/commentary-status.ts */}
+        {readinessState === 'scanning' && (
+          <div style={{ background: 'rgba(100,75,255,0.05)', border: `1px solid ${S.border}`, borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
+            <p style={{ color: S.purple, fontSize: 13, fontWeight: 600 }}>Scanning... data scan in progress, this can take a minute or two.</p>
+          </div>
+        )}
+
+        {readinessState === 'stalled' && (
+          <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <p style={{ color: S.orange, fontSize: 13, fontWeight: 600 }}>Scan stalled - the last data scan didn&apos;t finish generating commentary. The underlying data may already be ready.</p>
+            <button onClick={handleRetryCommentary} disabled={retrying} style={{ background: 'rgba(255,67,21,0.15)', color: S.orange, border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              {retrying ? 'Retrying...' : 'Retry Commentary'}
+            </button>
+          </div>
+        )}
+
+        {readinessState === 'updated' && (
           <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
-            <p style={{ color: '#22c55e', fontSize: 13, fontWeight: 600 }}>AI commentary is live. Run a data scan to regenerate.</p>
+            <p style={{ color: '#22c55e', fontSize: 13, fontWeight: 600 }}>AI commentary is up to date. Run a data scan to regenerate.</p>
           </div>
-        ) : (
-          <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
-            <p style={{ color: S.orange, fontSize: 13, fontWeight: 600 }}>AI commentary not yet generated, or incomplete. Run a data scan to generate.</p>
-          </div>
+        )}
+
+        {readinessState === 'idle' && (
+          !isCommentaryPending(content) ? (
+            <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
+              <p style={{ color: '#22c55e', fontSize: 13, fontWeight: 600 }}>AI commentary is live. Run a data scan to regenerate.</p>
+            </div>
+          ) : (
+            <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderRadius: 12, padding: '14px 20px', marginBottom: 24 }}>
+              <p style={{ color: S.orange, fontSize: 13, fontWeight: 600 }}>AI commentary not yet generated, or incomplete. Run a data scan to generate.</p>
+            </div>
+          )
         )}
 
         {/* CRO crawl status - surfaces the real failure reason instead of leaving it in the DB only */}

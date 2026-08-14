@@ -23,7 +23,7 @@ export default async function EditAuditPage({ params }: { params: { slug: string
 
   const { data: cache } = await supabaseAdmin
     .from('audit_data_cache')
-    .select('cro_checklist')
+    .select('cro_checklist, pagespeed_fetched_at, commentary_gen_invoked_at, commentary_readiness_status')
     .eq('prospect_id', prospect.id)
     .single()
 

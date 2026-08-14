@@ -7,11 +7,15 @@ export const maxDuration = 60
 
 // How long a lock is honoured before being treated as stale and taken over.
 // Generously longer than the pipeline's realistic worst case (dataforseo-
-// enrichment's own readiness poll caps at 50s, plus commentary's two
-// sequential Anthropic calls) so a genuinely still-running scan is never
-// pre-empted, but a lock orphaned by a crashed invocation can't block this
-// prospect forever either.
-const RESCAN_LOCK_TIMEOUT_MS = 120_000
+// enrichment's own readiness poll caps at COMMENTARY_READY_MAX_WAIT_MS, see
+// lib/commentary-status.ts - currently 52s, plus commentary's own up-to-60s
+// maxDuration) so a genuinely still-running scan is never pre-empted, but a
+// lock orphaned by a crashed invocation can't block this prospect forever
+// either. Kept well above that ~112s worst case, not just barely above it -
+// this is the same margin philosophy that made the atomic-lock fix (see git
+// history) actually safe, and it has to be re-checked any time either of
+// those two inputs changes.
+const RESCAN_LOCK_TIMEOUT_MS = 180_000
 
 export async function POST(req: NextRequest) {
   const cookieStore = cookies()
