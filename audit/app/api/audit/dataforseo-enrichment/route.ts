@@ -13,7 +13,17 @@ const READY_MAX_WAIT_MS = 50_000 // leaves headroom inside this route's own 60s 
 // distinction (did it resolve or time out, how long did it take) could be
 // checked, blocking several diagnoses this session - this makes it a normal
 // query instead of a race against log rotation.
-async function recordReadinessOutcome(prospect_id: string, status: 'ready' | 'timeout', elapsedMs: number): Promise<void> {
+//
+// pagespeedSeenAt is diagnostic tracing (see supabase/schema.sql's
+// commentary_gen_* migration block): commentary_readiness_at only records
+// WHEN this poll observed readiness, never WHAT VALUE of pagespeed_fetched_at
+// it actually read at that moment. If a later write changes that value
+// before generate-commentary does its own separate fresh read, this is what
+// makes that visible - comparing this against the final pagespeed_fetched_at
+// and against commentary_gen_saw_pagespeed_at (generate-commentary/route.ts)
+// pins down exactly which stage a divergence happens at, instead of
+// inferring it from two timestamps alone.
+async function recordReadinessOutcome(prospect_id: string, status: 'ready' | 'timeout', elapsedMs: number, pagespeedSeenAt: string | null): Promise<void> {
   try {
     await supabaseAdmin
       .from('audit_data_cache')
@@ -21,6 +31,7 @@ async function recordReadinessOutcome(prospect_id: string, status: 'ready' | 'ti
         commentary_readiness_status: status,
         commentary_readiness_ms: elapsedMs,
         commentary_readiness_at: new Date().toISOString(),
+        commentary_readiness_saw_pagespeed_at: pagespeedSeenAt,
       })
       .eq('prospect_id', prospect_id)
   } catch (e: any) {
@@ -54,14 +65,14 @@ async function waitForCommentaryData(prospect_id: string): Promise<boolean> {
     if (cache?.pagespeed_fetched_at && cache?.crawled_at && cache?.dataforseo_overview != null) {
       const elapsedMs = Date.now() - start
       console.log('[dataforseo-enrichment] data ready after', elapsedMs, 'ms')
-      await recordReadinessOutcome(prospect_id, 'ready', elapsedMs)
+      await recordReadinessOutcome(prospect_id, 'ready', elapsedMs, cache.pagespeed_fetched_at)
       return true
     }
     await new Promise(resolve => setTimeout(resolve, READY_POLL_INTERVAL_MS))
   }
   const elapsedMs = Date.now() - start
   console.warn('[dataforseo-enrichment] readiness wait hit', READY_MAX_WAIT_MS, 'ms cap without all inputs landing - skipping commentary rather than generating it from incomplete data. Re-run the data scan once the slow job finishes to pick this up.')
-  await recordReadinessOutcome(prospect_id, 'timeout', elapsedMs)
+  await recordReadinessOutcome(prospect_id, 'timeout', elapsedMs, null)
 
   // generate-commentary is what normally clears rescan_locked_at (see its own
   // try/finally). It's never being called on this path, so release the lock

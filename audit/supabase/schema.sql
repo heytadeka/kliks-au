@@ -181,3 +181,24 @@ on conflict do nothing;
 --
 -- ALTER TABLE audit_data_cache
 --   ADD COLUMN IF NOT EXISTS dataforseo_relevant_pages jsonb;
+
+-- Diagnostic tracing for the readiness/commentary-freshness investigation:
+-- the atomic rescan-lock fix (see git history) didn't close a small
+-- negative gap between commentary_readiness_at and pagespeed_fetched_at,
+-- reproduced on 3 real prospects (bakealicious, enze, sebastien-sans-gluten)
+-- after that fix was live - meaning the mechanism isn't a duplicate-rescan
+-- race after all, or isn't only that. commentary_readiness_at only records
+-- when the readiness POLL observed pagespeed_fetched_at as non-null - it
+-- says nothing about what generate-commentary's own, separate fresh read
+-- (a different HTTP invocation, moments later) actually saw. These columns
+-- close that visibility gap so the next single, deliberate rescan produces
+-- real evidence instead of another timestamp-based inference. Safe to drop
+-- once the mechanism is confirmed and fixed. Run this block in Supabase SQL
+-- editor if upgrading an existing database:
+--
+-- ALTER TABLE audit_data_cache
+--   ADD COLUMN IF NOT EXISTS commentary_gen_invoked_at timestamptz,
+--   ADD COLUMN IF NOT EXISTS commentary_gen_saw_pagespeed_at timestamptz,
+--   ADD COLUMN IF NOT EXISTS commentary_gen_saw_tbt numeric,
+--   ADD COLUMN IF NOT EXISTS commentary_gen_saw_speed_index numeric,
+--   ADD COLUMN IF NOT EXISTS commentary_readiness_saw_pagespeed_at timestamptz;

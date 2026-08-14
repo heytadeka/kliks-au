@@ -8,6 +8,14 @@ import { resolveRelevantPagesConcentration } from '@/lib/relevant-pages'
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
+  // Diagnostic tracing (see supabase/schema.sql's commentary_gen_* migration
+  // block) for the readiness/freshness investigation: commentary_readiness_at
+  // only records when the readiness poll observed pagespeed_fetched_at as
+  // non-null, not what this handler's own separate fresh read (a different
+  // HTTP invocation, moments later) actually saw. Captured unconditionally,
+  // before anything can fail, so a slow/failed generation still leaves a trace.
+  const genInvokedAt = new Date().toISOString()
+
   const { prospect_id } = await req.json()
   console.log('[commentary] starting for prospect_id:', prospect_id)
 
@@ -36,6 +44,29 @@ export async function POST(req: NextRequest) {
   if (!cache) {
     console.error('[commentary] no cache data for prospect_id:', prospect_id)
     return NextResponse.json({ error: 'No cache data found' }, { status: 404 })
+  }
+
+  // Trace what this handler's own fresh read actually saw, separate from
+  // recordReadinessOutcome's commentary_readiness_at (set by the poll, a
+  // different invocation entirely) and separate from whatever's in the DB
+  // by the time anyone queries it later. Awaited (not fire-and-forget) so
+  // this write is guaranteed to land before the function can terminate -
+  // an un-awaited write here would undermine the one thing this
+  // instrumentation exists to guarantee. Wrapped so a failure here can
+  // never break the real generation that follows.
+  try {
+    const { error: traceError } = await supabaseAdmin
+      .from('audit_data_cache')
+      .update({
+        commentary_gen_invoked_at: genInvokedAt,
+        commentary_gen_saw_pagespeed_at: cache.pagespeed_fetched_at ?? null,
+        commentary_gen_saw_tbt: cache.pagespeed_mobile?.tbt ?? null,
+        commentary_gen_saw_speed_index: cache.pagespeed_mobile?.speed_index ?? null,
+      })
+      .eq('prospect_id', prospect_id)
+    if (traceError) console.error('[commentary] trace write failed (non-fatal):', JSON.stringify(traceError))
+  } catch (traceErr: any) {
+    console.error('[commentary] trace write threw (non-fatal):', traceErr.message)
   }
 
   // Build data summary for the prompt
