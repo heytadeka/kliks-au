@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       prospect_name,
       prospect_email,
       audit_slug: slug,
-      status: 'audit_created',
+      stage: 'not_contacted',
     })
   } catch (e: any) {
     console.error('[create] outreach_log insert failed (non-fatal):', e.message)

@@ -57,6 +57,35 @@ create table if not exists admin_users (
   is_active boolean not null default true
 );
 
+-- Never checked in until now, despite being live since early on - see
+-- app/api/audit/admin/create/route.ts, app/api/outreach/update/route.ts,
+-- app/api/audit/gate/route.ts. Documented here from a full audit of every
+-- insert/select/update against it, not from a source-of-truth definition
+-- that existed anywhere. One row per prospect in practice (no unique
+-- constraint enforces it, but every write path treats it that way).
+-- `status` is the pre-2026-08-14 stage field, being retired in favour of
+-- `stage`/`declined_reason` below - see that migration block for why.
+create table if not exists outreach_log (
+  id uuid primary key default gen_random_uuid(),
+  prospect_id uuid not null references prospects(id) on delete cascade,
+  domain text,
+  brand_name text,
+  prospect_name text,
+  prospect_email text,
+  audit_slug text,
+  status text, -- legacy - superseded by `stage`, kept for historical rows only, no longer written
+  notes text,
+  follow_up_due_at date,
+  deal_value numeric,
+  lost_reason text, -- legacy - superseded by `declined_reason`
+  email_sent_at timestamptz, -- set once, on first transition into stage 'first_email_sent'
+  first_opened_at timestamptz,
+  last_opened_at timestamptz,
+  open_count integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- AI commentary columns (added after initial release)
 -- Run this block in Supabase SQL editor if upgrading an existing database:
 --
@@ -202,3 +231,25 @@ on conflict do nothing;
 --   ADD COLUMN IF NOT EXISTS commentary_gen_saw_tbt numeric,
 --   ADD COLUMN IF NOT EXISTS commentary_gen_saw_speed_index numeric,
 --   ADD COLUMN IF NOT EXISTS commentary_readiness_saw_pagespeed_at timestamptz;
+
+-- Unified outreach stage model (2026-08-14): collapses the old 10-value
+-- `status` (audit_created/email_sent/opened/no_response/responded/
+-- call_booked/proposal_sent/won/lost/not_a_fit) down to 6 real values -
+-- real usage data across all 26 live rows showed zero use of the
+-- responded/call_booked/proposal_sent distinction, so they collapse to one.
+-- `opened` is dropped as a stage entirely - it was always report-page-view
+-- tracking (see gate/route.ts), not email-open tracking, and is now
+-- correctly modelled as the independent "Viewed" badge (open_count > 0),
+-- not a stage a prospect occupies. Additive: `status`/`lost_reason` stay in
+-- the table, populated on historical rows, but the app stops reading or
+-- writing them once this migration runs - see lib/outreach-stage.ts for the
+-- values and the backfill mapping used to populate `stage` from `status`.
+-- Run this block in Supabase SQL editor if upgrading an existing database:
+--
+-- ALTER TABLE outreach_log
+--   ADD COLUMN IF NOT EXISTS stage text,
+--   ADD COLUMN IF NOT EXISTS declined_reason text;
+--
+-- stage values: not_contacted | first_email_sent | second_email_sent |
+--   responded | won | declined
+-- declined_reason values (only set when stage = 'declined'): said_no | not_a_fit

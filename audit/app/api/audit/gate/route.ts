@@ -30,11 +30,15 @@ export async function POST(req: NextRequest) {
     .update({ last_accessed_at: nowIso, access_count: newAccessCount })
     .eq('id', prospect.id)
 
-  // Sync open data to outreach_log (non-fatal)
+  // Sync open data to outreach_log (non-fatal). The Viewed badge (open_count
+  // etc.) is deliberately independent of stage - see lib/outreach-stage.ts -
+  // so this no longer moves stage at all, unlike the retired status field's
+  // email_sent -> opened auto-transition. A prospect can view their report
+  // at any stage, including before Mark Sent was ever clicked.
   try {
     const { data: outreachRow } = await supabaseAdmin
       .from('outreach_log')
-      .select('first_opened_at, status')
+      .select('first_opened_at')
       .eq('prospect_id', prospect.id)
       .single()
     if (outreachRow) {
@@ -44,7 +48,6 @@ export async function POST(req: NextRequest) {
         updated_at: nowIso,
       }
       if (!outreachRow.first_opened_at) outreachUpdate.first_opened_at = nowIso
-      if (outreachRow.status === 'email_sent') outreachUpdate.status = 'opened'
       await supabaseAdmin.from('outreach_log').update(outreachUpdate).eq('prospect_id', prospect.id)
     }
   } catch (e: any) {

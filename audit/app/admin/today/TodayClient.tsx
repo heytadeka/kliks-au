@@ -2,27 +2,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { STAGE_LABELS, STAGE_BG, STAGE_COLOR, addDays } from '@/lib/outreach-stage'
 
 const S = { bg: '#0e0d1a', bg2: '#1a1828', orange: '#ff4315', orangeDark: '#c42f08', white: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(100,75,255,0.12)', purple: '#644bff' }
-
-// ─── Status config (mirrors OutreachClient.tsx) ────────────────────────────
-
-const STATUS_LABELS: Record<string, string> = {
-  audit_created: 'Audit Created', email_sent: 'Email Sent', opened: 'Opened', no_response: 'No Response',
-  responded: 'Responded', call_booked: 'Call Booked', proposal_sent: 'Proposal Sent', won: 'Won', lost: 'Lost', not_a_fit: 'Not a Fit',
-}
-const STATUS_BG: Record<string, string> = {
-  audit_created: 'rgba(255,255,255,0.05)', email_sent: 'rgba(99,102,241,0.15)', opened: 'rgba(249,115,22,0.15)',
-  no_response: 'rgba(239,68,68,0.1)', responded: 'rgba(59,130,246,0.15)', call_booked: 'rgba(34,197,94,0.15)',
-  proposal_sent: 'rgba(34,197,94,0.2)', won: 'rgba(34,197,94,0.3)', lost: 'rgba(239,68,68,0.15)', not_a_fit: 'rgba(255,255,255,0.05)',
-}
-const STATUS_COLOR: Record<string, string> = {
-  audit_created: 'rgba(255,255,255,0.5)', email_sent: '#818cf8', opened: '#f97316', no_response: '#f87171',
-  responded: '#60a5fa', call_booked: '#22c55e', proposal_sent: '#22c55e', won: '#4ade80', lost: '#ef4444', not_a_fit: 'rgba(255,255,255,0.35)',
-}
-
-const toInputDate = (d: Date) => d.toISOString().split('T')[0]
-const addDays = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return toInputDate(d) }
 
 function daysOverdue(dateStr: string): number {
   const today = new Date()
@@ -69,7 +51,7 @@ export default function TodayClient({ sentToday, readyToReachOut, followUpsDue }
       await fetch('/api/outreach/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: outreachId, status: 'email_sent', follow_up_due_at: addDays(3) }),
+        body: JSON.stringify({ id: outreachId, stage: 'first_email_sent', follow_up_due_at: addDays(3) }),
       })
       router.refresh()
     } finally {
@@ -225,22 +207,22 @@ export default function TodayClient({ sentToday, readyToReachOut, followUpsDue }
                   return (
                     <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 14, color: S.white, fontWeight: 500, minWidth: 160 }}>{r.brand_name}</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: STATUS_BG[r.status] ?? STATUS_BG.audit_created, color: STATUS_COLOR[r.status] ?? S.muted }}>
-                        {STATUS_LABELS[r.status] ?? r.status}
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: STAGE_BG[r.stage] ?? STAGE_BG.not_contacted, color: STAGE_COLOR[r.stage] ?? S.muted }}>
+                        {STAGE_LABELS[r.stage] ?? r.stage}
                       </span>
                       <span style={{ fontSize: 13, color: '#ef4444' }}>{days === 1 ? '1 day overdue' : `${days} days overdue`}</span>
-                      {['audit_created', 'email_sent'].includes(r.status) && (
+                      {['not_contacted', 'first_email_sent'].includes(r.stage) && (
                         <button
                           disabled={busyId === r.id}
-                          onClick={() => updateOutreach(r.id, { status: 'email_sent', follow_up_due_at: addDays(3) })}
+                          onClick={() => updateOutreach(r.id, { stage: 'first_email_sent', follow_up_due_at: addDays(3) })}
                           style={{ background: 'rgba(99,102,241,0.15)', border: 'none', color: '#818cf8', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
                           Mark Sent
                         </button>
                       )}
-                      {['opened', 'no_response'].includes(r.status) && (
+                      {r.stage === 'first_email_sent' && (
                         <button
                           disabled={busyId === r.id}
-                          onClick={() => updateOutreach(r.id, { status: 'no_response', follow_up_due_at: addDays(4) })}
+                          onClick={() => updateOutreach(r.id, { stage: 'second_email_sent', follow_up_due_at: addDays(4) })}
                           style={{ background: 'rgba(239,68,68,0.15)', border: 'none', color: '#f87171', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>
                           Follow Up Sent
                         </button>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { STAGE_LABELS, STAGE_BG, STAGE_COLOR, DECLINED_REASONS, DECLINED_REASON_LABELS, autoFollowUpForStage, isViewed, addDays } from '@/lib/outreach-stage'
 
 const S = {
   bg: '#0e0d1a',
@@ -13,50 +14,9 @@ const S = {
   purple: '#644bff',
 }
 
-// ─── Status config ────────────────────────────────────────────────────────────
-
-const STATUS_LABELS: Record<string, string> = {
-  audit_created: 'Audit Created',
-  email_sent: 'Email Sent',
-  opened: 'Opened',
-  no_response: 'No Response',
-  responded: 'Responded',
-  call_booked: 'Call Booked',
-  proposal_sent: 'Proposal Sent',
-  won: 'Won',
-  lost: 'Lost',
-  not_a_fit: 'Not a Fit',
-}
-
-const STATUS_BG: Record<string, string> = {
-  audit_created: 'rgba(255,255,255,0.05)',
-  email_sent: 'rgba(99,102,241,0.15)',
-  opened: 'rgba(249,115,22,0.15)',
-  no_response: 'rgba(239,68,68,0.1)',
-  responded: 'rgba(59,130,246,0.15)',
-  call_booked: 'rgba(34,197,94,0.15)',
-  proposal_sent: 'rgba(34,197,94,0.2)',
-  won: 'rgba(34,197,94,0.3)',
-  lost: 'rgba(239,68,68,0.15)',
-  not_a_fit: 'rgba(255,255,255,0.05)',
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  audit_created: 'rgba(255,255,255,0.5)',
-  email_sent: '#818cf8',
-  opened: '#f97316',
-  no_response: '#f87171',
-  responded: '#60a5fa',
-  call_booked: '#22c55e',
-  proposal_sent: '#22c55e',
-  won: '#4ade80',
-  lost: '#ef4444',
-  not_a_fit: 'rgba(255,255,255,0.35)',
-}
-
-const LOST_REASONS = ['Price', 'Timing', 'No response', 'Went elsewhere', 'Not a fit', 'Other']
-
 // ─── Stage Rivers board config ─────────────────────────────────────────────────
+// STAGE_LABELS/STAGE_BG/STAGE_COLOR/DECLINED_REASONS now live in
+// lib/outreach-stage.ts, shared with TodayClient.tsx - see that file for why.
 
 const LANE_ORDER = ['to_contact', 'contacted', 'engaged', 'closed'] as const
 type LaneKey = typeof LANE_ORDER[number]
@@ -68,18 +28,16 @@ const LANE_LABELS: Record<LaneKey, string> = {
   closed: 'Closed',
 }
 
-// Maps every real outreach_log.status value to one of the 4 collapsed lanes.
-const STATUS_TO_LANE: Record<string, LaneKey> = {
-  audit_created: 'to_contact',
-  email_sent: 'contacted',
-  opened: 'contacted',
-  no_response: 'contacted',
+// Maps every real outreach_log.stage value to one of the 4 collapsed lanes -
+// same 4-lane visual structure as the old 10-status version, just onto the
+// new 6-value stage set.
+const STAGE_TO_LANE: Record<string, LaneKey> = {
+  not_contacted: 'to_contact',
+  first_email_sent: 'contacted',
+  second_email_sent: 'contacted',
   responded: 'engaged',
-  call_booked: 'engaged',
-  proposal_sent: 'engaged',
   won: 'closed',
-  lost: 'closed',
-  not_a_fit: 'closed',
+  declined: 'closed',
 }
 
 const AXIS_TICKS = [0, 7, 14, 21, 28]
@@ -122,17 +80,6 @@ function timeAgo(d: string | null | undefined): string {
   if (hours < 1) return 'just now'
   if (hours < 24) return `${hours}h ago`
   return `${Math.floor(hours / 24)}d ago`
-}
-
-const toInputDate = (d: Date) => d.toISOString().split('T')[0]
-const addDays = (days: number) => { const d = new Date(); d.setDate(d.getDate() + days); return toInputDate(d) }
-
-function autoFollowUp(status: string): string | null | undefined {
-  if (status === 'email_sent') return addDays(3)
-  if (status === 'no_response') return addDays(4)
-  if (status === 'opened') return addDays(2)
-  if (['responded', 'won', 'lost', 'not_a_fit'].includes(status)) return null
-  return undefined // don't change
 }
 
 function slugify(s: string): string {
@@ -202,7 +149,7 @@ type BoardItem = {
   outreachId: string | null
   prospectId: string
   brand_name: string
-  status: string
+  stage: string
   lastTouchIso: string
   slug: string | null
   raw: any
@@ -287,8 +234,8 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   const [followUpModal, setFollowUpModal] = useState<any | null>(null)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-  // Won / Lost prompt modal
-  const [wonLostModal, setWonLostModal] = useState<{ id: string; type: 'won' | 'lost'; prevStatus: string } | null>(null)
+  // Won / Declined prompt modal
+  const [wonLostModal, setWonLostModal] = useState<{ id: string; type: 'won' | 'declined'; prevStage: string } | null>(null)
   const [wonLostValue, setWonLostValue] = useState('')
 
   // Prospect detail modal (opened by clicking a dot on the board)
@@ -372,16 +319,16 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     }
   }, [])
 
-  async function handleStatusChange(id: string, newStatus: string) {
-    // Intercept won / lost to show prompt before saving
-    if (newStatus === 'won' || newStatus === 'lost') {
+  async function handleStatusChange(id: string, newStage: string) {
+    // Intercept won / declined to show prompt before saving
+    if (newStage === 'won' || newStage === 'declined') {
       const current = rows.find(r => r.id === id)
-      setWonLostModal({ id, type: newStatus, prevStatus: current?.status ?? '' })
+      setWonLostModal({ id, type: newStage as 'won' | 'declined', prevStage: current?.stage ?? '' })
       setWonLostValue('')
       return
     }
-    const suggested = autoFollowUp(newStatus)
-    const payload: Record<string, any> = { status: newStatus }
+    const suggested = autoFollowUpForStage(newStage)
+    const payload: Record<string, any> = { stage: newStage }
     if (suggested !== undefined) payload.follow_up_due_at = suggested
     await updateRow(id, payload)
   }
@@ -389,13 +336,13 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   async function handleWonLostSave(skip = false) {
     if (!wonLostModal) return
     const { id, type } = wonLostModal
-    const payload: Record<string, any> = { status: type }
+    const payload: Record<string, any> = { stage: type }
     if (!skip && wonLostValue.trim()) {
       if (type === 'won') payload.deal_value = parseFloat(wonLostValue)
-      if (type === 'lost') payload.lost_reason = wonLostValue
+      if (type === 'declined') payload.declined_reason = wonLostValue
     }
-    // Clear follow-up date for terminal statuses
-    const followUpDate = autoFollowUp(type)
+    // Clear follow-up date for terminal stages
+    const followUpDate = autoFollowUpForStage(type)
     if (followUpDate !== undefined) payload.follow_up_due_at = followUpDate
     await updateRow(id, payload)
     setWonLostModal(null)
@@ -441,7 +388,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   async function handleDetailFollowUpSent(item: BoardItem) {
     try {
       const row = await ensureOutreachRow(item)
-      await updateRow(row.id, { status: 'no_response', follow_up_due_at: addDays(4) })
+      await updateRow(row.id, { stage: 'second_email_sent', follow_up_due_at: addDays(4) })
     } catch (e: any) {
       alert(e.message)
     }
@@ -468,9 +415,9 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   // ── Stats ────────────────────────────────────────────────────────────────────
 
   const total = rows.length
-  const opened = rows.filter(r => (r.open_count ?? 0) > 0).length
-  const responded = rows.filter(r => ['responded', 'call_booked', 'proposal_sent', 'won'].includes(r.status)).length
-  const wonRows = rows.filter(r => r.status === 'won')
+  const opened = rows.filter(r => isViewed(r)).length
+  const responded = rows.filter(r => ['responded', 'won'].includes(r.stage)).length
+  const wonRows = rows.filter(r => r.stage === 'won')
   const wonCount = wonRows.length
   const revenueWon = wonRows.reduce((sum, r) => sum + (r.deal_value ?? 0), 0)
   const closeRate = total > 0 ? Math.round((wonCount / total) * 100) : 0
@@ -481,17 +428,17 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   const boardItems: BoardItem[] = [
     ...rows.map(r => ({
       outreachId: r.id as string, prospectId: r.prospect_id as string, brand_name: r.brand_name,
-      status: r.status, lastTouchIso: r.updated_at, slug: r.audit_slug ?? null, raw: r,
+      stage: r.stage, lastTouchIso: r.updated_at, slug: r.audit_slug ?? null, raw: r,
     })),
     ...availableProspects.map(p => ({
       outreachId: null, prospectId: p.id as string, brand_name: p.brand_name,
-      status: 'audit_created', lastTouchIso: p.created_at, slug: p.slug ?? null, raw: p,
+      stage: 'not_contacted', lastTouchIso: p.created_at, slug: p.slug ?? null, raw: p,
     })),
   ]
 
   const laneItems: Record<LaneKey, BoardItem[]> = { to_contact: [], contacted: [], engaged: [], closed: [] }
   for (const item of boardItems) {
-    const lane = STATUS_TO_LANE[item.status] ?? 'to_contact'
+    const lane = STAGE_TO_LANE[item.stage] ?? 'to_contact'
     laneItems[lane].push(item)
   }
 
@@ -532,16 +479,16 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', fontFamily: MONO, textTransform: 'uppercase' as const }}>Status</label>
               <select
-                value={detailItem.status}
+                value={detailItem.stage}
                 onChange={e => handleDetailStatusChange(detailItem, e.target.value)}
                 style={{
-                  background: STATUS_BG[detailItem.status] ?? STATUS_BG.audit_created,
-                  color: STATUS_COLOR[detailItem.status] ?? S.muted,
+                  background: STAGE_BG[detailItem.stage] ?? STAGE_BG.not_contacted,
+                  color: STAGE_COLOR[detailItem.stage] ?? S.muted,
                   border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px',
                   fontSize: 13, fontWeight: 600, cursor: 'pointer', outline: 'none', fontFamily: 'Satoshi, sans-serif',
                 }}
               >
-                {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                {Object.entries(STAGE_LABELS).map(([val, label]) => (
                   <option key={val} value={val} style={{ background: S.bg2, color: S.white }}>{label}</option>
                 ))}
               </select>
@@ -554,7 +501,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
                 <span>Opens: {detailItem.raw.open_count ?? 0}{detailItem.raw.last_opened_at ? ` (${timeAgo(detailItem.raw.last_opened_at)})` : ''}</span>
                 {detailItem.raw.follow_up_due_at && <span>Next follow-up: {fmtDate(detailItem.raw.follow_up_due_at)}</span>}
                 {detailItem.raw.deal_value != null && <span>Deal value: ${Number(detailItem.raw.deal_value).toLocaleString()}</span>}
-                {detailItem.raw.lost_reason && <span>Reason: {detailItem.raw.lost_reason}</span>}
+                {detailItem.raw.declined_reason && <span>Reason: {DECLINED_REASON_LABELS[detailItem.raw.declined_reason] ?? detailItem.raw.declined_reason}</span>}
               </div>
             ) : (
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 20 }}>Not tracked yet - any action below starts tracking.</p>
@@ -562,13 +509,13 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-              {['audit_created', 'email_sent'].includes(detailItem.status) && (
-                <button onClick={() => handleDetailStatusChange(detailItem, 'email_sent')}
+              {['not_contacted', 'first_email_sent'].includes(detailItem.stage) && (
+                <button onClick={() => handleDetailStatusChange(detailItem, 'first_email_sent')}
                   style={{ background: 'rgba(99,102,241,0.15)', border: 'none', color: '#818cf8', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
                   Mark Sent
                 </button>
               )}
-              {['opened', 'no_response'].includes(detailItem.status) && (
+              {detailItem.stage === 'first_email_sent' && (
                 <button onClick={() => handleDetailFollowUpSent(detailItem)}
                   style={{ background: 'rgba(239,68,68,0.15)', border: 'none', color: '#f87171', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
                   Follow Up Sent
@@ -670,7 +617,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
           <div style={{ ...modalCardStyle, maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ fontSize: 16, fontWeight: 600, color: S.white, margin: 0 }}>
-                {wonLostModal.type === 'won' ? 'Deal value?' : 'Reason for losing?'}
+                {wonLostModal.type === 'won' ? 'Deal value?' : 'Reason for declining?'}
               </h2>
               <button onClick={() => setWonLostModal(null)}
                 style={{ background: 'none', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: 4 }}>
@@ -699,8 +646,8 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
                   autoFocus
                 >
                   <option value="">Select a reason...</option>
-                  {LOST_REASONS.map(r => (
-                    <option key={r} value={r} style={{ background: S.bg2 }}>{r}</option>
+                  {DECLINED_REASONS.map(r => (
+                    <option key={r} value={r} style={{ background: S.bg2 }}>{DECLINED_REASON_LABELS[r]}</option>
                   ))}
                 </select>
               </div>
@@ -870,8 +817,8 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
                 {isClosed ? (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '10px 4px 22px', alignItems: 'center' }}>
                     {items.map(item => {
-                      const isWon = item.status === 'won'
-                      const outcomeLabel = isWon ? 'won' : item.status === 'lost' ? 'lost' : 'not a fit'
+                      const isWon = item.stage === 'won'
+                      const outcomeLabel = isWon ? 'won' : 'declined'
                       return (
                         <div
                           key={item.prospectId}
@@ -885,7 +832,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
                       )
                     })}
                     <span style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.35)', marginLeft: 6 }}>
-                      {items.filter(i => i.status === 'won').length} won · {items.filter(i => i.status === 'lost').length} lost · {items.filter(i => i.status === 'not_a_fit').length} not a fit
+                      {items.filter(i => i.stage === 'won').length} won · {items.filter(i => i.stage === 'declined').length} declined
                     </span>
                   </div>
                 ) : (

@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     prospect_name: prospect.prospect_name,
     prospect_email: prospect.prospect_email,
     audit_slug: prospect.slug,
-    status: 'audit_created',
+    stage: 'not_contacted',
   }).select().single()
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 400 })
