@@ -1,7 +1,11 @@
 'use client'
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { STAGE_LABELS, STAGE_BG, STAGE_COLOR, DECLINED_REASONS, DECLINED_REASON_LABELS, autoFollowUpForStage, isViewed, addDays } from '@/lib/outreach-stage'
+import { autoFollowUpForStage, isViewed, addDays } from '@/lib/outreach-stage'
+import ProspectDetailModal, { DetailItem } from '@/components/ProspectDetailModal'
+import WonDeclinedModal from '@/components/WonDeclinedModal'
+import EmailDraftBox from '@/components/EmailDraftBox'
+import { EmailDraft } from '@/lib/email-draft'
 
 const S = {
   bg: '#0e0d1a',
@@ -67,20 +71,8 @@ function daysSinceTouch(iso: string): number {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function fmtDate(d: string | null | undefined): string {
-  if (!d) return '-'
-  return new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
-}
-
-function timeAgo(d: string | null | undefined): string {
-  if (!d) return ''
-  const diff = Date.now() - new Date(d).getTime()
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  if (hours < 1) return 'just now'
-  if (hours < 24) return `${hours}h ago`
-  return `${Math.floor(hours / 24)}d ago`
-}
+// fmtDate/timeAgo moved into components/ProspectDetailModal.tsx with the
+// detail modal itself - no longer used standalone here.
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-')
@@ -242,6 +234,9 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   const [detailProspectId, setDetailProspectId] = useState<string | null>(null)
   const [notesDraft, setNotesDraft] = useState('')
 
+  // On-demand cold-email draft (lib/email-draft.ts, shared with Pipeline)
+  const [emailDraft, setEmailDraft] = useState<EmailDraft | null>(null)
+
   // Keep slug in sync with brand name
   useEffect(() => {
     setForm(prev => ({ ...prev, slug: slugify(prev.brand_name) }))
@@ -357,7 +352,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
   // Creates the outreach_log row on demand for a prospect that doesn't have
   // one yet (rare/legacy To Contact items), reusing track-existing exactly as
   // the "attach to existing audit" form already does. Real rows pass through.
-  async function ensureOutreachRow(item: BoardItem): Promise<any> {
+  async function ensureOutreachRow(item: DetailItem): Promise<any> {
     if (item.outreachId) return item.raw
     const res = await fetch('/api/audit/admin/track-existing', {
       method: 'POST',
@@ -371,12 +366,12 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     return data.row
   }
 
-  function openDetail(item: BoardItem) {
+  function openDetail(item: DetailItem) {
     setDetailProspectId(item.prospectId)
     setNotesDraft(item.raw?.notes ?? '')
   }
 
-  async function handleDetailStatusChange(item: BoardItem, newStatus: string) {
+  async function handleDetailStatusChange(item: DetailItem, newStatus: string) {
     try {
       const row = await ensureOutreachRow(item)
       await handleStatusChange(row.id, newStatus)
@@ -385,7 +380,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     }
   }
 
-  async function handleDetailFollowUpSent(item: BoardItem) {
+  async function handleDetailFollowUpSent(item: DetailItem) {
     try {
       const row = await ensureOutreachRow(item)
       await updateRow(row.id, { stage: 'second_email_sent', follow_up_due_at: addDays(4) })
@@ -394,7 +389,7 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     }
   }
 
-  async function handleDetailNotesBlur(item: BoardItem) {
+  async function handleDetailNotesBlur(item: DetailItem) {
     try {
       const row = await ensureOutreachRow(item)
       await updateRow(row.id, { notes: notesDraft })
@@ -403,12 +398,26 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
     }
   }
 
-  function openFollowUpDraft(item: BoardItem) {
+  function openFollowUpDraft(item: DetailItem) {
     setFollowUpModal({
       brand_name: item.brand_name,
       prospect_name: item.raw?.prospect_name ?? '',
       prospect_email: item.raw?.prospect_email ?? '',
       audit_slug: item.slug,
+    })
+  }
+
+  // Neither outreach_log nor prospects tracks which platform a store runs on
+  // (that's monitored_domains/Pipeline-only) - shopify is Kliks' primary
+  // business, used as the default here since there's no real signal to pick
+  // the squarespace copy from.
+  function handleGenerateEmail(item: DetailItem) {
+    setEmailDraft({
+      platform: 'shopify',
+      brand_name: item.brand_name,
+      prospect_name: item.raw?.prospect_name ?? '',
+      prospect_email: item.raw?.prospect_email ?? null,
+      slug: item.slug ?? '',
     })
   }
 
@@ -462,98 +471,21 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
 
       {/* ── Prospect Detail Modal ─────────────────────────────────────────────── */}
       {detailItem && (
-        <div style={modalOverlayStyle} onClick={() => setDetailProspectId(null)}>
-          <div style={modalCardStyle} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-              <div>
-                <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 20, fontWeight: 600, margin: 0 }}>{detailItem.brand_name}</h2>
-                {detailItem.raw?.prospect_name && <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>{detailItem.raw.prospect_name}</div>}
-              </div>
-              <button onClick={() => setDetailProspectId(null)}
-                style={{ background: 'none', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: 4 }}>
-                ×
-              </button>
-            </div>
-
-            {/* Status dropdown */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', fontFamily: MONO, textTransform: 'uppercase' as const }}>Status</label>
-              <select
-                value={detailItem.stage}
-                onChange={e => handleDetailStatusChange(detailItem, e.target.value)}
-                style={{
-                  background: STAGE_BG[detailItem.stage] ?? STAGE_BG.not_contacted,
-                  color: STAGE_COLOR[detailItem.stage] ?? S.muted,
-                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px',
-                  fontSize: 13, fontWeight: 600, cursor: 'pointer', outline: 'none', fontFamily: 'Satoshi, sans-serif',
-                }}
-              >
-                {Object.entries(STAGE_LABELS).map(([val, label]) => (
-                  <option key={val} value={val} style={{ background: S.bg2, color: S.white }}>{label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Read-only context */}
-            {detailItem.outreachId ? (
-              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 12, color: S.muted, marginBottom: 20, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
-                <span>Sent: {fmtDate(detailItem.raw.email_sent_at)}</span>
-                <span>Opens: {detailItem.raw.open_count ?? 0}{detailItem.raw.last_opened_at ? ` (${timeAgo(detailItem.raw.last_opened_at)})` : ''}</span>
-                {detailItem.raw.follow_up_due_at && <span>Next follow-up: {fmtDate(detailItem.raw.follow_up_due_at)}</span>}
-                {detailItem.raw.deal_value != null && <span>Deal value: ${Number(detailItem.raw.deal_value).toLocaleString()}</span>}
-                {detailItem.raw.declined_reason && <span>Reason: {DECLINED_REASON_LABELS[detailItem.raw.declined_reason] ?? detailItem.raw.declined_reason}</span>}
-              </div>
-            ) : (
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 20 }}>Not tracked yet - any action below starts tracking.</p>
-            )}
-
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-              {['not_contacted', 'first_email_sent'].includes(detailItem.stage) && (
-                <button onClick={() => handleDetailStatusChange(detailItem, 'first_email_sent')}
-                  style={{ background: 'rgba(99,102,241,0.15)', border: 'none', color: '#818cf8', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
-                  Mark Sent
-                </button>
-              )}
-              {detailItem.stage === 'first_email_sent' && (
-                <button onClick={() => handleDetailFollowUpSent(detailItem)}
-                  style={{ background: 'rgba(239,68,68,0.15)', border: 'none', color: '#f87171', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
-                  Follow Up Sent
-                </button>
-              )}
-              {detailItem.slug && (
-                <a href={`/audit/${detailItem.slug}/report`} target="_blank" rel="noreferrer"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: S.muted, borderRadius: 6, padding: '6px 14px', fontSize: 13, textDecoration: 'none' }}>
-                  View Audit
-                </a>
-              )}
-              {detailItem.slug && (
-                <button onClick={() => openFollowUpDraft(detailItem)}
-                  style={{ background: 'rgba(255,67,21,0.1)', border: '1px solid rgba(255,67,21,0.25)', color: S.orange, borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
-                  Follow-up Email
-                </button>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', fontFamily: MONO, textTransform: 'uppercase' as const }}>Notes</label>
-              <input
-                type="text"
-                value={notesDraft}
-                placeholder="Add a note..."
-                onChange={e => setNotesDraft(e.target.value)}
-                onBlur={() => handleDetailNotesBlur(detailItem)}
-                style={{
-                  width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 6, padding: '8px 12px', color: S.white, fontSize: 13,
-                  fontFamily: 'Satoshi, sans-serif', outline: 'none', boxSizing: 'border-box',
-                }}
-              />
-            </div>
-          </div>
-        </div>
+        <ProspectDetailModal
+          item={detailItem}
+          onClose={() => setDetailProspectId(null)}
+          onStageChange={handleDetailStatusChange}
+          onFollowUpSent={handleDetailFollowUpSent}
+          notesDraft={notesDraft}
+          onNotesChange={setNotesDraft}
+          onNotesBlur={handleDetailNotesBlur}
+          onOpenFollowUpDraft={openFollowUpDraft}
+          onGenerateEmail={handleGenerateEmail}
+        />
       )}
+
+      {/* ── Email Draft ───────────────────────────────────────────────────────── */}
+      {emailDraft && <EmailDraftBox draft={emailDraft} onDone={() => setEmailDraft(null)} />}
 
       {/* ── Follow-up Email Modal ─────────────────────────────────────────────── */}
       {followUpModal && (
@@ -611,60 +543,15 @@ export default function OutreachClient({ initialRows, existingProspects }: { ini
         </div>
       )}
 
-      {/* ── Won / Lost Modal ──────────────────────────────────────────────────── */}
+      {/* ── Won / Declined Modal ──────────────────────────────────────────────── */}
       {wonLostModal && (
-        <div style={modalOverlayStyle} onClick={() => setWonLostModal(null)}>
-          <div style={{ ...modalCardStyle, maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: S.white, margin: 0 }}>
-                {wonLostModal.type === 'won' ? 'Deal value?' : 'Reason for declining?'}
-              </h2>
-              <button onClick={() => setWonLostModal(null)}
-                style={{ background: 'none', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', lineHeight: 1, padding: 4 }}>
-                ×
-              </button>
-            </div>
-
-            {wonLostModal.type === 'won' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-                <input
-                  type="number"
-                  placeholder="e.g. 3500"
-                  value={wonLostValue}
-                  onChange={e => setWonLostValue(e.target.value)}
-                  style={{ ...inputStyle, width: 'auto', flex: 1 }}
-                  autoFocus
-                />
-                <span style={{ color: S.muted, fontSize: 14, whiteSpace: 'nowrap' }}>AUD</span>
-              </div>
-            ) : (
-              <div style={{ marginBottom: 24 }}>
-                <select
-                  value={wonLostValue}
-                  onChange={e => setWonLostValue(e.target.value)}
-                  style={{ ...inputStyle, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties}
-                  autoFocus
-                >
-                  <option value="">Select a reason...</option>
-                  {DECLINED_REASONS.map(r => (
-                    <option key={r} value={r} style={{ background: S.bg2 }}>{DECLINED_REASON_LABELS[r]}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <button onClick={() => handleWonLostSave(false)}
-                style={{ background: S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-                Save
-              </button>
-              <button onClick={() => handleWonLostSave(true)}
-                style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>
-                Skip
-              </button>
-            </div>
-          </div>
-        </div>
+        <WonDeclinedModal
+          target={wonLostModal}
+          value={wonLostValue}
+          onValueChange={setWonLostValue}
+          onSave={handleWonLostSave}
+          onClose={() => setWonLostModal(null)}
+        />
       )}
 
       {/* Top nav */}

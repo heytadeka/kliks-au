@@ -1,5 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { EmailDraft } from '@/lib/email-draft'
+import EmailDraftBox from '@/components/EmailDraftBox'
 
 const S = {
   bg: '#0e0d1a',
@@ -46,38 +48,8 @@ function sortByTraffic(rows: any[]): any[] {
   })
 }
 
-function emailBody(platform: string, brandName: string, prospectName: string, slug: string, email: string | null): string {
-  const accessLine = email ? `Access code: ${email}` : `Access code: [their email address]`
-  if (platform === 'squarespace') {
-    return `Hey ${prospectName},
-
-Pulled your site this week.
-
-Mobile load time is worth looking at - and there are a few conversion gaps worth knowing about.
-
-Put together what an upgrade could look like for you: kliks.com.au/audit/${slug}
-${accessLine}
-
-Worth 10 minutes.
-
-Adam`
-  }
-  return `Hey ${prospectName},
-
-Spent some time looking at ${brandName} this week.
-A few things worth knowing about.
-
-Put it together here: kliks.com.au/audit/${slug}
-${accessLine}
-
-Worth 10 minutes.
-
-Adam`
-}
-
-function emailSubject(platform: string, brandName: string): string {
-  return platform === 'squarespace' ? `your ${brandName} site` : `your ${brandName} audit`
-}
+// emailBody/emailSubject moved to lib/email-draft.ts - shared with the
+// Audits/Outreach detail panel's on-demand "Generate reach-out email" CTA.
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
@@ -136,7 +108,6 @@ const inputStyle: React.CSSProperties = {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Form = { brand_name: string; prospect_name: string; prospect_email: string; niche: string; location: string; gmb_cid: string; slug: string }
-type EmailDraft = { platform: string; brand_name: string; prospect_name: string; prospect_email: string | null; slug: string }
 type TrafficResult = { checked: number; flagged_new: number; flagged_domains: { domain: string; drop_pct: number; platform: string }[] }
 
 // ─── Main component ──────────────────────────────────────────────────────────
@@ -159,9 +130,8 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
-  // Email draft
+  // Email draft - copy-state lives inside EmailDraftBox itself now
   const [emailDraft, setEmailDraft] = useState<EmailDraft | null>(null)
-  const [copied, setCopied] = useState<'email' | 'subject' | null>(null)
 
   // Keep slug in sync with brand name edits
   useEffect(() => {
@@ -277,7 +247,6 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
         slug: form.slug,
       })
       setCreateDomain(null)
-      setCopied(null)
 
       // Step 4 — refresh table
       await refreshDomains()
@@ -293,12 +262,6 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
       body: JSON.stringify({ id, status: 'ignored' }),
     })
     setDomains(prev => prev.map(d => d.id === id ? { ...d, status: 'ignored' } : d))
-  }
-
-  async function copyText(type: 'email' | 'subject', text: string) {
-    await navigator.clipboard.writeText(text)
-    setCopied(type)
-    setTimeout(() => setCopied(null), 2000)
   }
 
   const shopifyCount = domains.filter(d => d.platform === 'shopify').length
@@ -419,32 +382,8 @@ export default function PipelineClient({ initialDomains }: { initialDomains: any
           </div>
         )}
 
-        {/* Email draft modal */}
-        {emailDraft && (
-          <div style={{ background: S.bg2, border: '1px solid rgba(100,75,255,0.2)', borderRadius: 16, padding: 32, marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-              <h2 style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600, color: S.white, margin: 0 }}>Cold Email Draft</h2>
-              <span style={{ background: 'rgba(34,197,94,0.12)', color: '#22c55e', borderRadius: 99, padding: '3px 12px', fontSize: 12, fontWeight: 600 }}>✓ Audit Created</span>
-            </div>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
-              Subject: {emailSubject(emailDraft.platform, emailDraft.brand_name)}
-            </p>
-            <pre style={{ background: S.bg, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, fontFamily: 'monospace', fontSize: 14, lineHeight: 1.8, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', margin: '0 0 20px 0', overflowX: 'auto' }}>
-              {emailBody(emailDraft.platform, emailDraft.brand_name, emailDraft.prospect_name, emailDraft.slug, emailDraft.prospect_email)}
-            </pre>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button onClick={() => copyText('email', emailBody(emailDraft.platform, emailDraft.brand_name, emailDraft.prospect_name, emailDraft.slug, emailDraft.prospect_email))}
-                style={{ background: S.orange, color: '#fff', border: 'none', borderRadius: 100, padding: '10px 24px', fontFamily: 'Satoshi, sans-serif', fontWeight: 600, fontSize: 14, cursor: 'pointer', minWidth: 120 }}>
-                {copied === 'email' ? '✓ Copied' : 'Copy Email'}
-              </button>
-              <button onClick={() => copyText('subject', emailSubject(emailDraft.platform, emailDraft.brand_name))}
-                style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', color: S.muted, borderRadius: 20, padding: '8px 16px', fontFamily: 'Satoshi, sans-serif', fontSize: 13, cursor: 'pointer', minWidth: 120 }}>
-                {copied === 'subject' ? '✓ Copied' : 'Copy Subject'}
-              </button>
-              <button onClick={closeAll} style={{ background: 'none', border: 'none', color: S.muted, fontSize: 14, cursor: 'pointer', padding: 0 }}>Done</button>
-            </div>
-          </div>
-        )}
+        {/* Email draft */}
+        {emailDraft && <EmailDraftBox draft={emailDraft} badgeLabel="✓ Audit Created" onDone={closeAll} />}
 
         {/* Domain table */}
         <div>
