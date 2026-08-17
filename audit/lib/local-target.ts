@@ -2,15 +2,24 @@
 // other call site needing the same "which AU city is this prospect in"
 // detection - e.g. the LLM Visibility Check's query builder - shares it
 // rather than growing a second, slightly different city-matching list.
+//
+// The `code` values below were wrong prior to 2026-08-17 - real DataForSEO
+// city-level location_codes (verified live against their locations endpoint,
+// not assumed) sit in the 1000000+ range (e.g. Sydney = 1000286), not the
+// 21xxx range that was hard-coded here. That mismatch was the confirmed
+// cause of the recurring "task error 40501 Invalid Field: 'location_code'"
+// on serp_competitors/live whenever a prospect resolved isLocal: true - it
+// silently fell back to the slower niche-search path (see dataforseo-core/
+// route.ts's `< 3 competitors` branch) on every single local-target scan.
 export const AU_CITY_MAP = [
-  { terms: ['sydney', 'nsw', 'new south wales'], label: 'sydney', code: 21167 },
-  { terms: ['melbourne', 'vic', 'victoria'], label: 'melbourne', code: 21182 },
-  { terms: ['brisbane', 'qld', 'queensland'], label: 'brisbane', code: 21139 },
-  { terms: ['perth', 'western australia'], label: 'perth', code: 21188 },
-  { terms: ['adelaide', 'south australia'], label: 'adelaide', code: 21136 },
-  { terms: ['canberra', 'act'], label: 'canberra', code: 21124 },
-  { terms: ['hobart', 'tasmania'], label: 'hobart', code: 21172 },
-  { terms: ['darwin', 'northern territory'], label: 'darwin', code: 21128 },
+  { terms: ['sydney', 'nsw', 'new south wales'], label: 'sydney', code: 1000286 },
+  { terms: ['melbourne', 'vic', 'victoria'], label: 'melbourne', code: 1000567 },
+  { terms: ['brisbane', 'qld', 'queensland'], label: 'brisbane', code: 1000339 },
+  { terms: ['perth', 'western australia'], label: 'perth', code: 1000676 },
+  { terms: ['adelaide', 'south australia'], label: 'adelaide', code: 1000422 },
+  { terms: ['canberra', 'act'], label: 'canberra', code: 1000142 },
+  { terms: ['hobart', 'tasmania'], label: 'hobart', code: 1000480 },
+  { terms: ['darwin', 'northern territory'], label: 'darwin', code: 1000322 },
 ]
 
 // location is the dedicated field for this, so a match there takes priority
