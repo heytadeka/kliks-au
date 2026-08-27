@@ -1190,6 +1190,34 @@
     @media (max-width: 600px) {
       .cta-checks { flex-direction: column; align-items: flex-start; padding: 0 24px; }
     }
+
+    /* ─── COPY LIST ───
+       Small orange-dot marker matching the accent language already used
+       elsewhere (live-dot, who-icon circles) rather than a generic browser
+       bullet - for scannable lists within otherwise-prose sections. */
+    .copy-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .copy-list li {
+      position: relative;
+      padding-left: 26px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .copy-list li + li { margin-top: 12px; }
+    .copy-list li::before {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 9px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
+    }
   </style>
 </head>
 <body>
@@ -1213,9 +1241,8 @@
   <div class="nav-inner">
     <a href="#" class="logo">KLIKS<span>.</span></a>
     <ul class="nav-links">
-      <li><a href="#services">Services</a></li>
-      <li><a href="#process">Process</a></li>
-      <li><a href="#results">Results</a></li>
+      <li><a href="#growth-system">How We Work</a></li>
+      <li><a href="#case-studies">Case Studies</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#straight-up">Honest Talk</a></li>
       <li><a href="/blog">Blog</a></li>
@@ -1232,9 +1259,8 @@
 
 <!-- MOBILE NAV OVERLAY -->
 <div class="nav-overlay">
-  <a href="#services" onclick="document.body.classList.remove('nav-open')">Services</a>
-  <a href="#process" onclick="document.body.classList.remove('nav-open')">Process</a>
-  <a href="#results" onclick="document.body.classList.remove('nav-open')">Results</a>
+  <a href="#growth-system" onclick="document.body.classList.remove('nav-open')">How We Work</a>
+  <a href="#case-studies" onclick="document.body.classList.remove('nav-open')">Case Studies</a>
   <a href="#about" onclick="document.body.classList.remove('nav-open')">About</a>
   <a href="#straight-up" onclick="document.body.classList.remove('nav-open')">Honest Talk</a>
   <a href="/blog" onclick="document.body.classList.remove('nav-open')">Blog</a>
@@ -1249,13 +1275,13 @@
       <span class="live-dot"></span>
       <span>Booking Q3 — 2 spots open</span>
     </div>
-    <h1 class="headline">We run ads for Shopify brands.<br>We own Shopify brands.<br>That's the <span class="word-diff">difference</span>.</h1>
-    <div class="hero-pills">
-      <span class="pill pill-neutral">Boutique agency</span>
-      <span class="pill pill-purple">Founder driven</span>
+    <h1 class="headline">Growth advice from someone who actually runs businesses.</h1>
+    <p class="hero-intro">KLIKS helps founder-led ecommerce brands turn scattered marketing into a growth system that actually makes sense.</p>
+    <p style="color:rgba(255,255,255,0.45);font-size:15px;max-width:600px;margin:0 auto 36px;line-height:1.7;">Creative strategy, paid acquisition, Shopify optimisation and retention, all working toward one thing: helping the business move forward.</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;">
+      <a href="book.html" class="btn btn-lg" style="padding:16px 40px;font-size:17px;">Request Your Growth Audit &rarr;</a>
+      <a href="#growth-system" style="color:var(--muted);font-size:15px;font-weight:500;text-decoration:underline;text-underline-offset:4px;">See How We Work</a>
     </div>
-    <p class="hero-services">Ads &middot; Creative &middot; Shopify</p>
-    <a href="book.html" class="btn btn-lg">Get a free Shopify audit &rarr;</a>
   </div>
 </section>
 
@@ -1320,113 +1346,81 @@
   </div>
 </div>
 
-<!-- SERVICES -->
-<section id="services">
+<!-- GROWTH SYSTEM -->
+<section id="growth-system" style="background:var(--bg2);">
   <div class="container">
-    <span class="section-label fade-up">What we do</span>
-    <h2 class="section-title fade-up">Ads and Shopify. That's it.</h2>
-    <p class="section-sub fade-up">Because that's where most stores are leaking money.</p>
+    <span class="section-label fade-up">The KLIKS Growth System</span>
+    <h2 class="section-title fade-up">Good marketing works as one system.</h2>
+    <p class="section-sub fade-up">A strong ad gets attention. A strong offer gives people a reason to care. A strong website makes buying easy. A strong retention system brings customers back. That is the game.</p>
 
     <div class="services-grid">
       <div class="card fade-up">
         <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        </div>
+        <h3>Creative</h3>
+        <p>We develop campaign ideas, hooks, angles and offers that give people a reason to stop.</p>
+      </div>
+      <div class="card fade-up">
+        <div class="card-icon-wrap">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         </div>
-        <h3>Ads</h3>
-        <p>Meta. Google. TikTok. Traffic is coming in, but it's not turning into revenue.</p>
-        <p>Your campaign structure might be off. Your creatives aren't doing enough to stop the scroll. The wrong people are seeing your ads.</p>
-        <p>We fix that. So visitors actually become customers.</p>
+        <h3>Acquisition</h3>
+        <p>Meta, Google and TikTok campaigns built around the business goals, with constant testing and learning.</p>
       </div>
       <div class="card fade-up">
         <div class="card-icon-wrap">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         </div>
-        <h3>Shopify</h3>
-        <p>We're a Shopify-focused agency. Full stop.</p>
-        <p>Traffic alone doesn't pay the bills. If your store doesn't convert, that's money walking out the door.</p>
-        <p>We optimise. We build. We migrate. Shopify only.</p>
+        <h3>Shopify &amp; Conversion</h3>
+        <p>We improve the parts of the customer journey that are costing you sales. Product pages, landing pages, offers, navigation and the overall buying experience.</p>
       </div>
       <div class="card fade-up">
         <div class="card-icon-wrap">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#644bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7.5L10 3L17 7.5V17H13V12H7V17H3V7.5Z" stroke="#644bff" stroke-width="1.5" stroke-linejoin="round"/><rect x="7" y="12" width="6" height="5" stroke="#644bff" stroke-width="1.5"/></svg>
         </div>
-        <h3>Creative Strategy</h3>
-        <p>You're running ads. But the message isn't landing.</p>
-        <p>Most creatives blend in. They don't stop anyone. They don't say anything worth stopping for.</p>
-        <p>We fix the message, the hook, the angle. So your ad actually does something.</p>
+        <h3>Retention</h3>
+        <p>We use Klaviyo, email flows and campaigns to get more value from the customers you already worked hard to acquire.</p>
       </div>
-    </div>
-
-    <div class="card-full fade-up">
-      <span class="card-full-label">How we work</span>
-      <h3>Think of us as your outsourced ecommerce team.</h3>
-      <p>Most Shopify store owners hit the same point. You're doing too much yourself.</p>
-      <p>Ads, store, emails, fixes, everything. Hiring someone full-time feels expensive and risky.</p>
-      <p>That's where we come in. We take this off your plate and focus on what actually grows revenue.</p>
-      <p>We offer Lite, Growth and full Manager packages depending on where you're at. Ask us about it on the call.</p>
-    </div>
-  </div>
-</section>
-
-<!-- PROCESS -->
-<section id="process" style="background:var(--bg2);">
-  <div class="container">
-    <span class="section-label fade-up">How it works</span>
-    <h2 class="section-title fade-up">What we do from day one</h2>
-    <p class="section-sub fade-up">No wasted time. In the very first strategy call we map out where you are, what's holding you back, your market, your product.</p>
-
-    <div class="process-grid">
-      <div class="card process-card fade-up">
-        <div class="process-num">01</div>
-        <h3>Audit</h3>
-        <p>We go through your store, ads and numbers properly. No fluff. Just what's working and what's not.</p>
-      </div>
-      <div class="card process-card fade-up">
-        <div class="process-num">02</div>
-        <h3>The List</h3>
-        <p>Then we show you exactly what needs fixing first. Where money is being wasted. What to focus on. All explained, nothing hidden.</p>
-      </div>
-      <div class="card process-card fade-up">
-        <div class="process-num">03</div>
-        <h3>We Execute</h3>
-        <p>We get to work. Ads, Shopify, creative, handled. You focus on your business.</p>
-      </div>
-      <div class="card process-card fade-up">
-        <div class="process-num">04</div>
-        <h3>Scale What Works</h3>
-        <p>Once something works, we push it harder. That's how growth actually happens.</p>
+      <div class="card fade-up">
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="3,14 7,9 11,11 17,5" stroke="#644bff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="14,5 17,5 17,8" stroke="#644bff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Strategy</h3>
+        <p>Everything starts with the bigger picture.</p>
+        <ul class="copy-list" style="margin:14px 0;">
+          <li>What are we trying to grow?</li>
+          <li>Who are we trying to reach?</li>
+          <li>What should we test next?</li>
+          <li>Where is the biggest opportunity right now?</li>
+        </ul>
+        <p>That direction keeps the rest of the marketing focused.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- RESULTS -->
-<section id="results">
+<!-- CASE STUDIES -->
+<section id="case-studies">
   <div class="container">
-    <span class="section-label fade-up">What you can realistically expect</span>
-    <h2 class="section-title fade-up">We don't promise miracles. But we do promise these.</h2>
-    <p class="section-sub fade-up">We're a team of ad junkies, so here's what you can count on. Concrete metrics we work to improve, measurable proof it's working.</p>
+    <span class="section-label fade-up">Case studies</span>
+    <h2 class="section-title fade-up">The numbers matter. The thinking behind them matters too.</h2>
+    <p class="section-sub fade-up" style="margin-bottom:20px;">A good case study should tell you more than ROAS. It should show:</p>
+    <ul class="copy-list fade-up" style="max-width:560px;margin-bottom:56px;">
+      <li>What was happening</li>
+      <li>What was holding the business back</li>
+      <li>What we changed</li>
+      <li>Why we changed it</li>
+      <li>What happened next</li>
+    </ul>
 
     <div class="results-grid">
       <div class="card result-card fade-up">
-        <div class="metric-name">ROAS / POAS &uarr;</div>
-        <div class="metric-label">More revenue from your ad spend</div>
-        <p>ROAS is revenue per dollar spent on ads. POAS is profit per dollar spent. We track both, because revenue alone isn't enough. Profitable scaling is the goal.</p>
+        <div class="metric-label">Oh My Days</div>
+        <p>A growing food brand with strong product demand and room to improve the digital side. We worked across the website, ecommerce setup, acquisition and customer journey. Online orders grew week by week as the system started working better together.</p>
       </div>
-      <div class="card result-card fade-up">
-        <div class="metric-name">CPA &darr; — cost per acquisition</div>
-        <div class="metric-label">More customers, same budget</div>
-        <p>CPA is what you pay to acquire each customer. We bring it down through better campaign structure, creative rotation and audience targeting.</p>
-      </div>
-      <div class="card result-card fade-up">
-        <div class="metric-name">Reach:Frequency &#x2696;</div>
-        <div class="metric-label">Stop burning your audience</div>
-        <p>If the same person sees your ad too many times, it gets more expensive and performs worse. We monitor this daily and rotate creative before it becomes a problem.</p>
-      </div>
-      <div class="card result-card fade-up">
-        <div class="metric-name">CTR + Conversion &uarr;</div>
-        <div class="metric-label">More clicks that actually convert</div>
-        <p>CTR (click-through rate) tells us if the ad is working. Conversion rate tells us if the store is. We optimise both ends so clicks turn into customers.</p>
+      <div class="card result-card fade-up" style="display:flex;align-items:center;justify-content:center;text-align:center;">
+        <p style="color:rgba(255,255,255,0.35);">More case studies coming soon.</p>
       </div>
     </div>
   </div>
@@ -1435,7 +1429,7 @@
 <!-- ABOUT -->
 <section id="about" style="background:var(--bg2);">
   <div class="container">
-    <span class="section-label fade-up">About</span>
+    <span class="section-label fade-up">Why KLIKS</span>
     <div class="about-grid">
       <div class="about-photo-wrap fade-up">
         <img src="https://cdn.shopify.com/s/files/1/0733/0693/1363/files/adam-ads.gif?v=1776520792" alt="Adam Nagy, Kliks founder">
@@ -1445,8 +1439,11 @@
         </div>
       </div>
       <div class="about-copy fade-up">
-        <h2>I know what it feels like when you're stuck.</h2>
-        <p>When your store is stagnating and ads aren't working, I know exactly how that feels. I've burned through my own money figuring it out. Everything we do was tested on my own businesses first. Not from a textbook. Not borrowed from a client's results. That's why when we work together, you're not paying for our learning curve.</p>
+        <h2>I know what it feels like when your own money is on the line.</h2>
+        <p>I have spent around 15 years working in marketing. I have also spent years building and operating businesses myself. That second part matters.</p>
+        <p>I know what it feels like to spend money on something and wonder if it will work. I know what wasted time feels like. I know how frustrating it is when someone gives you marketing advice without really understanding the business behind it.</p>
+        <p>That experience shapes how I work. I look at the campaign, but I also look at the offer, the website, the customer, what competitors are doing, and where the business is trying to go.</p>
+        <div class="quote-block">Because the numbers only make sense when you understand the business behind them.</div>
         <div class="about-chips">
           <span class="chip">Founder-led</span>
           <span class="chip">No outsourcing</span>
@@ -1463,21 +1460,25 @@
 <section>
   <div class="container">
     <span class="section-label fade-up">Who we work with</span>
-    <h2 class="section-title fade-up">Not everyone. And we mean that.</h2>
+    <h2 class="section-title fade-up">Built for founders who want to build something bigger.</h2>
     <div class="who-grid" style="margin-top:16px;">
       <div class="who-copy fade-up">
-        <p>Who do we work with? What kind of brands? This matters.</p>
-        <p>One of the goals of the first strategy call is figuring out whether we can genuinely help. If we think your product, your brand or your current situation doesn't fit our approach, or if there's just no chemistry, we'll say so straight.</p>
-        <p>Not because we're precious, but because it's better for both sides. We believe in long-term relationships and that starts with honesty.</p>
-        <p>If we can see we can genuinely add value, we floor it. 150%.</p>
+        <p>KLIKS works best with ecommerce brands that already have something worth growing. You have traction. You have customers. You know the product works. Now you want the next stage to feel more deliberate.</p>
+        <p>You do not need to have everything figured out. You just need to be serious about building.</p>
       </div>
       <div class="who-card fade-up">
         <div class="who-card-section">
           <div class="who-card-header">
             <div class="who-icon who-icon-yes">&#10003;</div>
-            <h4>Who we love working with</h4>
+            <h4>We are a good fit if you</h4>
           </div>
-          <p>Shopify stores serious about growth, open to honest feedback, and thinking long-term. Founders in that messy middle, some traction, ready to scale.</p>
+          <ul class="copy-list">
+            <li>Care about the brand, not just the numbers</li>
+            <li>Want someone who can challenge ideas</li>
+            <li>Are open to testing and changing things</li>
+            <li>Want marketing connected to the bigger business picture</li>
+            <li>Value experience over the cheapest option</li>
+          </ul>
         </div>
         <div class="who-card-section">
           <div class="who-card-header">
@@ -1494,24 +1495,33 @@
 <!-- STRAIGHT UP -->
 <section id="straight-up" style="background:var(--bg2);">
   <div class="container">
-    <span class="section-label fade-up" style="font-size:11px;font-weight:600;letter-spacing:0.1em;color:#ff4315;text-transform:uppercase;">Straight Up</span>
-    <h2 class="section-title fade-up">What nobody tells you about marketing agencies.</h2>
-    <p class="section-sub fade-up" style="color:rgba(255,255,255,0.55);">You didn't ask for advice. But since you're here, it's worth knowing. Look for these things when you're searching for outside help:</p>
+    <span class="section-label fade-up" style="font-size:11px;font-weight:600;letter-spacing:0.1em;color:#ff4315;text-transform:uppercase;">Before you hire</span>
+    <h2 class="section-title fade-up">Before hiring an agency, ask one question.</h2>
 
     <div class="article-card fade-up">
       <div class="article-card-inner">
-        <span class="article-tag">01 - Tip</span>
-        <h2 class="article-title">What to ask every marketing agency before you sign anything</h2>
-        <p class="article-lead">One question that filters out 90% of agencies:</p>
-
         <div class="quote-lg">
-          <p>"Do they run their own businesses?"</p>
+          <p>Do they run their own business? Are they practicing what they preach?</p>
         </div>
 
         <div class="article-body">
           <p>If not, why would you listen to them?</p>
-          <p>If someone has never risked their own money on an ad, never watched a campaign fail, never had to explain why revenue fell short - what gives them the right to tell you how to grow your business?</p>
-          <p>Most agencies sell theory. Borrowed frameworks, never tested with anything at stake. Then they send the invoice.</p>
+          <p>If someone has never spent their own money on an ad, never watched a campaign fail, never had to explain why revenue fell short, what gives them the right to tell you how to grow yours?</p>
+          <p>A lot of agency relationships look great at the start. Then the work gets passed down. The strategist disappears. The founder disappears. You end up explaining your business to someone who only knows the account.</p>
+          <p>That is where things usually start going sideways.</p>
+        </div>
+
+        <div class="quote-block" style="margin:28px 0;">At KLIKS, the thinking stays close to the business.</div>
+
+        <div class="highlight-box">
+          <strong>I want to understand:</strong>
+          <ul class="copy-list" style="margin-top:14px;">
+            <li>What you are trying to build</li>
+            <li>What customers actually care about</li>
+            <li>Where the margins are</li>
+            <li>Which offers have potential</li>
+            <li>What is slowing growth down</li>
+          </ul>
         </div>
 
         <div class="highlight-box">
@@ -1520,6 +1530,8 @@
           <p>Anyone can show a case study. Just pick your best client's best month. But an agency that can show a failure, explain what went wrong, and what they learned — that's an agency actually doing the work.</p>
           <p>Anyone who's never made a mistake is either lying or hasn't really tried anything.</p>
         </div>
+
+        <p style="color:var(--muted);font-size:15px;line-height:1.8;margin-top:24px;">Because if the person running your marketing does not understand the business, the decisions eventually show it.</p>
 
         <div class="author-footer">
           <div class="author-avatar">A</div>
@@ -1555,15 +1567,15 @@
   <div class="cta-glow"></div>
   <div class="container" style="position:relative;z-index:1;text-align:center;">
     <p class="cta-label">If you've read this far, you already know something needs fixing.</p>
-    <h2 class="section-title fade-up">What's the next step?</h2>
-    <p class="section-sub fade-up" style="margin:0 auto 36px;max-width:600px;color:rgba(255,255,255,0.55);">30 minutes. No pressure. We look at your store and tell you what's actually going on. After the call we put together a proper audit. We promise we won't sell you a course.</p>
+    <h2 class="section-title fade-up">There is probably more growth inside your business than you think.</h2>
+    <p class="section-sub fade-up" style="margin:0 auto 36px;max-width:600px;color:rgba(255,255,255,0.55);">Sometimes the opportunity is obvious. Sometimes it is hiding inside the offer, the creative, the website, the customer journey. The first step is finding it.</p>
     <div class="cta-checks fade-up">
       <span class="cta-check">Free audit included</span>
       <span class="cta-check">No annual contract</span>
       <span class="cta-check">No juniors, no outsourcing</span>
       <span class="cta-check">We won't sell you a course</span>
     </div>
-    <a href="book.html" class="btn btn-lg fade-up cta-section-btn">Book a free call &rarr;</a>
+    <a href="book.html" class="btn btn-lg fade-up cta-section-btn">Request Your Growth Audit &rarr;</a>
   </div>
 </section>
 
