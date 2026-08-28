@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const REVENUE_OPTIONS = ['Under $20k', '$20k-$50k', '$50k-$100k', '$100k-$250k', '$250k+', 'Prefer not to say']
 const AD_SPEND_OPTIONS = ['Not currently advertising', 'Under $5k', '$5k-$15k', '$15k-$50k', '$50k+']
@@ -8,6 +8,15 @@ export default function GrowthAuditForm() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+  const successRef = useRef<HTMLDivElement>(null)
+
+  // The success message is much shorter than the form it replaces, so the
+  // page shrinks underneath the visitor's scroll position - without this,
+  // they'd land somewhere in the section below instead of seeing the
+  // confirmation at all.
+  useEffect(() => {
+    if (submitted) successRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [submitted])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -16,9 +25,17 @@ export default function GrowthAuditForm() {
     const data = new FormData(form)
 
     const first_name = (data.get('first_name') as string || '').trim()
+    const last_name = (data.get('last_name') as string || '').trim()
     const email = (data.get('email') as string || '').trim()
+    const phone = (data.get('phone') as string || '').trim()
     const business_name = (data.get('business_name') as string || '').trim()
     const store_url = (data.get('store_url') as string || '').trim()
+    const social_handle = (data.get('social_handle') as string || '').trim()
+    const keywords = (data.get('keywords') as string || '').trim()
+    const monthly_revenue = (data.get('monthly_revenue') as string) || ''
+    const monthly_ad_spend = (data.get('monthly_ad_spend') as string) || ''
+    const challenge = (data.get('challenge') as string || '').trim()
+    const twelve_month_goal = (data.get('twelve_month_goal') as string || '').trim()
 
     if (!first_name || !email || !business_name || !store_url) {
       setError('Please fill in your name, email, business name, and store URL.')
@@ -31,17 +48,9 @@ export default function GrowthAuditForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          first_name,
-          last_name: (data.get('last_name') as string || '').trim(),
-          email,
-          phone: (data.get('phone') as string || '').trim(),
-          business_name,
-          store_url,
-          social_handle: (data.get('social_handle') as string || '').trim(),
-          monthly_revenue: data.get('monthly_revenue') || '',
-          monthly_ad_spend: data.get('monthly_ad_spend') || '',
-          challenge: (data.get('challenge') as string || '').trim(),
-          twelve_month_goal: (data.get('twelve_month_goal') as string || '').trim(),
+          first_name, last_name, email, phone, business_name, store_url,
+          social_handle, keywords, monthly_revenue, monthly_ad_spend,
+          challenge, twelve_month_goal,
           hp_field: (data.get('hp_field') as string || '').trim(),
         }),
       })
@@ -52,6 +61,30 @@ export default function GrowthAuditForm() {
         return
       }
       setSubmitted(true)
+
+      // Web3Forms only accepts client-side submissions on the free plan, so
+      // the notification email fires from here, after the CRM record (the
+      // source of truth) is already saved server-side. Fire-and-forget - a
+      // failed notification shouldn't affect what the applicant sees.
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          access_key: '8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5',
+          subject: `New Growth Audit application - ${business_name}`,
+          from_name: `${first_name} ${last_name}`.trim(),
+          email,
+          phone: phone || 'Not provided',
+          business_name,
+          store_url,
+          social_handle: social_handle || 'Not provided',
+          keywords: keywords || 'Not provided',
+          monthly_revenue: monthly_revenue || 'Not provided',
+          monthly_ad_spend: monthly_ad_spend || 'Not provided',
+          challenge: challenge || 'Not provided',
+          twelve_month_goal: twelve_month_goal || 'Not provided',
+        }),
+      }).catch(() => {})
     } catch {
       setError('Something went wrong. Please try again or email adam@kliks.com.au directly.')
       setSubmitting(false)
@@ -60,10 +93,10 @@ export default function GrowthAuditForm() {
 
   if (submitted) {
     return (
-      <div className="form-success" style={{ display: 'block' }}>
+      <div ref={successRef} className="form-success" style={{ display: 'block', scrollMarginTop: 80 }}>
         <span className="success-icon">🎉</span>
         <h3>Got it. Thank you.</h3>
-        <p>Adam personally reviews every application. If it looks like a strong fit, he&apos;ll be in touch.</p>
+        <p>Adam personally reviews every application. He&apos;ll be in touch soon.</p>
       </div>
     )
   }
@@ -110,6 +143,11 @@ export default function GrowthAuditForm() {
       <div className="form-group">
         <label htmlFor="social_handle">Instagram / TikTok <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>(optional)</span></label>
         <input type="text" id="social_handle" name="social_handle" placeholder="@yourbrand" />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="keywords">Preferred keywords to be ranked for <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>(optional)</span></label>
+        <input type="text" id="keywords" name="keywords" placeholder="e.g. vegan cake delivery sydney" />
       </div>
 
       <div className="form-group">

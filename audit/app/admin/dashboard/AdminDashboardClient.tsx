@@ -263,7 +263,16 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                 return (
                   <tr key={p.id} onClick={() => openDetail(toDetailItem(p))}
                     style={{ background: i % 2 === 0 ? S.bg2 : S.bg, cursor: 'pointer' }}>
-                    <td style={{ padding: '12px 14px', color: S.white, fontWeight: 500 }}>{p.brand_name}</td>
+                    <td style={{ padding: '12px 14px', color: S.white, fontWeight: 500 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {p.brand_name}
+                        {p.application_data && (
+                          <span title="Submitted via the Growth Audit application form" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: S.purple, background: 'rgba(100,75,255,0.15)', borderRadius: 99, padding: '2px 6px', whiteSpace: 'nowrap' }}>
+                            FORM REQUEST
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td style={{ padding: '12px 14px' }}>
                       <span style={{ color: AUDIT_STATUS_COLOR[auditStatus] }}>{AUDIT_STATUS_LABELS[auditStatus]}</span>
                     </td>
@@ -310,7 +319,14 @@ export default function AdminDashboardClient({ prospects, stats }: { prospects: 
                 style={{ background: S.bg2, border: `1px solid ${S.border}`, borderRadius: 12, padding: 20, cursor: 'pointer' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div>
-                    <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600 }}>{p.brand_name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <div style={{ fontFamily: '"Clash Display", sans-serif', fontSize: 18, fontWeight: 600 }}>{p.brand_name}</div>
+                      {p.application_data && (
+                        <span title="Submitted via the Growth Audit application form" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: S.purple, background: 'rgba(100,75,255,0.15)', borderRadius: 99, padding: '2px 6px', whiteSpace: 'nowrap' }}>
+                          FORM REQUEST
+                        </span>
+                      )}
+                    </div>
                     <div style={{ fontSize: 13, color: S.muted }}>/{p.slug}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }} onClick={e => e.stopPropagation()}>

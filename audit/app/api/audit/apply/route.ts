@@ -40,7 +40,7 @@ async function handleApply(req: NextRequest) {
   const body = await req.json()
   const {
     first_name, last_name, email, phone,
-    business_name, store_url, social_handle,
+    business_name, store_url, social_handle, keywords,
     monthly_revenue, monthly_ad_spend,
     challenge, twelve_month_goal,
     hp_field, // honeypot - real visitors never see or fill this
@@ -64,7 +64,7 @@ async function handleApply(req: NextRequest) {
     store_url: normalisedUrl,
     prospect_name: `${first_name} ${last_name || ''}`.trim(),
     prospect_email: email,
-    niche: '', // not asked on this form - filled in during review, before the real scan runs
+    niche: keywords || '',
   })
 
   if (!result.success) {
@@ -80,6 +80,7 @@ async function handleApply(req: NextRequest) {
   const notesSummary = [
     phone ? `Phone: ${phone}` : null,
     social_handle ? `Social: ${social_handle}` : null,
+    keywords ? `Keywords: ${keywords}` : null,
     monthly_revenue ? `Revenue: ${monthly_revenue}` : null,
     monthly_ad_spend ? `Ad spend: ${monthly_ad_spend}` : null,
     challenge ? `Challenge: ${challenge}` : null,
@@ -90,7 +91,7 @@ async function handleApply(req: NextRequest) {
     await supabaseAdmin
       .from('prospects')
       .update({
-        application_data: { phone: phone || null, social_handle: social_handle || null, monthly_revenue: monthly_revenue || null, monthly_ad_spend: monthly_ad_spend || null, challenge: challenge || null, twelve_month_goal: twelve_month_goal || null },
+        application_data: { phone: phone || null, social_handle: social_handle || null, keywords: keywords || null, monthly_revenue: monthly_revenue || null, monthly_ad_spend: monthly_ad_spend || null, challenge: challenge || null, twelve_month_goal: twelve_month_goal || null },
       })
       .eq('id', prospect.id)
 
@@ -104,30 +105,9 @@ async function handleApply(req: NextRequest) {
     console.error('[apply] application_data/notes write failed (non-fatal):', e.message)
   }
 
-  // Email notification alongside the CRM record - same Web3Forms access key
-  // the homepage contact form already uses, just a different subject/fields.
-  try {
-    await fetch('https://api.web3forms.com/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        access_key: '8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5',
-        subject: `New Growth Audit application - ${business_name}`,
-        from_name: `${first_name} ${last_name || ''}`.trim(),
-        email,
-        phone: phone || 'Not provided',
-        business_name,
-        store_url: normalisedUrl,
-        social_handle: social_handle || 'Not provided',
-        monthly_revenue: monthly_revenue || 'Not provided',
-        monthly_ad_spend: monthly_ad_spend || 'Not provided',
-        challenge: challenge || 'Not provided',
-        twelve_month_goal: twelve_month_goal || 'Not provided',
-      }),
-    })
-  } catch (e: any) {
-    console.error('[apply] Web3Forms notification failed (non-fatal):', e.message)
-  }
-
+  // Web3Forms rejects server-to-server calls on the free plan ("Use our API
+  // in client side" - confirmed directly against the endpoint), so the email
+  // notification fires from the browser instead, after this responds - see
+  // GrowthAuditForm.tsx.
   return NextResponse.json({ success: true, slug: prospect.slug })
 }
