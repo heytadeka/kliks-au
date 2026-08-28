@@ -96,7 +96,7 @@ export default function GrowthAuditForm() {
       <div ref={successRef} className="form-success" style={{ display: 'block', scrollMarginTop: 80 }}>
         <span className="success-icon">🎉</span>
         <h3>Got it. Thank you.</h3>
-        <p>Adam personally reviews every application. He&apos;ll be in touch soon.</p>
+        <p>I personally review every application. I&apos;ll be in touch soon.</p>
       </div>
     )
   }

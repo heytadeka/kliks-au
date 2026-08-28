@@ -21,7 +21,10 @@ export default function GrowthAuditPage() {
       <nav>
         <div className="nav-inner">
           <a href="/" className="logo">KLIKS<span>.</span></a>
-          <a href="#apply" className="btn nav-cta" style={{ padding: '10px 22px', fontSize: 14 }}>Apply Now</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            <a href="/" className="back-home-link" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>&larr; Back to homepage</a>
+            <a href="#apply" className="btn nav-cta" style={{ padding: '10px 22px', fontSize: 14 }}>Apply Now</a>
+          </div>
         </div>
       </nav>
 
@@ -33,7 +36,7 @@ export default function GrowthAuditPage() {
           <p className="hero-intro">You&apos;ve already built the brand. The next question is where the biggest growth opportunity is hiding.</p>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15, maxWidth: 620, margin: '0 auto 36px', lineHeight: 1.7 }}>The KLIKS Growth Audit looks at your marketing, creative, Shopify store, offer and customer journey to find the areas that deserve attention first.</p>
           <a href="#apply" className="btn btn-lg">Request Your Growth Audit &rarr;</a>
-          <p style={{ marginTop: 20, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Adam reviews every submission personally.</p>
+          <p style={{ marginTop: 20, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>I review every submission personally.</p>
         </div>
       </section>
 
@@ -1318,6 +1321,7 @@ const PAGE_CSS = `    *, *::before, *::after { box-sizing: border-box; margin: 0
       .nav-inner { padding: 0 24px; }
       .nav-links { display: none; }
       .hamburger { display: flex; }
+      .back-home-link { display: none; }
       section { padding: 72px 0; }
       .services-grid { grid-template-columns: 1fr; }
       .about-grid { grid-template-columns: 1fr; }
