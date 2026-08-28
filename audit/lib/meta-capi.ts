@@ -46,11 +46,10 @@ export async function sendMetaLeadEvent(params: {
   if (params.fbp) userData.fbp = params.fbp
   if (params.fbc) userData.fbc = params.fbc
 
-  const res = await fetch(`https://graph.facebook.com/v21.0/${PIXEL_ID}/events`, {
+  const res = await fetch(`https://graph.facebook.com/v26.0/${PIXEL_ID}/events?access_token=${accessToken}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      access_token: accessToken,
       data: [{
         event_name: 'Lead',
         event_time: Math.floor(Date.now() / 1000),
