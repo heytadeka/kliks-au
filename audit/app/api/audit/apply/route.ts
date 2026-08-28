@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createProspectRecord } from '@/lib/create-prospect'
 import { slugify } from '@/lib/slugify'
+import { sendMetaLeadEvent } from '@/lib/meta-capi'
 
 export const maxDuration = 30
 
@@ -43,6 +44,7 @@ async function handleApply(req: NextRequest) {
     business_name, store_url, social_handle, keywords,
     monthly_revenue, monthly_ad_spend,
     challenge, twelve_month_goal,
+    event_id, // shared with the browser-side fbq Lead fire, for CAPI dedup
     hp_field, // honeypot - real visitors never see or fill this
   } = body
 
@@ -103,6 +105,24 @@ async function handleApply(req: NextRequest) {
     }
   } catch (e: any) {
     console.error('[apply] application_data/notes write failed (non-fatal):', e.message)
+  }
+
+  if (event_id) {
+    try {
+      await sendMetaLeadEvent({
+        eventId: event_id,
+        email,
+        firstName: first_name,
+        lastName: last_name || undefined,
+        phone: phone || undefined,
+        clientIp: req.headers.get('x-forwarded-for')?.split(',')[0].trim(),
+        userAgent: req.headers.get('user-agent') || undefined,
+        fbp: req.cookies.get('_fbp')?.value,
+        fbc: req.cookies.get('_fbc')?.value,
+      })
+    } catch (e: any) {
+      console.error('[apply] Meta CAPI event failed (non-fatal):', e.message)
+    }
   }
 
   // Web3Forms rejects server-to-server calls on the free plan ("Use our API

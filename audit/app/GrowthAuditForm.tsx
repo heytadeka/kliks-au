@@ -42,6 +42,10 @@ export default function GrowthAuditForm() {
       return
     }
 
+    // Shared with the server-side Meta CAPI call so both the browser pixel
+    // and CAPI fires of this same Lead get deduped into one event, not two.
+    const eventId = crypto.randomUUID()
+
     setSubmitting(true)
     try {
       const res = await fetch('/api/audit/apply', {
@@ -51,6 +55,7 @@ export default function GrowthAuditForm() {
           first_name, last_name, email, phone, business_name, store_url,
           social_handle, keywords, monthly_revenue, monthly_ad_spend,
           challenge, twelve_month_goal,
+          event_id: eventId,
           hp_field: (data.get('hp_field') as string || '').trim(),
         }),
       })
@@ -63,9 +68,10 @@ export default function GrowthAuditForm() {
       setSubmitted(true)
 
       // Meta conversion event - standard "Lead" event so this can be set as
-      // a campaign optimization/conversion goal in Ads Manager.
+      // a campaign optimization/conversion goal in Ads Manager. eventID pairs
+      // this with the server-side CAPI fire for the same submission.
       const fbq = (window as any).fbq
-      if (typeof fbq === 'function') fbq('track', 'Lead')
+      if (typeof fbq === 'function') fbq('track', 'Lead', {}, { eventID: eventId })
 
       // Web3Forms only accepts client-side submissions on the free plan, so
       // the notification email fires from here, after the CRM record (the
