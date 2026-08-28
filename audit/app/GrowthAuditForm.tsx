@@ -62,6 +62,11 @@ export default function GrowthAuditForm() {
       }
       setSubmitted(true)
 
+      // Meta conversion event - standard "Lead" event so this can be set as
+      // a campaign optimization/conversion goal in Ads Manager.
+      const fbq = (window as any).fbq
+      if (typeof fbq === 'function') fbq('track', 'Lead')
+
       // Web3Forms only accepts client-side submissions on the free plan, so
       // the notification email fires from here, after the CRM record (the
       // source of truth) is already saved server-side. Fire-and-forget - a

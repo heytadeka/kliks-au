@@ -1,3 +1,4 @@
+import Script from 'next/script'
 import GrowthAuditForm from './GrowthAuditForm'
 
 export const metadata = {
@@ -9,6 +10,24 @@ export default function GrowthAuditPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
+      {/* Meta Pixel - same ID the homepage uses, not otherwise loaded inside the Next.js app */}
+      <Script id="fb-pixel" strategy="afterInteractive">
+        {`
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '1875112903440305');
+          fbq('track', 'PageView');
+        `}
+      </Script>
+      <noscript>
+        <img height="1" width="1" style={{ display: 'none' }} alt="" src="https://www.facebook.com/tr?id=1875112903440305&ev=PageView&noscript=1" />
+      </noscript>
       <link rel="preconnect" href="https://api.fontshare.com" />
       <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,7 +54,7 @@ export default function GrowthAuditPage() {
           <h1 className="headline">Find out what&apos;s actually holding growth back.</h1>
           <p className="hero-intro">You&apos;ve already built the brand. The next question is where the biggest growth opportunity is hiding.</p>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15, maxWidth: 620, margin: '0 auto 36px', lineHeight: 1.7 }}>The KLIKS Growth Audit looks at your marketing, creative, Shopify store, offer and customer journey to find the areas that deserve attention first.</p>
-          <a href="#apply" className="btn btn-lg">Request Your Growth Audit &rarr;</a>
+          <a href="#apply" className="btn btn-lg" style={{ padding: '16px 40px', fontSize: 17 }}>Request Your Growth Audit &rarr;</a>
           <p style={{ marginTop: 20, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>I review every submission personally.</p>
         </div>
       </section>
