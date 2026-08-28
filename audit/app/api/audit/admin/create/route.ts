@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 import { cookies } from 'next/headers'
 import { waitUntil } from '@vercel/functions'
+import { createProspectRecord } from '@/lib/create-prospect'
 
 export const maxDuration = 60
 
@@ -14,65 +14,12 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location, gmb_cid } = body
 
-  // Guard: check for duplicate slug before inserting
-  const { data: existing } = await supabaseAdmin
-    .from('prospects')
-    .select('id')
-    .eq('slug', slug)
-    .single()
-
-  if (existing) {
-    return NextResponse.json({
-      success: false,
-      error: 'A prospect with this slug already exists. Use a different slug or edit the existing audit.',
-    }, { status: 409 })
-  }
-
-  const { data: prospect, error: prospectError } = await supabaseAdmin
-    .from('prospects')
-    .insert({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link: cta_link || '/book', location: location || null, gmb_cid: gmb_cid || null })
-    .select()
-    .single()
-
-  if (prospectError) return NextResponse.json({ error: prospectError.message }, { status: 400 })
-
-  await supabaseAdmin.from('audit_content').insert({ prospect_id: prospect.id })
-  await supabaseAdmin.from('audit_data_cache').insert({ prospect_id: prospect.id })
-
-  const domain = store_url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
-
-  // Auto-create outreach_log row (non-fatal)
-  try {
-    await supabaseAdmin.from('outreach_log').insert({
-      prospect_id: prospect.id,
-      domain,
-      brand_name,
-      prospect_name,
-      prospect_email,
-      audit_slug: slug,
-      stage: 'not_contacted',
-    })
-  } catch (e: any) {
-    console.error('[create] outreach_log insert failed (non-fatal):', e.message)
-  }
-
-  // If this domain is already tracked in the discovery pipeline, mark it
-  // converted here too. Previously only Pipeline's own "Create Audit &
-  // Generate Email" form did this, as a separate client-side call after
-  // creation - any other path into this endpoint (standalone New Audit,
-  // Outreach's create toggle) silently skipped it. Matches on the same
-  // domain string already computed above for outreach_log. An update
-  // against zero matching rows is a normal no-op, so this is safe to fire
-  // unconditionally rather than checking existence first.
-  try {
-    const { error } = await supabaseAdmin
-      .from('monitored_domains')
-      .update({ audit_created: true, status: 'converted', audit_slug: slug, audit_brand_name: brand_name })
-      .eq('domain', domain)
-    if (error) console.error('[create] monitored_domains mark-converted failed (non-fatal):', error.message)
-  } catch (e: any) {
-    console.error('[create] monitored_domains mark-converted failed (non-fatal):', e.message)
-  }
+  // Phase 1: create prospects/audit_content/audit_data_cache/outreach_log -
+  // see lib/create-prospect.ts (shared with the public apply route, which
+  // stops here and never reaches Phase 2 below).
+  const result = await createProspectRecord({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location, gmb_cid })
+  if (!result.success) return NextResponse.json({ error: result.error }, { status: result.status })
+  const { prospect } = result
 
   // Phase 2: fire all jobs in background without awaiting - return to browser immediately
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://kliks.com.au'

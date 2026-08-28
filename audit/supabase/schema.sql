@@ -14,7 +14,11 @@ create table if not exists prospects (
   created_at timestamptz not null default now(),
   last_accessed_at timestamptz,
   access_count integer not null default 0,
-  is_active boolean not null default true
+  is_active boolean not null default true,
+  location text, -- live-only until now, admin/create/route.ts has always written it
+  gmb_cid text, -- live-only until now, same as above - Google Place ID/CID for the GMB routes
+  rescan_locked_at timestamptz, -- documented separately below, kept there for the history
+  application_data jsonb -- see the Growth Audit application migration block below
 );
 
 create table if not exists audit_content (
@@ -253,3 +257,20 @@ on conflict do nothing;
 -- stage values: not_contacted | first_email_sent | second_email_sent |
 --   responded | won | declined
 -- declined_reason values (only set when stage = 'declined'): said_no | not_a_fit
+
+-- Growth Audit application form (/audit, app/api/audit/apply/route.ts):
+-- captures fields the public application asks for that don't map onto any
+-- existing prospects column (revenue range, ad spend range, phone, social
+-- handle, biggest challenge, 12-month goal) as one JSON blob rather than six
+-- new dedicated columns, since none of it is read by the CRM's own logic -
+-- it exists purely for a human to read during review. A readable copy also
+-- gets written to outreach_log.notes at apply time so it's visible in the
+-- existing detail panel with no new UI. Applying never triggers the actual
+-- audit pipeline (crawl/PageSpeed/DataForSEO/commentary) - that only fires
+-- when a human clicks the existing "Re-run Data Scan" button after review.
+-- Run this block in Supabase SQL editor if upgrading an existing database:
+--
+-- ALTER TABLE prospects
+--   ADD COLUMN IF NOT EXISTS location text,
+--   ADD COLUMN IF NOT EXISTS gmb_cid text,
+--   ADD COLUMN IF NOT EXISTS application_data jsonb;
