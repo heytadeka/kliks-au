@@ -45,6 +45,7 @@ async function handleApply(req: NextRequest) {
     monthly_revenue, monthly_ad_spend,
     challenge, twelve_month_goal,
     event_id, // shared with the browser-side fbq Lead fire, for CAPI dedup
+    test_event_code, // present only when testing via ?test_event_code= on /audit
     hp_field, // honeypot - real visitors never see or fill this
   } = body
 
@@ -119,6 +120,7 @@ async function handleApply(req: NextRequest) {
         userAgent: req.headers.get('user-agent') || undefined,
         fbp: req.cookies.get('_fbp')?.value,
         fbc: req.cookies.get('_fbc')?.value,
+        testEventCode: test_event_code || undefined,
       })
     } catch (e: any) {
       console.error('[apply] Meta CAPI event failed (non-fatal):', e.message)

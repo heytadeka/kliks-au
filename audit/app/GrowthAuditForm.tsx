@@ -56,6 +56,7 @@ export default function GrowthAuditForm() {
           social_handle, keywords, monthly_revenue, monthly_ad_spend,
           challenge, twelve_month_goal,
           event_id: eventId,
+          test_event_code: new URLSearchParams(window.location.search).get('test_event_code') || '',
           hp_field: (data.get('hp_field') as string || '').trim(),
         }),
       })

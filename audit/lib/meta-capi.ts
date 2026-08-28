@@ -28,6 +28,7 @@ export async function sendMetaLeadEvent(params: {
   userAgent?: string
   fbp?: string
   fbc?: string
+  testEventCode?: string
 }) {
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN
   if (!accessToken) {
@@ -58,6 +59,9 @@ export async function sendMetaLeadEvent(params: {
         action_source: 'website',
         user_data: userData,
       }],
+      // Ties this call to Meta's live Test Events debug view - pass ?test_event_code=
+      // on the /audit URL while testing, omit it for real applicant submissions.
+      ...(params.testEventCode ? { test_event_code: params.testEventCode } : {}),
     }),
   })
 
