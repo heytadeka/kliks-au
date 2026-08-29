@@ -49,12 +49,13 @@ export default function GrowthAuditPage() {
 
       {/* HERO */}
       <section className="hero" style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate' }}>
-        <div className="hero-blob hero-blob-purple"></div>
+        <div className="hero-blob hero-blob-orange"></div>
         <div className="hero-content">
+          <div className="eyebrow"><span>GROWTH AUDIT APPLICATION</span></div>
           <h1 className="headline">Find out what&apos;s actually holding growth back.</h1>
           <p className="hero-intro">You&apos;ve already built the brand. The next question is where the biggest growth opportunity is hiding.</p>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15, maxWidth: 620, margin: '0 auto 36px', lineHeight: 1.7 }}>The KLIKS Growth Audit looks at your marketing, creative, Shopify store, offer and customer journey to find the areas that deserve attention first.</p>
-          <a href="#apply" className="btn btn-lg" style={{ padding: '16px 40px', fontSize: 17 }}>Request Your Growth Audit &rarr;</a>
+          <a href="#apply" className="btn btn-lg" style={{ padding: '16px 40px', fontSize: 17 }}>Start Your Application &darr;</a>
           <p style={{ marginTop: 20, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>I review every submission personally.</p>
         </div>
       </section>
@@ -70,7 +71,7 @@ export default function GrowthAuditPage() {
             <p style={{ marginTop: 16 }}>The audit looks across the parts that actually influence growth:</p>
           </div>
 
-          <div className="services-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+          <div className="services-grid">
             <div className="card">
               <h3>Creative &amp; Messaging</h3>
               <p>Are people getting a reason to stop, care and click?</p>
@@ -1221,8 +1222,8 @@ const PAGE_CSS = `    *, *::before, *::after { box-sizing: border-box; margin: 0
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
     .form-group input, .form-group textarea, .form-group select {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.16);
       border-radius: 12px;
       padding: 14px 18px;
       color: var(--white);
@@ -1280,7 +1281,7 @@ const PAGE_CSS = `    *, *::before, *::after { box-sizing: border-box; margin: 0
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 16px center;
-      background-color: rgba(255,255,255,0.04);
+      background-color: rgba(255,255,255,0.07);
       padding-right: 40px;
     }
     .form-group select option { background: #1a1828; color: white; }
