@@ -1,12 +1,10 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 const REVENUE_OPTIONS = ['Under $20k', '$20k-$50k', '$50k-$100k', '$100k-$250k', '$250k+', 'Prefer not to say']
 const AD_SPEND_OPTIONS = ['Not currently advertising', 'Under $5k', '$5k-$15k', '$15k-$50k', '$50k+']
 
 export default function GrowthAuditForm() {
-  const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -88,7 +86,11 @@ export default function GrowthAuditForm() {
         }),
       }).catch(() => {})
 
-      router.push('/thank-you')
+      // A full navigation, not router.push - the app has no basePath config,
+      // so client-side routing only knows internal route names ('/thank-you'),
+      // not the externally-rewritten public path. window.location goes through
+      // Vercel's actual /audit/(.*) rewrite like any other page load does.
+      window.location.href = '/audit/thank-you'
     } catch {
       setError('Something went wrong. Please try again or email adam@kliks.com.au directly.')
       setSubmitting(false)
