@@ -34,6 +34,11 @@ export default function GrowthAuditPage() {
       <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
       <div className="bg-base"></div>
+      <div className="orbs">
+        <div className="orb orb-1"></div>
+        <div className="orb orb-2"></div>
+        <div className="orb orb-3"></div>
+      </div>
       <div className="grain"></div>
       <div className="vignette"></div>
 

@@ -1,22 +1,14 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const REVENUE_OPTIONS = ['Under $20k', '$20k-$50k', '$50k-$100k', '$100k-$250k', '$250k+', 'Prefer not to say']
 const AD_SPEND_OPTIONS = ['Not currently advertising', 'Under $5k', '$5k-$15k', '$15k-$50k', '$50k+']
 
 export default function GrowthAuditForm() {
+  const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
-  const successRef = useRef<HTMLDivElement>(null)
-
-  // The success message is much shorter than the form it replaces, so the
-  // page shrinks underneath the visitor's scroll position - without this,
-  // they'd land somewhere in the section below instead of seeing the
-  // confirmation at all.
-  useEffect(() => {
-    if (submitted) successRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [submitted])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -66,8 +58,6 @@ export default function GrowthAuditForm() {
         setSubmitting(false)
         return
       }
-      setSubmitted(true)
-
       // Meta conversion event - standard "Lead" event so this can be set as
       // a campaign optimization/conversion goal in Ads Manager. eventID pairs
       // this with the server-side CAPI fire for the same submission.
@@ -97,20 +87,12 @@ export default function GrowthAuditForm() {
           twelve_month_goal: twelve_month_goal || 'Not provided',
         }),
       }).catch(() => {})
+
+      router.push('/thank-you')
     } catch {
       setError('Something went wrong. Please try again or email adam@kliks.com.au directly.')
       setSubmitting(false)
     }
-  }
-
-  if (submitted) {
-    return (
-      <div ref={successRef} className="form-success" style={{ display: 'block', scrollMarginTop: 80 }}>
-        <span className="success-icon">🎉</span>
-        <h3>Got it. Thank you.</h3>
-        <p>I personally review every application. I&apos;ll be in touch soon.</p>
-      </div>
-    )
   }
 
   return (
