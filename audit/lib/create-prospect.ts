@@ -47,7 +47,7 @@ export async function createProspectRecord(input: CreateProspectInput): Promise<
   await supabaseAdmin.from('audit_content').insert({ prospect_id: prospect.id })
   await supabaseAdmin.from('audit_data_cache').insert({ prospect_id: prospect.id })
 
-  const domain = store_url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
+  const domain = store_url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').toLowerCase()
 
   try {
     await supabaseAdmin.from('outreach_log').insert({
@@ -63,14 +63,34 @@ export async function createProspectRecord(input: CreateProspectInput): Promise<
     console.error('[create-prospect] outreach_log insert failed (non-fatal):', e.message)
   }
 
+  // Update if a row already exists (preserving whatever platform discovery
+  // already detected), otherwise insert one - a prospect created here
+  // through Outreach or the New Prospect page never went through discover,
+  // so without this insert branch monitored_domains silently never learns
+  // about it, and a later discover run can rediscover the same domain and
+  // add it back as a fresh 'active' find with no idea it's already a
+  // contacted prospect.
   try {
-    const { error } = await supabaseAdmin
+    const { data: existingRow } = await supabaseAdmin
       .from('monitored_domains')
-      .update({ audit_created: true, status: 'converted', audit_slug: slug, audit_brand_name: brand_name })
+      .select('domain')
       .eq('domain', domain)
-    if (error) console.error('[create-prospect] monitored_domains mark-converted failed (non-fatal):', error.message)
+      .maybeSingle()
+
+    if (existingRow) {
+      const { error } = await supabaseAdmin
+        .from('monitored_domains')
+        .update({ audit_created: true, status: 'converted', audit_slug: slug, audit_brand_name: brand_name })
+        .eq('domain', domain)
+      if (error) console.error('[create-prospect] monitored_domains mark-converted failed (non-fatal):', error.message)
+    } else {
+      const { error } = await supabaseAdmin
+        .from('monitored_domains')
+        .insert({ domain, platform: 'unknown', niche, audit_created: true, status: 'converted', audit_slug: slug, audit_brand_name: brand_name })
+      if (error) console.error('[create-prospect] monitored_domains insert failed (non-fatal):', error.message)
+    }
   } catch (e: any) {
-    console.error('[create-prospect] monitored_domains mark-converted failed (non-fatal):', e.message)
+    console.error('[create-prospect] monitored_domains sync failed (non-fatal):', e.message)
   }
 
   return { success: true, prospect }

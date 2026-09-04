@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { detectPlatform } from '@/lib/detect-platform'
+import { cookies } from 'next/headers'
 
 export const maxDuration = 60
 export const preferredRegion = 'syd1'
@@ -14,6 +15,10 @@ const BLOCK_DOMAINS = [
 ]
 
 export async function POST(req: NextRequest) {
+  const cookieStore = cookies()
+  if (!cookieStore.get('audit_admin_auth')?.value) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const { query, max_results = 20 } = await req.json()
   if (!query) return NextResponse.json({ error: 'query required' }, { status: 400 })
   const limit = Math.min(Number(max_results) || 20, 50)
@@ -77,6 +82,17 @@ export async function POST(req: NextRequest) {
 
     const existingMap = new Map((existingRows ?? []).map((r: any) => [r.domain, r.platform]))
 
+    // A domain can already be a real contacted prospect (outreach_log)
+    // without ever having a monitored_domains row - e.g. it was created
+    // through Outreach or the New Prospect page, not discovered here. Without
+    // this check it would insert as a fresh 'active' find with no idea it's
+    // already been emailed.
+    const { data: outreachRows } = await supabaseAdmin
+      .from('outreach_log')
+      .select('domain')
+      .in('domain', domainList)
+    const alreadyContacted = new Set((outreachRows ?? []).map((r: any) => r.domain))
+
     for (const { domain, platform } of qualifying) {
       const existingPlatform = existingMap.get(domain)
       if (!existingPlatform) {
@@ -85,7 +101,7 @@ export async function POST(req: NextRequest) {
           platform,
           platform_detected_at: now,
           niche: query,
-          status: 'active',
+          status: alreadyContacted.has(domain) ? 'converted' : 'active',
         })
       } else if (existingPlatform === 'unknown') {
         await supabaseAdmin.from('monitored_domains')
