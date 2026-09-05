@@ -668,7 +668,7 @@ const PAGE_CSS = `    *, *::before, *::after { box-sizing: border-box; margin: 0
     .hero-blob-orange {
       width: 500px; height: 500px;
       background: var(--orange);
-      bottom: -80px; right: -80px;
+      bottom: 100px; right: -80px;
       opacity: 0.2;
     }
     .hero-content { position: relative; z-index: 1; max-width: 860px; }
