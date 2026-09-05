@@ -65,6 +65,29 @@ export default function GrowthAuditPage() {
         </div>
       </section>
 
+      {/* MARQUEE */}
+      <div className="marquee-section">
+        <p className="marquee-label">Brands we&apos;ve worked with or built ourselves</p>
+        <div className="marquee-track">
+          <div className="marquee-inner">
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/bragster-logo.png" alt="Bragster" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/reset-logo.png" alt="Reset" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944283/tch-logo.png" alt="TCH" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/Sketcha_Logo.png" alt="Sketcha" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/the-billion-roses.png" alt="The Billion Roses" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/bloom-de-luxe.png" alt="Bloom de Luxe" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/bragster-logo.png" alt="Bragster" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/reset-logo.png" alt="Reset" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944283/tch-logo.png" alt="TCH" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/Sketcha_Logo.png" alt="Sketcha" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/the-billion-roses.png" alt="The Billion Roses" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/bloom-de-luxe.png" alt="Bloom de Luxe" /></div>
+          </div>
+        </div>
+      </div>
+
       {/* WHAT THE AUDIT LOOKS AT */}
       <section style={{ background: 'var(--bg2)' }}>
         <div className="container">

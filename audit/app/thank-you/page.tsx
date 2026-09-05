@@ -9,6 +9,8 @@ export default function ThankYouPage() {
       <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
       <link rel="preconnect" href="https://api.fontshare.com" />
       <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
       <div className="bg-base"></div>
       <div className="orbs">
@@ -34,6 +36,28 @@ export default function ThankYouPage() {
           <a href="/">Back to homepage</a>
         </div>
       </main>
+
+      <div className="marquee-section">
+        <p className="marquee-label">Brands we&apos;ve worked with or built ourselves</p>
+        <div className="marquee-track">
+          <div className="marquee-inner">
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/bragster-logo.png" alt="Bragster" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/reset-logo.png" alt="Reset" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944283/tch-logo.png" alt="TCH" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/Sketcha_Logo.png" alt="Sketcha" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/the-billion-roses.png" alt="The Billion Roses" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/bloom-de-luxe.png" alt="Bloom de Luxe" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/bragster-logo.png" alt="Bragster" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/reset-logo.png" alt="Reset" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944283/tch-logo.png" alt="TCH" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/Sketcha_Logo.png" alt="Sketcha" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/the-billion-roses.png" alt="The Billion Roses" /></div>
+            <div className="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/bloom-de-luxe.png" alt="Bloom de Luxe" /></div>
+          </div>
+        </div>
+      </div>
     </>
   )
 }
@@ -153,6 +177,55 @@ const PAGE_CSS = `
   }
   .links a:hover { border-color: var(--orange); }
   .links a:last-child { color: var(--muted); font-weight: 400; }
+
+  .marquee-section {
+    position: relative;
+    z-index: 1;
+    padding: 24px 0 64px;
+    overflow: hidden;
+    border-top: 1px solid rgba(100,75,255,0.12);
+  }
+  .marquee-label {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+  .marquee-track {
+    position: relative;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+  }
+  .marquee-inner {
+    display: flex;
+    width: max-content;
+    animation: marquee 28s linear infinite;
+  }
+  .marquee-inner:hover { animation-play-state: paused; }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .marquee-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 48px;
+    flex-shrink: 0;
+  }
+  .marquee-logo img {
+    height: 54px;
+    width: auto;
+    filter: brightness(0) invert(1);
+    opacity: 0.75;
+    transition: opacity 0.2s ease;
+    object-fit: contain;
+  }
+  .marquee-logo img:hover { opacity: 1; }
 
   @media (max-width: 640px) {
     .nav-inner { padding: 20px 24px; }
