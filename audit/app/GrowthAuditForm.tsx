@@ -2,7 +2,6 @@
 import { useState } from 'react'
 
 const REVENUE_OPTIONS = ['Under $20k', '$20k-$50k', '$50k-$100k', '$100k-$250k', '$250k+', 'Prefer not to say']
-const AD_SPEND_OPTIONS = ['Not currently advertising', 'Under $5k', '$5k-$15k', '$15k-$50k', '$50k+']
 
 export default function GrowthAuditForm() {
   const [submitting, setSubmitting] = useState(false)
@@ -15,20 +14,14 @@ export default function GrowthAuditForm() {
     const data = new FormData(form)
 
     const first_name = (data.get('first_name') as string || '').trim()
-    const last_name = (data.get('last_name') as string || '').trim()
     const email = (data.get('email') as string || '').trim()
     const phone = (data.get('phone') as string || '').trim()
-    const business_name = (data.get('business_name') as string || '').trim()
     const store_url = (data.get('store_url') as string || '').trim()
-    const social_handle = (data.get('social_handle') as string || '').trim()
-    const keywords = (data.get('keywords') as string || '').trim()
     const monthly_revenue = (data.get('monthly_revenue') as string) || ''
-    const monthly_ad_spend = (data.get('monthly_ad_spend') as string) || ''
     const challenge = (data.get('challenge') as string || '').trim()
-    const twelve_month_goal = (data.get('twelve_month_goal') as string || '').trim()
 
-    if (!first_name || !email || !business_name || !store_url) {
-      setError('Please fill in your name, email, business name, and store URL.')
+    if (!first_name || !email || !store_url) {
+      setError('Please fill in your name, email and website / store URL.')
       return
     }
 
@@ -42,9 +35,8 @@ export default function GrowthAuditForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          first_name, last_name, email, phone, business_name, store_url,
-          social_handle, keywords, monthly_revenue, monthly_ad_spend,
-          challenge, twelve_month_goal,
+          first_name, email, phone, store_url,
+          monthly_revenue, challenge,
           event_id: eventId,
           test_event_code: new URLSearchParams(window.location.search).get('test_event_code') || '',
           hp_field: (data.get('hp_field') as string || '').trim(),
@@ -58,7 +50,9 @@ export default function GrowthAuditForm() {
       }
       // Meta conversion event - standard "Lead" event so this can be set as
       // a campaign optimization/conversion goal in Ads Manager. eventID pairs
-      // this with the server-side CAPI fire for the same submission.
+      // this with the server-side CAPI fire for the same submission. Only
+      // fires here, after a genuinely successful submission - never on the
+      // button click itself or a validation error.
       const fbq = (window as any).fbq
       if (typeof fbq === 'function') fbq('track', 'Lead', {}, { eventID: eventId })
 
@@ -71,18 +65,13 @@ export default function GrowthAuditForm() {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
           access_key: '8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5',
-          subject: `New Growth Audit application - ${business_name}`,
-          from_name: `${first_name} ${last_name}`.trim(),
+          subject: `New Growth Audit request - ${first_name}`,
+          from_name: first_name,
           email,
           phone: phone || 'Not provided',
-          business_name,
           store_url,
-          social_handle: social_handle || 'Not provided',
-          keywords: keywords || 'Not provided',
           monthly_revenue: monthly_revenue || 'Not provided',
-          monthly_ad_spend: monthly_ad_spend || 'Not provided',
           challenge: challenge || 'Not provided',
-          twelve_month_goal: twelve_month_goal || 'Not provided',
         }),
       }).catch(() => {})
 
@@ -105,15 +94,9 @@ export default function GrowthAuditForm() {
         <input type="text" id="hp_field" name="hp_field" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="first_name">First name</label>
-          <input type="text" id="first_name" name="first_name" placeholder="Sarah" required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="last_name">Last name</label>
-          <input type="text" id="last_name" name="last_name" placeholder="Johnson" />
-        </div>
+      <div className="form-group">
+        <label htmlFor="first_name">First name</label>
+        <input type="text" id="first_name" name="first_name" placeholder="Sarah" required />
       </div>
 
       <div className="form-group">
@@ -127,27 +110,12 @@ export default function GrowthAuditForm() {
       </div>
 
       <div className="form-group">
-        <label htmlFor="business_name">Business / Brand name</label>
-        <input type="text" id="business_name" name="business_name" placeholder="Your brand" required />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="store_url">Shopify store URL</label>
+        <label htmlFor="store_url">Website / store URL</label>
         <input type="text" id="store_url" name="store_url" placeholder="yourstore.com.au" required />
       </div>
 
       <div className="form-group">
-        <label htmlFor="social_handle">Instagram / TikTok <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>(optional)</span></label>
-        <input type="text" id="social_handle" name="social_handle" placeholder="@yourbrand" />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="keywords">Preferred keywords to be ranked for <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>(optional)</span></label>
-        <input type="text" id="keywords" name="keywords" placeholder="e.g. vegan cake delivery sydney" />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="monthly_revenue">Approximate monthly revenue</label>
+        <label htmlFor="monthly_revenue">Approximate monthly revenue <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>(optional)</span></label>
         <select id="monthly_revenue" name="monthly_revenue" defaultValue="">
           <option value="" disabled>Select an option</option>
           {REVENUE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
@@ -155,28 +123,16 @@ export default function GrowthAuditForm() {
       </div>
 
       <div className="form-group">
-        <label htmlFor="monthly_ad_spend">Monthly ad spend</label>
-        <select id="monthly_ad_spend" name="monthly_ad_spend" defaultValue="">
-          <option value="" disabled>Select an option</option>
-          {AD_SPEND_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="challenge">What&apos;s the biggest challenge right now?</label>
+        <label htmlFor="challenge">What&apos;s the biggest challenge right now? <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>(optional)</span></label>
         <textarea id="challenge" name="challenge" placeholder="e.g. Ads are running but not converting, growth has plateaued, not sure where the biggest opportunity is..." />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="twelve_month_goal">Where would you like the business to be in the next 12 months?</label>
-        <textarea id="twelve_month_goal" name="twelve_month_goal" placeholder="What does the next stage of growth look like for you?" />
       </div>
 
       {error && <div className="form-error" style={{ display: 'block' }}>{error}</div>}
 
       <button type="submit" disabled={submitting} className="btn send-btn">
-        {submitting ? 'Sending...' : 'Request My Growth Audit →'}
+        {submitting ? 'Sending...' : 'Request My Free Growth Audit →'}
       </button>
+      <p style={{ marginTop: 14, color: 'rgba(255,255,255,0.4)', fontSize: 13, textAlign: 'center' }}>No account access required. No obligation.</p>
     </form>
   )
 }

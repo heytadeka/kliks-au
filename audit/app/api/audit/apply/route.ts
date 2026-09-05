@@ -25,6 +25,20 @@ async function findAvailableSlug(base: string): Promise<string> {
   return `${candidate}-${Date.now()}`
 }
 
+// The form no longer asks for a business name (one less field, less friction),
+// so a reasonable brand name is guessed from the domain instead. Adam can
+// correct it from the admin edit page if the guess is off.
+function deriveBrandNameFromDomain(domain: string): string {
+  const root = domain.split('.')[0] || domain
+  const guess = root
+    .replace(/[-_]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+  return guess || domain
+}
+
 export async function POST(req: NextRequest) {
   try {
     return await handleApply(req)
@@ -40,10 +54,8 @@ export async function POST(req: NextRequest) {
 async function handleApply(req: NextRequest) {
   const body = await req.json()
   const {
-    first_name, last_name, email, phone,
-    business_name, store_url, social_handle, keywords,
-    monthly_revenue, monthly_ad_spend,
-    challenge, twelve_month_goal,
+    first_name, email, phone, store_url,
+    monthly_revenue, challenge,
     event_id, // shared with the browser-side fbq Lead fire, for CAPI dedup
     test_event_code, // present only when testing via ?test_event_code= on /audit
     hp_field, // honeypot - real visitors never see or fill this
@@ -54,20 +66,22 @@ async function handleApply(req: NextRequest) {
     return NextResponse.json({ success: true })
   }
 
-  if (!first_name || !email || !business_name || !store_url) {
+  if (!first_name || !email || !store_url) {
     return NextResponse.json({ success: false, error: 'Missing required fields.' }, { status: 400 })
   }
 
   const normalisedUrl = store_url.startsWith('http') ? store_url : `https://${store_url}`
+  const domain = normalisedUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').toLowerCase()
+  const business_name = deriveBrandNameFromDomain(domain)
   const slug = await findAvailableSlug(slugify(business_name))
 
   const result = await createProspectRecord({
     brand_name: business_name,
     slug,
     store_url: normalisedUrl,
-    prospect_name: `${first_name} ${last_name || ''}`.trim(),
+    prospect_name: first_name,
     prospect_email: email,
-    niche: keywords || '',
+    niche: '',
   })
 
   if (!result.success) {
@@ -76,32 +90,28 @@ async function handleApply(req: NextRequest) {
 
   const { prospect } = result
 
-  // Store the full structured application alongside a human-readable notes
+  // Store the full structured request alongside a human-readable notes
   // summary - notes already renders in the existing detail panel, so this is
   // visible immediately with no new UI, while application_data keeps the
   // structured version for anything that wants it later.
   const notesSummary = [
     phone ? `Phone: ${phone}` : null,
-    social_handle ? `Social: ${social_handle}` : null,
-    keywords ? `Keywords: ${keywords}` : null,
     monthly_revenue ? `Revenue: ${monthly_revenue}` : null,
-    monthly_ad_spend ? `Ad spend: ${monthly_ad_spend}` : null,
     challenge ? `Challenge: ${challenge}` : null,
-    twelve_month_goal ? `12mo goal: ${twelve_month_goal}` : null,
   ].filter(Boolean).join('\n')
 
   try {
     await supabaseAdmin
       .from('prospects')
       .update({
-        application_data: { phone: phone || null, social_handle: social_handle || null, keywords: keywords || null, monthly_revenue: monthly_revenue || null, monthly_ad_spend: monthly_ad_spend || null, challenge: challenge || null, twelve_month_goal: twelve_month_goal || null },
+        application_data: { phone: phone || null, monthly_revenue: monthly_revenue || null, challenge: challenge || null },
       })
       .eq('id', prospect.id)
 
     if (notesSummary) {
       await supabaseAdmin
         .from('outreach_log')
-        .update({ notes: `Applied via Growth Audit form:\n${notesSummary}` })
+        .update({ notes: `Requested via Growth Audit form:\n${notesSummary}` })
         .eq('prospect_id', prospect.id)
     }
   } catch (e: any) {
@@ -114,7 +124,6 @@ async function handleApply(req: NextRequest) {
         eventId: event_id,
         email,
         firstName: first_name,
-        lastName: last_name || undefined,
         phone: phone || undefined,
         clientIp: req.headers.get('x-forwarded-for')?.split(',')[0].trim(),
         userAgent: req.headers.get('user-agent') || undefined,

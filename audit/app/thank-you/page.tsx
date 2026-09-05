@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Thank You — Kliks Digital',
+  title: 'Thank You - Kliks Digital',
   description: 'Your Growth Audit application has been received.',
 }
 
@@ -29,8 +29,8 @@ export default function ThankYouPage() {
 
       <main className="wrap">
         <span className="success-icon">🎉</span>
-        <h1>Got it. Thank you.</h1>
-        <p>I personally review every application. I&apos;ll be in touch soon.</p>
+        <h1>Thanks, your request has been received.</h1>
+        <p>I&apos;ll review your business personally and email you about the next step.</p>
         <div className="links">
           <a href="/case-studies">See our case studies &rarr;</a>
           <a href="/">Back to homepage</a>

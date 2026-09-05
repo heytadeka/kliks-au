@@ -2,8 +2,8 @@ import Script from 'next/script'
 import GrowthAuditForm from './GrowthAuditForm'
 
 export const metadata = {
-  title: 'Growth Audit — Kliks Digital',
-  description: 'The KLIKS Growth Audit looks at your marketing, creative, Shopify store, offer and customer journey to find the areas that deserve attention first.',
+  title: 'Free Growth Audit - Kliks Digital',
+  description: 'The KLIKS Growth Audit is currently free. I’ll personally review your marketing, creative, Shopify store, offer and customer journey to find the areas that deserve attention first.',
 }
 
 export default function GrowthAuditPage() {
@@ -47,7 +47,7 @@ export default function GrowthAuditPage() {
           <a href="/" className="logo">KLIKS<span>.</span></a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <a href="/" className="back-home-link" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>&larr; Back to homepage</a>
-            <a href="#apply" className="btn nav-cta" style={{ padding: '10px 22px', fontSize: 14 }}>Apply Now</a>
+            <a href="#apply" className="btn nav-cta" style={{ padding: '10px 22px', fontSize: 14 }}>Free Growth Audit</a>
           </div>
         </div>
       </nav>
@@ -56,12 +56,12 @@ export default function GrowthAuditPage() {
       <section className="hero" style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate' }}>
         <div className="hero-blob hero-blob-orange"></div>
         <div className="hero-content">
-          <div className="eyebrow"><span>GROWTH AUDIT APPLICATION</span></div>
-          <h1 className="headline">Find out what&apos;s actually holding growth back.</h1>
-          <p className="hero-intro">You&apos;ve already built the brand. The next question is where the biggest growth opportunity is hiding.</p>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15, maxWidth: 620, margin: '0 auto 36px', lineHeight: 1.7 }}>The KLIKS Growth Audit looks at your marketing, creative, Shopify store, offer and customer journey to find the areas that deserve attention first.</p>
-          <a href="#apply" className="btn btn-lg" style={{ padding: '16px 40px', fontSize: 17 }}>Start Your Application &darr;</a>
-          <p style={{ marginTop: 20, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>I review every submission personally.</p>
+          <div className="eyebrow"><span>COMPREHENSIVE GROWTH AUDIT. CURRENTLY FREE.</span></div>
+          <h1 className="headline">Find out what&apos;s holding your brand back.</h1>
+          <p className="hero-intro">I&apos;ll personally review your creative, paid ads, offer, Shopify store, customer journey and retention.</p>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15, maxWidth: 620, margin: '0 auto 36px', lineHeight: 1.7 }}>You&apos;ll receive a focused audit showing the biggest opportunities I can see and what I would prioritise first.</p>
+          <a href="#apply" className="btn btn-lg" style={{ padding: '16px 40px', fontSize: 17 }}>Request My Free Growth Audit &darr;</a>
+          <p style={{ marginTop: 20, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Takes around 60 seconds to request. No account access required. No obligation.</p>
         </div>
       </section>
 
@@ -88,15 +88,35 @@ export default function GrowthAuditPage() {
         </div>
       </div>
 
-      {/* WHAT THE AUDIT LOOKS AT */}
+      {/* WHAT YOU'LL RECEIVE */}
+      <section>
+        <div className="container">
+          <span className="section-label">What you&apos;ll receive</span>
+          <h2 className="section-title">A clear view of what to improve first.</h2>
+          <div style={{ maxWidth: 680, color: 'var(--muted)', fontSize: 17, lineHeight: 1.9 }}>
+            <p>Growth problems rarely sit in one place. The audit reviews how your creative, advertising, offer, Shopify store and customer journey work together.</p>
+            <p style={{ marginTop: 16 }}>The audit will highlight:</p>
+          </div>
+          <ul className="copy-list" style={{ maxWidth: 620, margin: '20px 0 32px' }}>
+            <li>The biggest growth opportunities I can see</li>
+            <li>Problems that may be costing you sales</li>
+            <li>Creative and offer ideas worth testing</li>
+            <li>Shopify and customer journey improvements</li>
+            <li>The priorities I would focus on next</li>
+          </ul>
+          <div style={{ maxWidth: 680, color: 'var(--muted)', fontSize: 17, lineHeight: 1.9 }}>
+            <p>I&apos;ll put these findings together for you to keep. If it looks like a good fit, I&apos;m also happy to walk you through them personally on a short call.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* AUDIT CATEGORIES */}
       <section style={{ background: 'var(--bg2)' }}>
         <div className="container">
           <span className="section-label">What the audit looks at</span>
-          <h2 className="section-title">We look at the whole picture.</h2>
+          <h2 className="section-title">We look at the whole growth journey.</h2>
           <div style={{ maxWidth: 680, color: 'var(--muted)', fontSize: 17, lineHeight: 1.9, marginBottom: 56 }}>
-            <p>Growth problems rarely sit in one place.</p>
-            <p style={{ marginTop: 16 }}>Sometimes the ads are fine and the offer is weak. Sometimes the creative gets attention but the website loses the sale. Sometimes acquisition works, but customers never come back.</p>
-            <p style={{ marginTop: 16 }}>The audit looks across the parts that actually influence growth:</p>
+            <p>Your ads, creative, offer and store influence each other. The audit looks across the full customer journey to identify where attention, sales or repeat business may be getting lost.</p>
           </div>
 
           <div className="services-grid">
@@ -128,24 +148,25 @@ export default function GrowthAuditPage() {
         </div>
       </section>
 
-      {/* WHAT YOU'LL GET */}
+      {/* FOUNDER CREDIBILITY */}
       <section>
         <div className="container">
-          <span className="section-label">What you&apos;ll get</span>
-          <h2 className="section-title">Clear opportunities. No 40-page marketing report.</h2>
-          <div style={{ maxWidth: 680, color: 'var(--muted)', fontSize: 17, lineHeight: 1.9 }}>
-            <p>If your business is selected, I&apos;ll personally review it and highlight the areas I think deserve attention. The goal is to give you:</p>
-          </div>
-          <ul className="copy-list" style={{ maxWidth: 620, margin: '20px 0 32px' }}>
-            <li>The biggest growth opportunities I can see</li>
-            <li>Problems that may be costing you sales</li>
-            <li>Creative or offer ideas worth testing</li>
-            <li>Shopify and customer journey improvements</li>
-            <li>A clearer idea of what should happen next</li>
-          </ul>
-          <div style={{ maxWidth: 680, color: 'var(--muted)', fontSize: 17, lineHeight: 1.9 }}>
-            <p>For selected brands, I&apos;ll record a short personalised video audit walking through my findings. Usually around 5-10 minutes.</p>
-            <p style={{ marginTop: 16, color: 'var(--white)', fontWeight: 500 }}>Useful enough to act on. Focused enough that you&apos;ll actually watch it.</p>
+          <span className="section-label">Who reviews your business</span>
+          <div className="about-grid">
+            <div className="about-photo-wrap">
+              <img src="https://cdn.shopify.com/s/files/1/0733/0693/1363/files/adam-ads.gif?v=1776520792" alt="Adam Nagy, Kliks founder" />
+              <div className="about-photo-label">
+                <strong>Adam Nagy</strong>
+                <span>Kliks founder</span>
+              </div>
+            </div>
+            <div className="about-copy">
+              <h2>Your audit is completed personally by Adam.</h2>
+              <p>I&apos;m Adam, the founder of KLIKS.</p>
+              <p>I&apos;ve spent around 15 years working across ecommerce, paid advertising, creative strategy and Shopify. During that time, I&apos;ve managed roughly $7.5 million in advertising spend and worked with startups, established ecommerce businesses and global brands.</p>
+              <p>I also build and operate businesses myself, so I understand what it feels like when every marketing decision affects your own money, time and growth.</p>
+              <p>I&apos;ll look at how your offer, creative, advertising, store and customer journey work together as one growth system.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -153,26 +174,25 @@ export default function GrowthAuditPage() {
       {/* WHO THIS IS FOR */}
       <section style={{ background: 'var(--bg2)' }}>
         <div className="container">
-          <span className="section-label">Who this is for</span>
-          <h2 className="section-title">Built for brands that already have something worth growing.</h2>
-          <p className="section-sub" style={{ marginBottom: 32 }}>The Growth Audit is best suited to ecommerce businesses with:</p>
+          <span className="section-label">Who it&apos;s for</span>
+          <h2 className="section-title">Built for ecommerce brands with something worth growing.</h2>
+          <p className="section-sub" style={{ marginBottom: 32 }}>The free Growth Audit is best suited to businesses with:</p>
 
           <div className="who-card" style={{ maxWidth: 620, marginBottom: 40 }}>
             <div className="who-card-section" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
               <ul className="copy-list">
-                <li>An established product</li>
+                <li>An established product, brand</li>
                 <li>Existing customers</li>
                 <li>Real sales and traction</li>
                 <li>Ambition to grow</li>
-                <li>Openness to changing things when there&apos;s a better way</li>
+                <li>Openness to improving the current approach</li>
               </ul>
             </div>
           </div>
 
           <div style={{ maxWidth: 680, color: 'var(--muted)', fontSize: 17, lineHeight: 1.9 }}>
-            <p>You might already be running ads. You might already have an agency. You might be doing most of the marketing yourself.</p>
-            <p style={{ marginTop: 16 }}>That&apos;s fine.</p>
-            <div className="quote-block" style={{ marginTop: 20 }}>The important part is that there is a real business underneath it.</div>
+            <p>You may already be running ads. You may already have an agency. You may still be handling most of the marketing yourself.</p>
+            <div className="quote-block" style={{ marginTop: 20 }}>The important part is that there is a real business and a genuine opportunity to grow it.</div>
           </div>
         </div>
       </section>
@@ -181,67 +201,48 @@ export default function GrowthAuditPage() {
       <section>
         <div className="container">
           <span className="section-label">How it works</span>
-          <h2 className="section-title">Simple process.</h2>
+          <h2 className="section-title">A simple place to start.</h2>
 
-          <div className="process-grid">
+          <div className="process-grid process-grid-3">
             <div className="card process-card">
               <div className="process-num">01</div>
-              <h3>Tell me about the business</h3>
-              <p>Complete the short application below. Share your store, current marketing situation and the main challenge you&apos;re trying to solve.</p>
+              <h3>Request your free audit</h3>
+              <p>Share your website and the main growth challenge you&apos;re facing. The form takes around 60 seconds.</p>
             </div>
             <div className="card process-card">
               <div className="process-num">02</div>
-              <h3>I review it personally</h3>
-              <p>I&apos;ll look through the business and decide whether I think I can add something useful.</p>
+              <h3>I review the business</h3>
+              <p>I&apos;ll personally look through your store, creative, advertising presence, offer and customer journey.</p>
             </div>
             <div className="card process-card">
               <div className="process-num">03</div>
-              <h3>Selected brands receive a personalised audit</h3>
-              <p>I&apos;ll record the biggest opportunities I see and explain where I would focus first.</p>
-            </div>
-            <div className="card process-card">
-              <div className="process-num">04</div>
-              <h3>We talk if it makes sense</h3>
-              <p>If there looks like a strong fit, we can jump on a strategy call and talk through the business properly.</p>
+              <h3>Receive your personalised audit</h3>
+              <p>I&apos;ll send through what I found and the priorities I&apos;d focus on first. If it&apos;s useful, we can go through it together on a short call.</p>
             </div>
           </div>
-          <p style={{ marginTop: 40, color: 'var(--muted)', fontSize: 15, lineHeight: 1.8, maxWidth: 600 }}>No awkward sales dance. If there&apos;s an opportunity to work together, we&apos;ll know pretty quickly.</p>
-        </div>
-      </section>
-
-      {/* WHY I DO IT THIS WAY */}
-      <section style={{ background: 'var(--bg2)' }}>
-        <div className="container">
-          <span className="section-label">Why I do it this way</span>
-          <h2 className="section-title">I&apos;d rather understand the business before telling you what to buy.</h2>
-          <div style={{ maxWidth: 680, color: 'var(--muted)', fontSize: 17, lineHeight: 1.9 }}>
-            <p>I&apos;ve spent years running campaigns and businesses. One thing that becomes obvious after enough time in this world: every business has a different bottleneck.</p>
-            <p style={{ marginTop: 16 }}>Some need better creative. Some need a stronger offer. Some need the Shopify store cleaned up. Some need someone to finally connect everything together.</p>
-            <p style={{ marginTop: 16, color: 'var(--white)', fontWeight: 500 }}>The audit gives me a chance to actually understand what&apos;s going on before making recommendations.</p>
-          </div>
+          <p style={{ marginTop: 40, color: 'var(--muted)', fontSize: 15, lineHeight: 1.8, maxWidth: 600 }}>If you&apos;d like help implementing the recommendations, we can talk afterwards. There&apos;s no obligation. I keep the number of free audits limited so I can review each business properly.</p>
         </div>
       </section>
 
       {/* APPLICATION FORM */}
-      <section id="apply">
+      <section id="apply" style={{ background: 'var(--bg2)' }}>
         <div className="container">
-          <span className="section-label">Tell me about your business</span>
-          <h2 className="section-title">Takes around 2 minutes.</h2>
-          <p className="section-sub" style={{ marginBottom: 40 }}>I personally review every submission.</p>
-          <div style={{ maxWidth: 560 }}>
-            <GrowthAuditForm />
-          </div>
-        </div>
-      </section>
-
-      {/* EXPECTATION SETTING */}
-      <section style={{ background: 'var(--bg2)' }}>
-        <div className="container">
-          <span className="section-label">Before you apply</span>
-          <h2 className="section-title">A quick note before you apply.</h2>
-          <div style={{ maxWidth: 680, color: 'var(--muted)', fontSize: 17, lineHeight: 1.9 }}>
-            <p>I deliberately keep these audits limited. A personalised review takes time, and I want to make sure the businesses I audit are ones where I can genuinely add value.</p>
-            <p style={{ marginTop: 16 }}>If your business looks like a good fit, I&apos;ll be in touch. If I can already see that KLIKS isn&apos;t the right partner, I&apos;d rather be upfront about that too.</p>
+          <span className="section-label">Request your free audit</span>
+          <h2 className="section-title">Request Your Free Growth Audit</h2>
+          <p className="section-sub" style={{ marginBottom: 40 }}>Tell me where to find your business and what you would like help with.</p>
+          <div className="contact-grid">
+            <div className="highlight-box panel-col">
+              <strong>YOUR FREE AUDIT INCLUDES</strong>
+              <ul className="copy-list" style={{ marginTop: 14 }}>
+                <li>A personal review by Adam</li>
+                <li>Clear priorities and practical ideas</li>
+                <li>No account access required</li>
+                <li>No obligation to work with KLIKS</li>
+              </ul>
+            </div>
+            <div className="form-col">
+              <GrowthAuditForm />
+            </div>
           </div>
         </div>
       </section>
@@ -250,9 +251,9 @@ export default function GrowthAuditPage() {
       <section className="cta-section">
         <div className="cta-glow"></div>
         <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <h2 className="section-title">There&apos;s probably something inside your marketing that deserves a closer look.</h2>
-          <p className="section-sub" style={{ margin: '0 auto 36px', maxWidth: 500, color: 'rgba(255,255,255,0.55)' }}>Let&apos;s find it.</p>
-          <a href="#apply" className="btn btn-lg cta-section-btn">Request Your Growth Audit &rarr;</a>
+          <h2 className="section-title">There may be something inside your marketing that deserves a closer look.</h2>
+          <p className="section-sub" style={{ margin: '0 auto 36px', maxWidth: 500, color: 'rgba(255,255,255,0.55)' }}>Let&apos;s find the opportunities that could make the biggest difference.</p>
+          <a href="#apply" className="btn btn-lg cta-section-btn">Request My Free Growth Audit &rarr;</a>
         </div>
       </section>
 
@@ -1246,6 +1247,12 @@ const PAGE_CSS = `    *, *::before, *::after { box-sizing: border-box; margin: 0
       gap: 60px;
       align-items: start;
     }
+    /* DOM order is panel then form, so mobile stacks panel above the form
+       naturally with no override needed - these move the form to the left
+       track and the panel to the right on desktop only. */
+    .form-col { order: 1; }
+    .panel-col { order: 2; align-self: start; }
+    .process-grid-3 { grid-template-columns: repeat(3, 1fr); }
     .contact-form { display: flex; flex-direction: column; gap: 16px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
@@ -1377,6 +1384,7 @@ const PAGE_CSS = `    *, *::before, *::after { box-sizing: border-box; margin: 0
       .patisserie-grid { grid-template-columns: 1fr; }
       .patisserie-frame { max-width: 320px; }
       .contact-grid { grid-template-columns: 1fr; }
+      .form-col, .panel-col { order: 0; }
       .form-row { grid-template-columns: 1fr; }
       .value-props { padding: 60px 24px; }
       .value-props-inner { grid-template-columns: 1fr; }
