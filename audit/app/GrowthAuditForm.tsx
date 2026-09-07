@@ -56,6 +56,9 @@ export default function GrowthAuditForm() {
       const fbq = (window as any).fbq
       if (typeof fbq === 'function') fbq('track', 'Lead', {}, { eventID: eventId })
 
+      const gtag = (window as any).gtag
+      if (typeof gtag === 'function') gtag('event', 'generate_lead', { event_id: eventId })
+
       // Web3Forms only accepts client-side submissions on the free plan, so
       // the notification email fires from here, after the CRM record (the
       // source of truth) is already saved server-side. Fire-and-forget - a

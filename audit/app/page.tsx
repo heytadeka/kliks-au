@@ -110,6 +110,12 @@ export default function GrowthAuditPage() {
         </div>
       </section>
 
+      {/* MID-PAGE CTA */}
+      <div className="container mid-cta">
+        <p style={{ color: 'var(--muted)', fontSize: 17, marginBottom: 24 }}>Don&apos;t want to keep scrolling?</p>
+        <a href="#apply" className="btn btn-lg">Request My Free Growth Audit &rarr;</a>
+      </div>
+
       {/* AUDIT CATEGORIES */}
       <section style={{ background: 'var(--bg2)' }}>
         <div className="container">
@@ -181,7 +187,7 @@ export default function GrowthAuditPage() {
           <div className="who-card" style={{ maxWidth: 620, marginBottom: 40 }}>
             <div className="who-card-section" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
               <ul className="copy-list">
-                <li>An established product, brand</li>
+                <li>An established product with real customer demand</li>
                 <li>Existing customers</li>
                 <li>Real sales and traction</li>
                 <li>Ambition to grow</li>
@@ -537,6 +543,7 @@ const PAGE_CSS = `    *, *::before, *::after { box-sizing: border-box; margin: 0
     }
     .btn:hover { background: var(--orange-dark); transform: translateY(-2px); }
     .btn-lg { padding: 20px 48px; font-size: 18px; }
+    .container.mid-cta { text-align: center; padding-top: 40px; padding-bottom: 64px; }
 
     /* Pills */
     .pill {
