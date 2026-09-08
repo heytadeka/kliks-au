@@ -15,7 +15,6 @@ export default function GrowthAuditForm() {
 
     const first_name = (data.get('first_name') as string || '').trim()
     const email = (data.get('email') as string || '').trim()
-    const phone = (data.get('phone') as string || '').trim()
     const store_url = (data.get('store_url') as string || '').trim()
     const monthly_revenue = (data.get('monthly_revenue') as string) || ''
     const challenge = (data.get('challenge') as string || '').trim()
@@ -35,7 +34,7 @@ export default function GrowthAuditForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          first_name, email, phone, store_url,
+          first_name, email, store_url,
           monthly_revenue, challenge,
           event_id: eventId,
           test_event_code: new URLSearchParams(window.location.search).get('test_event_code') || '',
@@ -71,7 +70,6 @@ export default function GrowthAuditForm() {
           subject: `New Growth Audit request - ${first_name}`,
           from_name: first_name,
           email,
-          phone: phone || 'Not provided',
           store_url,
           monthly_revenue: monthly_revenue || 'Not provided',
           challenge: challenge || 'Not provided',
@@ -105,11 +103,6 @@ export default function GrowthAuditForm() {
       <div className="form-group">
         <label htmlFor="email">Email</label>
         <input type="email" id="email" name="email" placeholder="sarah@yourstore.com.au" required />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="phone">Phone <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>(optional)</span></label>
-        <input type="tel" id="phone" name="phone" placeholder="+61 4XX XXX XXX" />
       </div>
 
       <div className="form-group">

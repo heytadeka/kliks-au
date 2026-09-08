@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 async function handleApply(req: NextRequest) {
   const body = await req.json()
   const {
-    first_name, email, phone, store_url,
+    first_name, email, store_url,
     monthly_revenue, challenge,
     event_id, // shared with the browser-side fbq Lead fire, for CAPI dedup
     test_event_code, // present only when testing via ?test_event_code= on /audit
@@ -95,7 +95,6 @@ async function handleApply(req: NextRequest) {
   // visible immediately with no new UI, while application_data keeps the
   // structured version for anything that wants it later.
   const notesSummary = [
-    phone ? `Phone: ${phone}` : null,
     monthly_revenue ? `Revenue: ${monthly_revenue}` : null,
     challenge ? `Challenge: ${challenge}` : null,
   ].filter(Boolean).join('\n')
@@ -104,7 +103,7 @@ async function handleApply(req: NextRequest) {
     await supabaseAdmin
       .from('prospects')
       .update({
-        application_data: { phone: phone || null, monthly_revenue: monthly_revenue || null, challenge: challenge || null },
+        application_data: { monthly_revenue: monthly_revenue || null, challenge: challenge || null },
       })
       .eq('id', prospect.id)
 
@@ -124,7 +123,6 @@ async function handleApply(req: NextRequest) {
         eventId: event_id,
         email,
         firstName: first_name,
-        phone: phone || undefined,
         clientIp: req.headers.get('x-forwarded-for')?.split(',')[0].trim(),
         userAgent: req.headers.get('user-agent') || undefined,
         fbp: req.cookies.get('_fbp')?.value,
