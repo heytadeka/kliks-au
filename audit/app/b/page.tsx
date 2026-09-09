@@ -1,6 +1,7 @@
 import Script from 'next/script'
 import GrowthAuditForm from '../GrowthAuditForm'
 import { getGrowthAuditAvailability } from '@/lib/growth-audit-cap'
+import VariantBNav from './VariantBNav'
 
 export const metadata = {
   title: 'Free Growth Audit - Kliks Digital',
@@ -82,15 +83,7 @@ export default async function GrowthAuditVariantB() {
       <div className="vb-root">
         <div className="vb-grain" />
 
-        <nav className="vb-nav">
-          <div className="vb-nav-inner">
-            <div className="vb-wordmark">KLIKS<span>.</span></div>
-            <div className="vb-pill">
-              <span className="vb-dot" />
-              <span>{spotsFraction} audits left</span>
-            </div>
-          </div>
-        </nav>
+        <VariantBNav spotsFraction={spotsFraction} />
 
         <section className="vb-hero">
           <div className="vb-blob vb-blob-purple" />
@@ -98,12 +91,12 @@ export default async function GrowthAuditVariantB() {
           <div className="vb-hero-grid">
             <div>
               <div className="vb-eyebrow"><span>Free growth audit, {monthLabel}</span></div>
-              <h1 className="vb-h1">Find out exactly why your Shopify store is leaving money on the table.</h1>
+              <h1 className="vb-h1">Find out exactly why your store is leaving money on the table.</h1>
               <p className="vb-sub">A free growth audit of your ads, store and retention, done personally by Adam, not a template or an automated report.</p>
               <div className="vb-capsules">
                 <span className="vb-capsule">$7.5M ad spend managed</span>
                 <span className="vb-capsule">15 years in ecommerce</span>
-                <span className="vb-capsule">Shopify only</span>
+                <span className="vb-capsule">We run our own brands too</span>
               </div>
               <p className="vb-capnote">We cap it at {total} a month because each one takes about three hours. The next batch opens on the first.</p>
             </div>
@@ -112,7 +105,7 @@ export default async function GrowthAuditVariantB() {
               <div className="vb-form-head">Request your free audit</div>
               <p className="vb-form-sub">Your name, email, store URL and a couple of optional details. No call required to receive it.</p>
               <GrowthAuditForm variant="b" />
-              <p className="vb-form-note">{spotsFraction} left this month. We only need read access, nothing is changed in your store.</p>
+              <p className="vb-form-note">{spotsFraction} left this month.</p>
             </div>
           </div>
         </section>
@@ -123,7 +116,7 @@ export default async function GrowthAuditVariantB() {
               <div style={{ maxWidth: '60ch' }}>
                 <div className="vb-eyebrow-label">See the actual deliverable</div>
                 <h2 className="vb-h2">This is what lands in your inbox.</h2>
-                <p className="vb-body-p">A real audit, lightly redacted. Findings ranked by what they are costing you, each one with the fix and the effort it takes.</p>
+                <p className="vb-body-p">A lightly redacted audit. Findings ranked by what they are costing you, each one with the fix and the effort it takes.</p>
               </div>
               <span className="vb-hint">Hover to pause</span>
             </div>
@@ -183,11 +176,13 @@ export default async function GrowthAuditVariantB() {
         </section>
 
         <section className="vb-logos">
-          <div className="vb-section-inner vb-logos-row">
+          <div className="vb-logos-label-wrap">
             <span className="vb-logos-label">Brands we have built or worked with</span>
-            <div className="vb-logos-list">
-              {BRAND_LOGOS.map(b => (
-                <img key={b.name} src={b.src} alt={b.name} className={b.mono === false ? 'vb-logo-img vb-logo-img-color' : 'vb-logo-img'} />
+          </div>
+          <div className="vb-logos-track">
+            <div className="vb-logos-inner">
+              {[...BRAND_LOGOS, ...BRAND_LOGOS].map((b, i) => (
+                <img key={b.name + i} src={b.src} alt={b.name} className={b.mono === false ? 'vb-logo-img vb-logo-img-color' : 'vb-logo-img'} />
               ))}
             </div>
           </div>
@@ -206,6 +201,7 @@ export default async function GrowthAuditVariantB() {
               <p className="vb-body-p" style={{ marginBottom: 26 }}>You get my read on it, in writing, whether or not we ever work together. No pitch deck, no retainer talk unless you raise it.</p>
               <div className="vb-capsules">
                 <span className="vb-capsule vb-capsule-alt">Founder, Kliks Digital</span>
+                <span className="vb-capsule vb-capsule-alt">Brand owner</span>
                 <span className="vb-capsule vb-capsule-alt">Meta, Google, TikTok</span>
               </div>
             </div>
@@ -226,7 +222,7 @@ export default async function GrowthAuditVariantB() {
 
         <footer className="vb-footer">
           <div className="vb-section-inner vb-footer-inner">
-            <div className="vb-wordmark" style={{ fontSize: 16 }}>KLIKS<span>.</span></div>
+            <a href="/" className="vb-wordmark" style={{ fontSize: 16 }}>KLIKS<span>.</span></a>
             <span className="vb-hint">Sydney and Budapest / kliks.com.au</span>
           </div>
         </footer>
@@ -269,6 +265,7 @@ const PAGE_CSS = `
      the generic "a" rule above (higher specificity: class + tag) wins over
      .vb-btn's own color and renders the label orange-on-orange, invisible. */
   .vb-root a.vb-btn, .vb-root a.vb-btn:hover { color: #fff; }
+  .vb-root a.vb-wordmark, .vb-root a.vb-wordmark:hover { color: var(--ink); }
   html { scroll-behavior: smooth; }
   #audit-form { scroll-margin-top: 100px; }
 
@@ -287,11 +284,20 @@ const PAGE_CSS = `
     background: rgba(247,246,249,0.86);
     border-bottom: 1px solid rgba(20,19,31,0.09);
   }
-  .vb-nav-inner { max-width: 1200px; margin: 0 auto; padding: 16px 48px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-  .vb-wordmark { font-family: 'Clash Display', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -0.5px; }
+  .vb-nav-inner { max-width: 1200px; margin: 0 auto; padding: 16px 48px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; row-gap: 10px; }
+  .vb-wordmark { font-family: 'Clash Display', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -0.5px; color: var(--ink); }
+  .vb-wordmark:hover { color: var(--ink); }
   .vb-wordmark span { color: var(--orange); }
+  .vb-nav-right { display: flex; align-items: center; gap: 12px; }
   .vb-pill { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 100px; background: var(--pill-bg); border: 1px solid var(--pill-border); backdrop-filter: blur(6px); font-family: 'Space Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
   .vb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); animation: vbPulse 3.2s ease-in-out infinite; }
+
+  .vb-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: 1px solid var(--pill-border); border-radius: 10px; padding: 10px; cursor: pointer; }
+  .vb-hamburger span { display: block; width: 18px; height: 2px; background: var(--ink); }
+  .vb-nav-menu { border-top: 1px solid rgba(20,19,31,0.09); background: rgba(247,246,249,0.98); padding: 18px 24px 22px; display: flex; flex-direction: column; gap: 4px; }
+  .vb-nav-menu a { font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 17px; color: var(--ink); padding: 10px 0; }
+  .vb-nav-menu a:hover { color: var(--orange); }
+  @media (max-width: 900px) { .vb-hamburger { display: flex; } }
 
   .vb-hero { position: relative; overflow: hidden; }
   .vb-blob { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
@@ -299,12 +305,12 @@ const PAGE_CSS = `
   .vb-blob-orange { top: 180px; right: -160px; width: 460px; height: 460px; background: rgba(255,67,21,0.12); animation: vbDrift 24s ease-in-out infinite reverse; }
   .vb-blob-final { bottom: -200px; left: 50%; margin-left: -320px; width: 640px; height: 520px; background: rgba(255,67,21,0.12); animation: vbDrift 22s ease-in-out infinite; }
 
-  .vb-hero-grid { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 76px 48px 84px; display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 56px; align-items: start; }
+  .vb-hero-grid { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 76px 48px 84px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: 56px; align-items: start; }
 
   .vb-eyebrow { display: inline-flex; align-items: center; gap: 10px; padding: 9px 18px; border-radius: 100px; background: rgba(255,67,21,0.1); border: 1px solid rgba(255,67,21,0.28); backdrop-filter: blur(6px); margin-bottom: 28px; }
   .vb-eyebrow span { font-family: 'Space Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--orange-on-tint); }
 
-  .vb-h1 { font-family: 'Clash Display', sans-serif; font-weight: 700; font-size: clamp(36px, 4vw, 58px); line-height: 1.06; letter-spacing: -2px; margin-bottom: 22px; text-wrap: pretty; }
+  .vb-h1 { font-family: 'Clash Display', sans-serif; font-weight: 700; font-size: clamp(36px, 4vw, 58px); line-height: 1.06; letter-spacing: -1px; margin-bottom: 22px; text-wrap: pretty; }
   .vb-sub { font-size: 18px; line-height: 1.65; color: var(--muted); margin-bottom: 32px; max-width: 52ch; }
   .vb-capsules { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
   .vb-capsule { padding: 8px 14px; border-radius: 100px; background: var(--pill-bg); border: 1px solid var(--pill-border); font-family: 'Space Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
@@ -382,11 +388,19 @@ const PAGE_CSS = `
   .vb-first30 { margin-top: 34px; padding: 28px 30px; border-radius: 16px; background: rgba(100,75,255,0.08); border: 1px solid rgba(100,75,255,0.2); }
   .vb-first30 p { color: rgba(20,19,31,0.72); font-size: 15px; line-height: 1.75; max-width: 64ch; }
 
-  .vb-logos { position: relative; z-index: 2; border-top: 1px solid rgba(20,19,31,0.08); border-bottom: 1px solid rgba(20,19,31,0.08); }
-  .vb-logos-row { padding: 44px 48px; display: flex; flex-wrap: wrap; align-items: center; gap: 28px 44px; }
-  .vb-logos-label { font-family: 'Space Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted-soft); white-space: nowrap; }
-  .vb-logos-list { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 40px; flex: 1; }
-  .vb-logo-img { height: 26px; width: auto; object-fit: contain; filter: brightness(0); opacity: 0.55; transition: opacity 0.25s ease; }
+  .vb-logos { position: relative; z-index: 2; border-top: 1px solid rgba(20,19,31,0.08); border-bottom: 1px solid rgba(20,19,31,0.08); padding: 44px 0; }
+  .vb-logos-label-wrap { max-width: 1200px; margin: 0 auto; padding: 0 48px; margin-bottom: 24px; }
+  .vb-logos-label { font-family: 'Space Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted-soft); }
+  .vb-logos-track {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  }
+  .vb-logos-inner { display: flex; align-items: center; gap: 56px; width: max-content; padding: 0 28px; animation: vbMarquee 32s linear infinite; }
+  .vb-logos-inner:hover { animation-play-state: paused; }
+  @keyframes vbMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .vb-logos-inner { animation: none; } }
+  .vb-logo-img { height: 26px; width: auto; object-fit: contain; filter: brightness(0); opacity: 0.55; transition: opacity 0.25s ease; flex-shrink: 0; }
   .vb-logo-img:hover { opacity: 1; }
   .vb-logo-img-color { filter: none; opacity: 0.85; }
   .vb-logo-img-color:hover { opacity: 1; }
@@ -412,13 +426,8 @@ const PAGE_CSS = `
     .vb-section-inner { padding: 72px 24px; }
     .vb-hero-grid { padding: 60px 24px 64px; }
     .vb-nav-inner { padding: 16px 24px; }
-    .vb-logos-row, .vb-footer-inner { padding: 30px 24px; }
+    .vb-footer-inner { padding: 30px 24px; }
     .vb-final-inner { padding: 72px 24px; }
-    /* Stack the label above the logo list instead of sharing one flex row -
-       at some widths the label doesn't fully wrap onto its own line, which
-       squeezes .vb-logos-list (flex:1) into a narrow leftover column on the
-       right, wrapping logos into a vertical stack instead of a normal row. */
-    .vb-logos-row { flex-direction: column; align-items: flex-start; gap: 16px; }
-    .vb-logos-list { width: 100%; }
+    .vb-logos-label-wrap { padding: 0 24px; }
   }
 `
