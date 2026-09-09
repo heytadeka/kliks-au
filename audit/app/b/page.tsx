@@ -16,7 +16,10 @@ const BRAND_LOGOS = [
   { name: 'The Billion Roses', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/the-billion-roses.png' },
   { name: 'Bloom de Luxe', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/bloom-de-luxe.png' },
   { name: 'Occasionly', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/v1783077834/wordmark-charcoal_lpykw4.png' },
-  { name: 'Magniscan', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/v1788926791/magniscan_logo_learss.png' },
+  // Not a wordmark like the others - a solid filled mark, so forcing it to a
+  // black silhouette (like every other logo here) just renders as an
+  // unrecognisable black square. Shown in its real colours instead.
+  { name: 'Magniscan', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/v1788926791/magniscan_logo_learss.png', mono: false },
 ]
 
 // Layout reference only, not a real client's data - see README note below.
@@ -184,7 +187,7 @@ export default async function GrowthAuditVariantB() {
             <span className="vb-logos-label">Brands we have built or worked with</span>
             <div className="vb-logos-list">
               {BRAND_LOGOS.map(b => (
-                <img key={b.name} src={b.src} alt={b.name} className="vb-logo-img" />
+                <img key={b.name} src={b.src} alt={b.name} className={b.mono === false ? 'vb-logo-img vb-logo-img-color' : 'vb-logo-img'} />
               ))}
             </div>
           </div>
@@ -224,7 +227,7 @@ export default async function GrowthAuditVariantB() {
         <footer className="vb-footer">
           <div className="vb-section-inner vb-footer-inner">
             <div className="vb-wordmark" style={{ fontSize: 16 }}>KLIKS<span>.</span></div>
-            <span className="vb-hint">Melbourne and Budapest / kliks.com.au</span>
+            <span className="vb-hint">Sydney and Budapest / kliks.com.au</span>
           </div>
         </footer>
       </div>
@@ -262,6 +265,10 @@ const PAGE_CSS = `
   }
   .vb-root a { color: var(--orange); text-decoration: none; }
   .vb-root a:hover { color: var(--ink); }
+  /* .vb-btn/.vb-btn-lg are used on an <a> (the final CTA link) - without this,
+     the generic "a" rule above (higher specificity: class + tag) wins over
+     .vb-btn's own color and renders the label orange-on-orange, invisible. */
+  .vb-root a.vb-btn, .vb-root a.vb-btn:hover { color: #fff; }
   html { scroll-behavior: smooth; }
   #audit-form { scroll-margin-top: 100px; }
 
@@ -381,6 +388,8 @@ const PAGE_CSS = `
   .vb-logos-list { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 40px; flex: 1; }
   .vb-logo-img { height: 26px; width: auto; object-fit: contain; filter: brightness(0); opacity: 0.55; transition: opacity 0.25s ease; }
   .vb-logo-img:hover { opacity: 1; }
+  .vb-logo-img-color { filter: none; opacity: 0.85; }
+  .vb-logo-img-color:hover { opacity: 1; }
 
   .vb-founder { position: relative; z-index: 2; background: var(--bg2); border-top: 1px solid rgba(20,19,31,0.08); }
   .vb-founder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 52px; align-items: center; }
@@ -404,5 +413,12 @@ const PAGE_CSS = `
     .vb-hero-grid { padding: 60px 24px 64px; }
     .vb-nav-inner { padding: 16px 24px; }
     .vb-logos-row, .vb-footer-inner { padding: 30px 24px; }
+    .vb-final-inner { padding: 72px 24px; }
+    /* Stack the label above the logo list instead of sharing one flex row -
+       at some widths the label doesn't fully wrap onto its own line, which
+       squeezes .vb-logos-list (flex:1) into a narrow leftover column on the
+       right, wrapping logos into a vertical stack instead of a normal row. */
+    .vb-logos-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .vb-logos-list { width: 100%; }
   }
 `
