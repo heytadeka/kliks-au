@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 const REVENUE_OPTIONS = ['Under $20k', '$20k-$50k', '$50k-$100k', '$100k-$250k', '$250k+', 'Prefer not to say']
 
-export default function GrowthAuditForm() {
+export default function GrowthAuditForm({ variant = 'a' }: { variant?: 'a' | 'b' }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -39,6 +39,7 @@ export default function GrowthAuditForm() {
           event_id: eventId,
           test_event_code: new URLSearchParams(window.location.search).get('test_event_code') || '',
           hp_field: (data.get('hp_field') as string || '').trim(),
+          variant,
         }),
       })
       const result = await res.json()
@@ -56,7 +57,7 @@ export default function GrowthAuditForm() {
       if (typeof fbq === 'function') fbq('track', 'Lead', {}, { eventID: eventId })
 
       const gtag = (window as any).gtag
-      if (typeof gtag === 'function') gtag('event', 'generate_lead', { event_id: eventId })
+      if (typeof gtag === 'function') gtag('event', 'generate_lead', { event_id: eventId, variant })
 
       // Web3Forms only accepts client-side submissions on the free plan, so
       // the notification email fires from here, after the CRM record (the

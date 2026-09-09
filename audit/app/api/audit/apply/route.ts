@@ -59,6 +59,7 @@ async function handleApply(req: NextRequest) {
     event_id, // shared with the browser-side fbq Lead fire, for CAPI dedup
     test_event_code, // present only when testing via ?test_event_code= on /audit
     hp_field, // honeypot - real visitors never see or fill this
+    variant, // 'a' | 'b' - which landing page layout this lead came from
   } = body
 
   if (hp_field) {
@@ -97,13 +98,14 @@ async function handleApply(req: NextRequest) {
   const notesSummary = [
     monthly_revenue ? `Revenue: ${monthly_revenue}` : null,
     challenge ? `Challenge: ${challenge}` : null,
+    variant ? `Landing page: variant ${String(variant).toUpperCase()}` : null,
   ].filter(Boolean).join('\n')
 
   try {
     await supabaseAdmin
       .from('prospects')
       .update({
-        application_data: { monthly_revenue: monthly_revenue || null, challenge: challenge || null },
+        application_data: { monthly_revenue: monthly_revenue || null, challenge: challenge || null, variant: variant || 'a' },
       })
       .eq('id', prospect.id)
 
