@@ -15,6 +15,8 @@ const BRAND_LOGOS = [
   { name: 'Pupcases', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png' },
   { name: 'The Billion Roses', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/the-billion-roses.png' },
   { name: 'Bloom de Luxe', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/bloom-de-luxe.png' },
+  { name: 'Occasionly', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/v1783077834/wordmark-charcoal_lpykw4.png' },
+  { name: 'Magniscan', src: 'https://res.cloudinary.com/dfgyuhf8k/image/upload/v1788926791/magniscan_logo_learss.png' },
 ]
 
 // Layout reference only, not a real client's data - see README note below.
@@ -179,7 +181,7 @@ export default async function GrowthAuditVariantB() {
 
         <section className="vb-logos">
           <div className="vb-section-inner vb-logos-row">
-            <span className="vb-logos-label">Brands we have grown</span>
+            <span className="vb-logos-label">Brands we have built or worked with</span>
             <div className="vb-logos-list">
               {BRAND_LOGOS.map(b => (
                 <img key={b.name} src={b.src} alt={b.name} className="vb-logo-img" />
