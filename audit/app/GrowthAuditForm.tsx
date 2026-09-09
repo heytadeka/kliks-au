@@ -68,10 +68,11 @@ export default function GrowthAuditForm({ variant = 'a' }: { variant?: 'a' | 'b'
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
           access_key: '8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5',
-          subject: `New Growth Audit request - ${first_name}`,
+          subject: `New Growth Audit request - ${first_name} (Variant ${variant.toUpperCase()})`,
           from_name: first_name,
           email,
           store_url,
+          landing_page: `Variant ${variant.toUpperCase()}`,
           monthly_revenue: monthly_revenue || 'Not provided',
           challenge: challenge || 'Not provided',
         }),
