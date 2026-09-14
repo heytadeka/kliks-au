@@ -226,7 +226,26 @@
 </head>
 <body>
 <div class="grain"></div>
-<main>
+
+<div id="gate" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px; position:relative; overflow:hidden;">
+  <div class="glow glow-hero"></div>
+  <div style="max-width:420px; width:100%; position:relative;">
+    <div class="kliks-mark" style="text-align:center; margin-bottom:36px;"><span class="pre">Prepared by</span> <span class="name">KLIKS</span><span class="dot">.</span></div>
+    <div class="eyebrow-rule" style="justify-content:center;"><div class="rule"></div><div class="txt">Growth audit</div><div class="rule"></div></div>
+    <h1 style="font-size:26px; text-align:center; margin:20px 0 10px;">Your report is ready.</h1>
+    <p style="color:var(--mute); text-align:center; font-size:15px; line-height:1.6; margin-bottom:28px;">Enter the email address this was sent to.</p>
+    <form id="gate-form" style="display:flex; flex-direction:column; gap:14px;">
+      <input type="email" id="gate-email" placeholder="you@company.com" required autocomplete="email"
+        style="background:var(--panel); border:1px solid rgba(255,255,255,0.14); color:var(--paper); padding:14px 16px; font-size:15px; font-family:'IBM Plex Sans',sans-serif;">
+      <button type="submit" class="cta" style="border:none; cursor:pointer; justify-content:center; width:100%;">
+        <span>Access report</span><span class="arrow">→</span>
+      </button>
+      <p id="gate-error" style="display:none; color:var(--bad); font-size:13.5px; text-align:center; margin-top:4px;">That email doesn't match our records. Check your inbox for the link.</p>
+    </form>
+  </div>
+</div>
+
+<main id="report" style="display:none;">
 
   <div class="route">
     <div class="route-inner">
@@ -441,10 +460,6 @@
           <div class="kicker mono">A 20 minute call</div>
           <div class="pitch">We'll walk through the three fixes and what each one is worth.</div>
           <a href="/book" class="cta"><span>Book a call</span><span class="arrow">→</span></a>
-          <div class="fallback">
-            <div class="lbl mono">Or reply direct</div>
-            <a href="mailto:geoffpro@yahoo.com.au">geoffpro@yahoo.com.au</a>
-          </div>
         </div>
       </div>
     </div>
@@ -456,5 +471,38 @@
   </footer>
 
 </main>
+
+<script>
+(function(){
+  var EXPECTED = 'geoffpro@yahoo.com.au';
+  var STORAGE_KEY = 'mactrans_audit_unlocked';
+  var gate = document.getElementById('gate');
+  var report = document.getElementById('report');
+  var form = document.getElementById('gate-form');
+  var input = document.getElementById('gate-email');
+  var error = document.getElementById('gate-error');
+
+  function unlock(){
+    gate.style.display = 'none';
+    report.style.display = '';
+    try { localStorage.setItem(STORAGE_KEY, '1'); } catch(e){}
+  }
+
+  try {
+    if (localStorage.getItem(STORAGE_KEY) === '1') unlock();
+  } catch(e){}
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var val = (input.value || '').trim().toLowerCase();
+    if (val === EXPECTED) {
+      error.style.display = 'none';
+      unlock();
+    } else {
+      error.style.display = 'block';
+    }
+  });
+})();
+</script>
 </body>
 </html>
