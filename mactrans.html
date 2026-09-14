@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mactrans — Growth Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalt:#14161B;
+    --asphalt-deep:#0E1014;
+    --panel:#1B1E25;
+    --panel-alt:#21252D;
+    --steel:#3C4759;
+    --paper:#EDEEF0;
+    --mute:#8B93A1;
+    --amber:#E39B3C;
+    --amber-light:#F2B45F;
+    --amber-deep:#C9822A;
+    --bad:#C0574A;
+    --good:#5FA776;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{background:var(--asphalt-deep);}
+  body{
+    background:var(--asphalt-deep);
+    color:var(--paper);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:16px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+  h1,h2,h3{font-family:'Oswald', sans-serif; letter-spacing:-0.01em; text-wrap:pretty;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .wrap{max-width:1020px; margin:0 auto; padding:0 40px;}
+  a{color:var(--amber); text-decoration:none; transition:color 0.2s ease;}
+  a:hover{color:var(--amber-light);}
+  a:focus-visible, .cta:focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+
+  .grain{position:absolute; inset:0; pointer-events:none; z-index:3; opacity:0.055;
+    background-image:url(data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.8'%20numOctaves='3'/%3E%3C/filter%3E%3Crect%20width='140'%20height='140'%20filter='url(%23n)'/%3E%3C/svg%3E);
+  }
+  main{position:relative; z-index:2;}
+
+  /* ---- Route strip ---- */
+  .route{background:var(--asphalt-deep); border-bottom:1px solid rgba(255,255,255,0.09); overflow:hidden;}
+  .route-inner{padding:11px 40px; display:flex; align-items:center; overflow:hidden; white-space:nowrap;
+    max-width:1020px; margin:0 auto;}
+  .route-inner span.city{font-size:10.5px; letter-spacing:0.2em; color:var(--mute); text-transform:uppercase;}
+  .route-inner span.sep{color:var(--amber); font-size:8px; padding:0 9px;}
+
+  /* ---- Hero ---- */
+  .hero{position:relative; background:var(--asphalt-deep); border-bottom:1px solid rgba(255,255,255,0.09); overflow:hidden;}
+  .glow{position:absolute; border-radius:50%; pointer-events:none;}
+  .glow-hero{width:520px; height:520px; top:-180px; right:-140px;
+    background:radial-gradient(circle, rgba(227,155,60,0.13), rgba(227,155,60,0) 70%);}
+  .glow-ai{width:600px; height:600px; bottom:-220px; left:-120px;
+    background:radial-gradient(circle, rgba(192,87,74,0.12), rgba(192,87,74,0) 70%);}
+  .glow-close{width:560px; height:560px; top:-160px; right:-100px;
+    background:radial-gradient(circle, rgba(227,155,60,0.15), rgba(227,155,60,0) 70%);}
+
+  .brandrow{padding:34px 40px 30px; border-bottom:1px solid rgba(255,255,255,0.07);
+    display:flex; justify-content:space-between; align-items:center; gap:24px; flex-wrap:wrap;
+    max-width:1020px; margin:0 auto;}
+  .brandrow img{height:36px; filter:brightness(0) invert(1); opacity:0.92;}
+  .kliks-mark{font-size:11px; letter-spacing:0.16em; text-transform:uppercase;}
+  .kliks-mark .pre{color:var(--mute);}
+  .kliks-mark .name{color:var(--paper); font-weight:600;}
+  .kliks-mark .dot{color:var(--amber);}
+
+  .metagrid{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr));
+    border-bottom:1px solid rgba(255,255,255,0.07); max-width:1020px; margin:0 auto;}
+  .metacell{padding:20px; border-right:1px solid rgba(255,255,255,0.07);}
+  .metacell:last-child{border-right:none; padding-right:0;}
+  .metacell:first-child{padding-left:0;}
+  .metacell .lbl{font-size:9.5px; letter-spacing:0.18em; color:var(--mute); text-transform:uppercase; margin-bottom:7px;}
+  .metacell .val{font-family:'Oswald',sans-serif; font-size:15px; font-weight:500; letter-spacing:0.02em; color:var(--paper);}
+
+  .headline{padding-top:64px; max-width:840px; padding-left:40px; padding-right:40px; margin:0 auto; max-width:1020px;}
+  .eyebrow-rule{display:flex; align-items:center; gap:14px; margin-bottom:26px;}
+  .eyebrow-rule .rule{width:34px; height:1px; background:var(--amber);}
+  .eyebrow-rule .txt{font-size:10.5px; letter-spacing:0.2em; color:var(--amber); text-transform:uppercase;}
+
+  .hero h1{font-weight:600; font-size:clamp(34px,4.9vw,60px); line-height:1.06; letter-spacing:-0.02em; max-width:840px;}
+  .hero h1 .hi{color:var(--amber);}
+  .hero .lede{font-family:'IBM Plex Sans',sans-serif; font-size:18px; line-height:1.65; color:var(--mute);
+    max-width:620px; margin-top:28px;}
+
+  .statband{margin-top:74px; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+    gap:1px; background:rgba(255,255,255,0.08); border-top:1px solid rgba(255,255,255,0.08);
+    max-width:1020px; margin-left:auto; margin-right:auto;}
+  .statcell{background:var(--asphalt-deep); padding:28px 26px 34px;}
+  .statcell .fig{font-family:'Oswald',sans-serif; font-weight:600; font-size:52px; line-height:1; letter-spacing:-0.02em;}
+  .statcell .fig .unit{font-family:'IBM Plex Sans',sans-serif; font-size:20px; font-weight:400; color:var(--mute);}
+  .statcell .lbl{font-size:10px; letter-spacing:0.18em; color:var(--mute); text-transform:uppercase; margin-top:12px;}
+
+  /* ---- Sections ---- */
+  section{padding:76px 0 84px;}
+  .bg-a{background:var(--asphalt);}
+  .bg-b{background:var(--asphalt-deep);}
+  .sechead{display:flex; align-items:baseline; gap:16px; margin-bottom:18px;}
+  .sechead .idx{font-size:11px; font-weight:600; letter-spacing:0.14em; color:var(--mute);}
+  .sechead .eyebrow{font-size:11px; letter-spacing:0.2em; color:var(--amber); text-transform:uppercase;}
+  section h2{font-weight:600; font-size:clamp(26px,3.4vw,38px); line-height:1.12; letter-spacing:-0.015em; max-width:660px;}
+  .secsub{font-size:16.5px; line-height:1.65; color:var(--mute); max-width:620px; margin:16px 0 40px;}
+
+  /* ---- Score cards (section 01) ---- */
+  .scorecards{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:1px;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.08);}
+  .scorecard{background:var(--panel); padding:32px 30px 34px; position:relative;}
+  .scorecard .bar{position:absolute; top:0; left:0; right:0; height:2px;}
+  .scorecard .scorerow{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;}
+  .scorecard .score{font-family:'Oswald',sans-serif; font-weight:600; font-size:58px; line-height:1; letter-spacing:-0.02em;}
+  .scorecard .score .of{font-family:'IBM Plex Sans',sans-serif; font-size:22px; font-weight:400; color:var(--mute);}
+  .chip{font-size:9.5px; letter-spacing:0.16em; text-transform:uppercase; padding:4px 8px; border:1px solid; display:inline-block;}
+  .scorecard .metric{font-size:10.5px; letter-spacing:0.18em; color:var(--paper); text-transform:uppercase; margin-top:18px;}
+  .scorecard .detail{font-size:14.5px; line-height:1.6; color:var(--mute); margin-top:10px;}
+
+  .readblock{margin-top:28px; background:var(--panel); border-left:3px solid var(--amber);
+    padding:26px 28px; display:flex; gap:22px;}
+  .readblock .rail{font-family:'Oswald',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.14em;
+    color:var(--amber); text-transform:uppercase; writing-mode:vertical-rl; flex-shrink:0;}
+  .readblock p{font-size:15.5px; line-height:1.7; color:var(--paper);}
+
+  /* ---- Section 02: AI Visibility ---- */
+  .ai-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:44px; align-items:start;}
+  .ai-left{border-top:1px solid rgba(255,255,255,0.08); padding-top:26px;}
+  .ai-zero{display:flex; align-items:flex-start; gap:4px;}
+  .ai-zero .z{font-family:'Oswald',sans-serif; font-weight:700; font-size:clamp(120px,17vw,200px);
+    line-height:0.82; letter-spacing:-0.05em; color:var(--bad);}
+  .ai-zero .of3{font-family:'Oswald',sans-serif; font-weight:400; font-size:clamp(36px,5vw,58px);
+    line-height:1; color:var(--steel); padding-top:10px;}
+  .ai-left .cap{font-size:10.5px; letter-spacing:0.18em; color:var(--mute); text-transform:uppercase;
+    line-height:1.8; margin-top:20px;}
+  .ai-left p{font-size:15.5px; line-height:1.7; color:var(--mute); max-width:330px; margin-top:22px;}
+
+  .querystrip{padding:14px 18px; background:var(--asphalt); border:1px solid rgba(255,255,255,0.1);
+    margin-bottom:18px; display:flex; gap:14px; flex-wrap:wrap; align-items:baseline;}
+  .querystrip .lbl{font-size:9.5px; letter-spacing:0.18em; color:var(--mute); text-transform:uppercase;}
+  .querystrip .val{font-size:13.5px; color:var(--paper);}
+
+  .aicards{display:flex; flex-direction:column; gap:12px;}
+  .aicard{background:var(--panel); border:1px solid rgba(255,255,255,0.08); padding:22px 24px;
+    transition:border-color 0.2s ease;}
+  .aicard:hover{border-color:rgba(227,155,60,0.3);}
+  .aicard-head{display:flex; align-items:center; gap:14px; margin-bottom:12px; flex-wrap:wrap;}
+  .letterbadge{width:36px; height:36px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    border:1px solid; font-family:'Oswald',sans-serif; font-weight:600; font-size:16px;}
+  .lb-g{background:rgba(47,125,104,0.16); border-color:rgba(47,125,104,0.45); color:#4FA98D;}
+  .lb-c{background:rgba(168,91,62,0.18); border-color:rgba(168,91,62,0.5); color:#C98462;}
+  .lb-p{background:rgba(63,110,126,0.18); border-color:rgba(63,110,126,0.5); color:#6FA3B5;}
+  .aicard-name{flex:1; min-width:0;}
+  .aicard-name .n{font-family:'Oswald',sans-serif; font-weight:500; font-size:17px; letter-spacing:0.01em;}
+  .aicard-name .m{font-size:10px; letter-spacing:0.12em; color:var(--mute); text-transform:uppercase; margin-left:8px;}
+  .aicard p{font-size:14.5px; line-height:1.65; color:var(--mute);}
+  .aicard p b{color:var(--paper); font-weight:600;}
+
+  .named-footer{margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,0.08);}
+  .named-footer .lbl{font-size:9.5px; letter-spacing:0.18em; color:var(--mute); text-transform:uppercase; margin-bottom:12px;}
+  .named-row{display:flex; gap:10px; flex-wrap:wrap;}
+  .named-chip{border:1px solid rgba(255,255,255,0.14); padding:8px 15px; font-family:'Oswald',sans-serif;
+    font-weight:400; font-size:14.5px; letter-spacing:0.02em;}
+
+  /* ---- Section 03: bars ---- */
+  .bars{display:flex; flex-direction:column; gap:26px;}
+  .barrow .lblline{display:flex; justify-content:space-between; align-items:baseline; gap:16px; margin-bottom:9px;}
+  .barrow .name{font-family:'Oswald',sans-serif; font-weight:500; font-size:17px; letter-spacing:0.01em;}
+  .barrow .val{font-size:12.5px;}
+  .track{height:14px; background:var(--panel-alt); border:1px solid rgba(255,255,255,0.08);}
+  .fill{height:100%;}
+  .fill-amber{background:linear-gradient(90deg, var(--amber), var(--amber-deep));}
+  .fill-mute{background:var(--steel);}
+  .barsclose{font-size:15.5px; line-height:1.7; color:var(--mute); max-width:700px; margin-top:36px;}
+  .barsclose b{color:var(--paper); font-weight:600;}
+
+  /* ---- Section 04: missing grid ---- */
+  .missgrid{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:1px;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.08);}
+  .misscard{background:var(--asphalt); padding:28px 26px 30px;}
+  .misscard .idx{font-size:10px; letter-spacing:0.14em; color:var(--bad); margin-bottom:12px;}
+  .misscard .t{font-family:'Oswald',sans-serif; font-weight:500; font-size:18px; letter-spacing:0.01em; margin-bottom:8px;}
+  .misscard .b{font-size:14.5px; line-height:1.65; color:var(--mute);}
+
+  /* ---- Section 05: priorities ---- */
+  .priorities{margin-top:34px;}
+  .prow{display:grid; grid-template-columns:76px minmax(0,1fr); gap:8px; padding:32px 0;
+    border-top:1px solid rgba(255,255,255,0.1);}
+  .prow:last-child{border-bottom:1px solid rgba(255,255,255,0.1);}
+  .prow .pn{font-family:'Oswald',sans-serif; font-weight:700; font-size:46px; line-height:0.9;
+    letter-spacing:-0.03em; color:var(--amber);}
+  .prow h3{font-weight:600; font-size:22px; letter-spacing:-0.005em; margin-bottom:10px;}
+  .prow .rationale{font-size:15px; line-height:1.6; color:var(--mute); max-width:640px; margin-bottom:14px;}
+  .actionbox{display:inline-flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding:10px 14px;
+    background:var(--panel); border:1px solid rgba(255,255,255,0.08);}
+  .actionbox .tf{font-size:9.5px; letter-spacing:0.16em; color:var(--good); text-transform:uppercase;}
+  .actionbox .ac{font-size:14.5px; color:var(--paper);}
+
+  /* ---- Closing ---- */
+  .closing{position:relative; background:var(--asphalt-deep); overflow:hidden; padding:88px 0 96px;}
+  .closegrid{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:56px; align-items:start;}
+  .closing h2{font-weight:600; font-size:clamp(28px,3.8vw,44px); line-height:1.08; letter-spacing:-0.02em;}
+  .closing .arg p{font-size:16.5px; line-height:1.7; color:var(--mute); max-width:540px; margin-top:22px;}
+
+  .callcard{background:var(--panel); border:1px solid rgba(255,255,255,0.1); border-top:3px solid var(--amber);
+    padding:34px 32px 36px;}
+  .callcard .kicker{font-size:9.5px; letter-spacing:0.18em; color:var(--mute); text-transform:uppercase; margin-bottom:16px;}
+  .callcard .pitch{font-family:'Oswald',sans-serif; font-weight:600; font-size:26px; line-height:1.14;
+    letter-spacing:-0.01em; margin-bottom:26px;}
+  .cta{display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--amber);
+    color:var(--asphalt); padding:17px 24px; font-family:'Oswald',sans-serif; font-weight:600; font-size:17px;
+    letter-spacing:0.03em; text-transform:uppercase; transition:background 0.2s ease, transform 0.2s ease;}
+  .cta:hover{background:var(--amber-light); transform:translateY(-2px); color:var(--asphalt);}
+  .cta .arrow{font-size:19px;}
+  .fallback{margin-top:22px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.08);
+    display:flex; flex-direction:column; gap:8px;}
+  .fallback .lbl{font-size:9.5px; letter-spacing:0.18em; color:var(--mute); text-transform:uppercase;}
+  .fallback a{font-family:'IBM Plex Mono',monospace; font-size:13.5px;}
+
+  footer{background:var(--asphalt); border-top:1px solid rgba(255,255,255,0.09); padding:26px 40px;
+    display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; max-width:1020px; margin:0 auto;}
+  footer .item{font-size:10.5px; letter-spacing:0.14em; color:var(--mute); text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<main>
+
+  <div class="route">
+    <div class="route-inner">
+      <span class="city">MELBOURNE</span><span class="sep">◆</span><span class="city">SYDNEY</span><span class="sep">◆</span><span class="city">BRISBANE</span><span class="sep">◆</span><span class="city">BUNDABERG</span><span class="sep">◆</span><span class="city">ROCKHAMPTON</span><span class="sep">◆</span><span class="city">MACKAY</span><span class="sep">◆</span><span class="city">TOWNSVILLE</span><span class="sep">◆</span><span class="city">CAIRNS</span>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="glow glow-hero"></div>
+    <div class="brandrow">
+      <img src="/mactrans-logo.png" alt="Mactrans Gold Coast">
+      <div class="kliks-mark"><span class="pre">Prepared by</span> <span class="name">KLIKS</span><span class="dot">.</span></div>
+    </div>
+
+    <div class="metagrid">
+      <div class="metacell"><div class="lbl">Document</div><div class="val">Growth Audit</div></div>
+      <div class="metacell"><div class="lbl">Prepared for</div><div class="val">Mactrans Gold Coast</div></div>
+      <div class="metacell"><div class="lbl">Dated</div><div class="val">September 2026</div></div>
+      <div class="metacell"><div class="lbl">Scope</div><div class="val">Site · Search · AI</div></div>
+    </div>
+
+    <div class="headline">
+      <div class="eyebrow-rule"><div class="rule"></div><div class="txt">The finding</div></div>
+      <h1>22 years moving freight up and down the East Coast. Ask an AI who the best freight company on the Gold Coast is, and Mactrans <span class="hi">doesn't come up.</span></h1>
+      <p class="lede">This audit looks at how Mactrans actually shows up right now, to the search engines, AI assistants, and corporate buyers deciding who moves their freight next.</p>
+    </div>
+
+    <div class="statband">
+      <div class="statcell"><div class="fig" style="color:var(--bad)">0<span class="unit">/3</span></div><div class="lbl">AI assistants naming Mactrans</div></div>
+      <div class="statcell"><div class="fig" style="color:var(--amber)">5.92<span class="unit">s</span></div><div class="lbl">Mobile load, vs 2.5s benchmark</div></div>
+      <div class="statcell"><div class="fig">30</div><div class="lbl">Keywords ranked, mostly own name</div></div>
+    </div>
+  </div>
+
+  <section class="bg-a">
+    <div class="wrap">
+      <div class="sechead"><span class="idx mono">01</span><span class="eyebrow mono">Site performance</span></div>
+      <h2>Mobile is where the real cost sits</h2>
+      <p class="secsub">Most quote requests now start on a phone, a site manager or ops lead checking freight options between jobs. Desktop is solid. Mobile is not.</p>
+
+      <div class="scorecards">
+        <div class="scorecard">
+          <div class="bar" style="background:var(--bad)"></div>
+          <div class="scorerow">
+            <div class="score">66<span class="of">/100</span></div>
+            <div class="chip" style="border-color:rgba(192,87,74,0.5); color:var(--bad)">Needs work</div>
+          </div>
+          <div class="metric mono">Mobile performance</div>
+          <div class="detail">Load time (LCP): 5.92s, more than double Google's own 2.5s benchmark.</div>
+        </div>
+        <div class="scorecard">
+          <div class="bar" style="background:var(--good)"></div>
+          <div class="scorerow">
+            <div class="score">95<span class="of">/100</span></div>
+            <div class="chip" style="border-color:rgba(95,167,118,0.5); color:var(--good)">Healthy</div>
+          </div>
+          <div class="metric mono">Desktop performance</div>
+          <div class="detail">Strong. Not where the problem lives.</div>
+        </div>
+      </div>
+
+      <div class="readblock">
+        <div class="rail">Read</div>
+        <p>A visitor on-site or between jobs, checking freight options on their phone, waits nearly six seconds before anything meaningful loads. That's enough time to open a competitor's site instead. Fixing this is a compression and script-loading job, not a rebuild.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-b" style="position:relative; overflow:hidden;">
+    <div class="glow glow-ai"></div>
+    <div class="wrap" style="position:relative;">
+      <div class="sechead"><span class="idx mono">02</span><span class="eyebrow mono">AI search visibility</span></div>
+      <h2 style="margin-bottom:44px;">Zero of three AI assistants recommend Mactrans</h2>
+
+      <div class="ai-grid">
+        <div class="ai-left">
+          <div class="ai-zero"><div class="z">0</div><div class="of3">/3</div></div>
+          <div class="cap mono">Assistants that named<br>Mactrans, unprompted</div>
+          <p>ChatGPT, Claude, and Perplexity were each asked the same real question a prospective client might ask.</p>
+        </div>
+        <div>
+          <div class="querystrip">
+            <span class="lbl mono">Query</span>
+            <span class="val mono">"best freight company Gold Coast in Australia"</span>
+          </div>
+          <div class="aicards">
+            <div class="aicard">
+              <div class="aicard-head">
+                <div class="letterbadge lb-g">G</div>
+                <div class="aicard-name"><span class="n">ChatGPT</span><span class="m">o4-mini</span></div>
+                <div class="chip" style="border-color:rgba(192,87,74,0.5); color:var(--bad)">Not mentioned</div>
+              </div>
+              <p>Recommended <b>Toll Group, Linfox, Mainfreight, Allied Express</b> and four others. No mention of Mactrans.</p>
+            </div>
+            <div class="aicard">
+              <div class="aicard-head">
+                <div class="letterbadge lb-c">C</div>
+                <div class="aicard-name"><span class="n">Claude</span><span class="m">sonnet-5</span></div>
+                <div class="chip" style="border-color:rgba(192,87,74,0.5); color:var(--bad)">Not mentioned</div>
+              </div>
+              <p>Recommended <b>Toll Group, TNT/FedEx, StarTrack, Northline, Allied Express</b> and Direct Freight Express. No mention of Mactrans.</p>
+            </div>
+            <div class="aicard">
+              <div class="aicard-head">
+                <div class="letterbadge lb-p">P</div>
+                <div class="aicard-name"><span class="n">Perplexity</span><span class="m">sonar</span></div>
+                <div class="chip" style="border-color:rgba(192,87,74,0.5); color:var(--bad)">Not mentioned</div>
+              </div>
+              <p>Recommended <b>Freight Assist Australia, Foley Logistics</b> and City 2 Surf Transport. No mention of Mactrans.</p>
+            </div>
+          </div>
+          <div class="named-footer">
+            <div class="lbl mono">Named instead, repeatedly</div>
+            <div class="named-row">
+              <div class="named-chip">Toll Group</div>
+              <div class="named-chip">Allied Express</div>
+              <div class="named-chip">Northline</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-a">
+    <div class="wrap">
+      <div class="sechead"><span class="idx mono">03</span><span class="eyebrow mono">Search standing</span></div>
+      <h2>Mactrans ranks for its own name. Not much else.</h2>
+      <p class="secsub">30 keywords total, almost entirely people already searching for Mactrans by name. That's not growth, that's just people who already know you.</p>
+
+      <div class="bars">
+        <div class="barrow">
+          <div class="lblline"><span class="name">Border Express</span><span class="val mono" style="color:var(--amber)">~11,910 visits/mo</span></div>
+          <div class="track"><div class="fill fill-amber" style="width:100%"></div></div>
+        </div>
+        <div class="barrow">
+          <div class="lblline"><span class="name">Mactrans</span><span class="val mono" style="color:var(--mute)">~5,400 visits/mo</span></div>
+          <div class="track"><div class="fill fill-mute" style="width:45%"></div></div>
+        </div>
+      </div>
+
+      <p class="barsclose">Border Express pulls <b>more than double</b> Mactrans' estimated monthly traffic, largely from category content Mactrans has never published, the actual freight and haulage terms a buyer types when they don't already know your name.</p>
+    </div>
+  </section>
+
+  <section class="bg-b">
+    <div class="wrap">
+      <div class="sechead"><span class="idx mono">04</span><span class="eyebrow mono">What's missing</span></div>
+      <h2 style="margin-bottom:40px;">The site tells people Mactrans is reliable. Nothing shows it.</h2>
+
+      <div class="missgrid">
+        <div class="misscard"><div class="idx mono">— 01</div><div class="t">No face behind the brand</div><div class="b">22 years in business, and the About and Contact pages name no one, no founder story, no team photo. Corporate buyers commit to relationships, not just fleets.</div></div>
+        <div class="misscard"><div class="idx mono">— 02</div><div class="t">No visible client trust signals</div><div class="b">No testimonials, no case studies, no client logos anywhere on-site, despite serving "leading corporations" for two decades, per the site's own copy.</div></div>
+        <div class="misscard"><div class="idx mono">— 03</div><div class="t">No content beyond the core service pages</div><div class="b">No blog, no resource content, nothing for Google or an AI assistant to actually cite when someone searches the category.</div></div>
+        <div class="misscard"><div class="idx mono">— 04</div><div class="t">Zero Google reviews visible</div><div class="b">The Google Business Profile is claimed and verified, but shows no review count and no rating at all.</div></div>
+        <div class="misscard"><div class="idx mono">— 05</div><div class="t">No paid presence anywhere</div><div class="b">No active Facebook or Instagram ads, no Google Ads. Every competitor named above is winning the searches Mactrans isn't even contesting.</div></div>
+        <div class="misscard"><div class="idx mono">— 06</div><div class="t">No lead capture</div><div class="b">No email capture, no way to follow up with a visitor who isn't ready to call today. Every non-converting visit is gone for good.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-a">
+    <div class="wrap">
+      <div class="sechead"><span class="idx mono">05</span><span class="eyebrow mono">Where to start</span></div>
+      <h2 style="margin-bottom:12px;">Three moves, in order</h2>
+
+      <div class="priorities">
+        <div class="prow">
+          <div class="pn">1</div>
+          <div>
+            <h3>Fix mobile load speed</h3>
+            <p class="rationale">5.92s is losing quote requests before the page even finishes loading, on the device most buyers actually use.</p>
+            <div class="actionbox"><span class="tf mono">This month</span><span class="ac">Compress hero imagery, defer non-critical scripts, target under 3s.</span></div>
+          </div>
+        </div>
+        <div class="prow">
+          <div class="pn">2</div>
+          <div>
+            <h3>Build content AI and Google can actually cite</h3>
+            <p class="rationale">0 of 3 AI assistants know Mactrans exists. Without real published content, that doesn't change on its own.</p>
+            <div class="actionbox"><span class="tf mono">This quarter</span><span class="ac">Publish real service and route pages, with the specifics AI answers draw from.</span></div>
+          </div>
+        </div>
+        <div class="prow">
+          <div class="pn">3</div>
+          <div>
+            <h3>Put the trust signals on the page</h3>
+            <p class="rationale">22 years and corporate clients are real assets sitting invisible. A buyer comparing options has no way to see them.</p>
+            <div class="actionbox"><span class="tf mono">This quarter</span><span class="ac">Add client testimonials, a founder presence, and get real Google reviews flowing.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="route">
+    <div class="route-inner">
+      <span class="city">MELBOURNE</span><span class="sep">◆</span><span class="city">SYDNEY</span><span class="sep">◆</span><span class="city">BRISBANE</span><span class="sep">◆</span><span class="city">BUNDABERG</span><span class="sep">◆</span><span class="city">ROCKHAMPTON</span><span class="sep">◆</span><span class="city">MACKAY</span><span class="sep">◆</span><span class="city">TOWNSVILLE</span><span class="sep">◆</span><span class="city">CAIRNS</span>
+    </div>
+  </div>
+
+  <div class="closing">
+    <div class="glow glow-close"></div>
+    <div class="wrap" style="position:relative;">
+      <div class="closegrid">
+        <div class="arg">
+          <div class="eyebrow-rule"><div class="rule"></div><div class="txt">Next step</div></div>
+          <h2>None of this is a rebuild. It's what's missing from a site that already works.</h2>
+          <p>Twenty-two years of real freight relationships is the hard part, and Mactrans already has that. What's missing is visible everywhere except the results. Happy to walk through exactly what fixing this is worth in new quote volume.</p>
+        </div>
+        <div class="callcard">
+          <div class="kicker mono">A 20 minute call</div>
+          <div class="pitch">We'll walk through the three fixes and what each one is worth.</div>
+          <a href="/book" class="cta"><span>Book a call</span><span class="arrow">→</span></a>
+          <div class="fallback">
+            <div class="lbl mono">Or reply direct</div>
+            <a href="mailto:geoffpro@yahoo.com.au">geoffpro@yahoo.com.au</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="item">Prepared by Kliks for Mactrans Gold Coast</div>
+    <div class="item">kliks.com.au</div>
+  </footer>
+
+</main>
+</body>
+</html>
