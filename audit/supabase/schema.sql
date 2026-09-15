@@ -18,7 +18,8 @@ create table if not exists prospects (
   location text, -- live-only until now, admin/create/route.ts has always written it
   gmb_cid text, -- live-only until now, same as above - Google Place ID/CID for the GMB routes
   rescan_locked_at timestamptz, -- documented separately below, kept there for the history
-  application_data jsonb -- see the Growth Audit application migration block below
+  application_data jsonb, -- see the Growth Audit application migration block below
+  aov numeric -- per-prospect average order value (Piece 1, see migration block below); null falls back to ASSUMED_AOV in ReportClient.tsx
 );
 
 create table if not exists audit_content (
@@ -274,3 +275,16 @@ on conflict do nothing;
 --   ADD COLUMN IF NOT EXISTS location text,
 --   ADD COLUMN IF NOT EXISTS gmb_cid text,
 --   ADD COLUMN IF NOT EXISTS application_data jsonb;
+
+-- Piece 1 - configurable AOV (HANDOVER.md #6): ReportClient.tsx hardcoded
+-- ASSUMED_AOV = 150 for every dollar-impact figure on every report
+-- (hero revenue number, all three "what this costs you" line items, the
+-- mobile-speed revenue-loss box), regardless of what the prospect actually
+-- sells - confirmed to have produced a wrong AOV assumption on a real
+-- non-ecommerce prospect (mactrans-2). This column lets each prospect
+-- override it; null/blank still falls back to the $150 default in
+-- ReportClient.tsx, so this is additive and safe on existing rows. Run this
+-- block in Supabase SQL editor if upgrading an existing database:
+--
+-- ALTER TABLE prospects
+--   ADD COLUMN IF NOT EXISTS aov numeric;

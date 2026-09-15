@@ -22,10 +22,13 @@ const MONO = "'Space Mono', ui-monospace, monospace"
 
 // Shared revenue-model assumptions. Every dollar-impact calculation on this
 // page (revCalc's three initiatives, and the "What this costs you" box) must
-// use these same two constants - traffic alone isn't revenue, it becomes
+// use these same two values - traffic alone isn't revenue, it becomes
 // revenue via a conversion rate and an average order value. Defined once so
 // the two can't silently diverge into two different formulas for what's
 // meant to be the same underlying model, which is what happened before.
+// ASSUMED_AOV is only the fallback: AOV is a per-prospect `aov` column
+// (Piece 1, HANDOVER.md #6) since a hardcoded $150 assumption doesn't hold
+// across niches - see the `aov` const derived from `prospect.aov` below.
 const ASSUMED_CONVERSION_RATE = 0.015
 const ASSUMED_AOV = 150
 
@@ -313,6 +316,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
     return `KL-${String(parseInt(hex, 16) % 10000).padStart(4, '0')}`
   })()
   const headerDomain = (prospect.store_url ?? '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '')
+  const aov = prospect.aov != null && prospect.aov !== '' ? Number(prospect.aov) : ASSUMED_AOV
 
   // Revenue calculations
   const revCalc = useMemo(() => {
@@ -330,14 +334,14 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
         const lcpS = ps.lcp / 1000
         if (lcpS > 2.5) {
           // traffic -> revenue via conversion rate and AOV, same shape as the
-          // "What this costs you" box - $150 is per order, not per visitor.
-          const mobile = (lcpS - 2.5) * 0.07 * (traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12)
+          // "What this costs you" box - AOV is per order, not per visitor.
+          const mobile = (lcpS - 2.5) * 0.07 * (traffic * ASSUMED_CONVERSION_RATE * aov * 12)
           results.push({ initiative: 'Mobile Performance', confidence: lcpS > 4 ? 'High' : 'Medium', impact: mobile, note: null })
         }
       }
       if (cro?.summary) {
         const failedHigh = cro.summary.critical_issues ?? 0
-        const croImpact = failedHigh * 0.03 * (traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12)
+        const croImpact = failedHigh * 0.03 * (traffic * ASSUMED_CONVERSION_RATE * aov * 12)
         if (croImpact > 0) {
           results.push({ initiative: 'CRO Improvements', confidence: failedHigh > 2 ? 'High' : 'Medium', impact: croImpact, note: null })
         }
@@ -347,13 +351,13 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
       const topGapsVol = dfsGaps.slice(0, 3).reduce((sum: number, g: any) => sum + (g.keyword_data?.keyword_info?.search_volume ?? 0), 0)
       // topGapsVol is a visitor-like quantity (search volume) here, same role
       // "traffic" plays above - same conversion-rate/AOV shape applies.
-      const seoImpact = topGapsVol * 0.02 * ASSUMED_CONVERSION_RATE * ASSUMED_AOV * 12
+      const seoImpact = topGapsVol * 0.02 * ASSUMED_CONVERSION_RATE * aov * 12
       results.push({ initiative: 'SEO Content Gap', confidence: 'Medium', impact: seoImpact, note: null })
     }
 
     return results
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ps, cro, dfsOverview, dfsGaps, dfsKeywords])
+  }, [ps, cro, dfsOverview, dfsGaps, dfsKeywords, aov])
 
   const totalRevImpact = revCalc.filter(r => r.impact).reduce((sum: number, r: any) => sum + r.impact, 0)
 
@@ -827,7 +831,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                   const lcpS = ps.lcp / 1000
                   const traffic = resolveOrganicStats(dfsOverview, dfsKeywords).monthlyTraffic
                   // Each second over 2.5s costs ~7% in conversions
-                  const monthlyRevLoss = Math.round((lcpS - 2.5) * 0.07 * traffic * ASSUMED_CONVERSION_RATE * ASSUMED_AOV)
+                  const monthlyRevLoss = Math.round((lcpS - 2.5) * 0.07 * traffic * ASSUMED_CONVERSION_RATE * aov)
                   return (
                     <div style={{ background: 'rgba(255,67,21,0.05)', border: '1px solid rgba(255,67,21,0.2)', borderLeft: `3px solid ${S.orange}`, borderRadius: 12, padding: 24 }}>
                       <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase' as const, color: S.orange, display: 'block', marginBottom: 8 }}>WHAT THIS COSTS YOU</span>
@@ -835,7 +839,7 @@ export default function ReportClient({ prospect, content, cache }: { prospect: a
                         At <strong>{lcpS.toFixed(2)}s</strong> load time, you&apos;re estimated to be losing{' '}
                         <strong style={{ color: S.orange }}>${monthlyRevLoss.toLocaleString()}/month</strong> in revenue to slow page speed alone.
                       </p>
-                      <p style={{ color: S.muted, fontSize: 13 }}>Based on 7% conversion loss per second over 2.5s, {traffic.toLocaleString()} monthly visitors, {(ASSUMED_CONVERSION_RATE * 100).toFixed(1)}% baseline CR, ${ASSUMED_AOV} AOV.</p>
+                      <p style={{ color: S.muted, fontSize: 13 }}>Based on 7% conversion loss per second over 2.5s, {traffic.toLocaleString()} monthly visitors, {(ASSUMED_CONVERSION_RATE * 100).toFixed(1)}% baseline CR, ${aov} AOV.</p>
                     </div>
                   )
                 })()}

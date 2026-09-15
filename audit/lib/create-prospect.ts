@@ -19,12 +19,13 @@ export type CreateProspectInput = {
   cta_link?: string | null
   location?: string | null
   gmb_cid?: string | null
+  aov?: number | null
 }
 
 export async function createProspectRecord(input: CreateProspectInput): Promise<
   { success: true; prospect: any } | { success: false; error: string; status: number }
 > {
-  const { brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location, gmb_cid } = input
+  const { brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location, gmb_cid, aov } = input
 
   const { data: existing } = await supabaseAdmin
     .from('prospects')
@@ -38,7 +39,7 @@ export async function createProspectRecord(input: CreateProspectInput): Promise<
 
   const { data: prospect, error: prospectError } = await supabaseAdmin
     .from('prospects')
-    .insert({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link: cta_link || '/book', location: location || null, gmb_cid: gmb_cid || null })
+    .insert({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link: cta_link || '/book', location: location || null, gmb_cid: gmb_cid || null, aov: aov ?? null })
     .select()
     .single()
 

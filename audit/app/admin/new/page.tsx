@@ -46,6 +46,7 @@ interface FormData {
   location: string
   gmb_cid: string
   cta_link: string
+  aov: string
 }
 
 interface AuditStatus {
@@ -68,6 +69,7 @@ export default function NewAuditPage() {
     location: '',
     gmb_cid: '',
     cta_link: '',
+    aov: '',
   })
 
   const [slugManual, setSlugManual] = useState(false)
@@ -137,7 +139,7 @@ export default function NewAuditPage() {
       const res = await fetch('/api/audit/admin/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...normalised, location: form.location || null, gmb_cid: form.gmb_cid || null }),
+        body: JSON.stringify({ ...normalised, location: form.location || null, gmb_cid: form.gmb_cid || null, aov: form.aov ? Number(form.aov) : null }),
       })
       const data = await res.json()
       if (data.success) {
@@ -330,6 +332,11 @@ Kliks`
                 <label style={labelStyle}>CTA Link</label>
                 <input value={form.cta_link} onChange={set('cta_link')} placeholder="https://cal.com/..." style={inputStyle} />
                 <p style={helperStyle}>Defaults to /book if blank.</p>
+              </div>
+              <div>
+                <label style={labelStyle}>Average Order Value (AOV)</label>
+                <input value={form.aov} onChange={set('aov')} placeholder="150" type="number" min="0" step="0.01" style={inputStyle} />
+                <p style={helperStyle}>Drives every dollar-impact figure on the report. Defaults to $150 if left blank.</p>
               </div>
             </div>
           </div>

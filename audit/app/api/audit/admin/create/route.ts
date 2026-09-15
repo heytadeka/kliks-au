@@ -12,12 +12,12 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location, gmb_cid } = body
+  const { brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location, gmb_cid, aov } = body
 
   // Phase 1: create prospects/audit_content/audit_data_cache/outreach_log -
   // see lib/create-prospect.ts (shared with the public apply route, which
   // stops here and never reaches Phase 2 below).
-  const result = await createProspectRecord({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location, gmb_cid })
+  const result = await createProspectRecord({ brand_name, slug, store_url, prospect_name, prospect_email, niche, cta_link, location, gmb_cid, aov })
   if (!result.success) return NextResponse.json({ error: result.error }, { status: result.status })
   const { prospect } = result
 

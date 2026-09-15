@@ -38,6 +38,7 @@ export default function EditAuditClient({ prospect, content, cache }: { prospect
     niche: prospect.niche ?? '',
     cta_link: prospect.cta_link ?? '',
     gmb_cid: prospect.gmb_cid ?? '',
+    aov: prospect.aov != null ? String(prospect.aov) : '',
   })
 
   const [loading, setLoading] = useState(false)
@@ -275,6 +276,11 @@ export default function EditAuditClient({ prospect, content, cache }: { prospect
               <div>
                 <label style={labelStyle}>CTA Link</label>
                 <input value={form.cta_link} onChange={set('cta_link')} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Average Order Value (AOV)</label>
+                <input value={form.aov} onChange={set('aov')} placeholder="150" type="number" min="0" step="0.01" style={inputStyle} />
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4, lineHeight: 1.5 }}>Drives every dollar-impact figure on the report. Defaults to $150 if left blank.</p>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>Google Business ID (optional)</label>
