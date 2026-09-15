@@ -4,15 +4,17 @@
 
 ---
 
-## State as of 2026-08-14
+## State as of 2026-09-15
 
-- **Everything committed is pushed and live on `origin/main`.** No local-only commits outstanding. This pass shipped three new report features — LLM Visibility Check (what ChatGPT/Claude/Perplexity say about the prospect vs. competitors), Relevant Pages (organic-traffic concentration by page), and wiring both into the Priority Actions prompt — plus a security cleanup. Full commit list in §7, full architecture in §4.
-- **The rescan/commentary-freshness investigation is NOT resolved — read this before touching that area.** Original symptom: after a rescan, the score cards and the AI commentary show different PageSpeed numbers. Root cause #1 (rescan only reset `crawled_at`, not `pagespeed_fetched_at`/`dataforseo_overview`, so the readiness poll could fire commentary off stale leftover data) was found and fixed — correct, live, confirmed via a 12-prospect SQL audit. A **second, smaller version of the same symptom** (a `commentary_readiness_at` vs `pagespeed_fetched_at` gap of 1.9-3.4s, not the original bug's 19-55s) kept reproducing on `bakealicious-by-gabriela`, `enze`, and `sebastien-sans-gluten` — the last one confirmed on a genuinely single, non-double-clicked rescan, after root cause #2 (a TOCTOU race in the rescan lock allowing two near-simultaneous requests to both fire a fan-out) was also found, fixed, and confirmed deployed. **That second fix did not close the gap.** Root cause is genuinely unknown as of this writing — re-reading the same code a second time found no further mechanism. Diagnostic tracing was added instead of a third theory (`commentary_gen_invoked_at`, `commentary_gen_saw_pagespeed_at`, `commentary_gen_saw_tbt`, `commentary_gen_saw_speed_index`, `commentary_readiness_saw_pagespeed_at` — all on `audit_data_cache`) to make the actual sequence directly observable on the next single rescan instead of inferred from two timestamps. **This migration has not been confirmed applied, and no trace has been captured yet.** Top priority for the next session — see §6 item 1.
-- **A live security issue was found and closed this pass**: a `.env.local` at the repo root (outside `audit/`, not read by any code) held live Anthropic and Supabase credentials. Confirmed via a full git-history search across all branches that it was never committed — no rotation needed. Deleted.
-- **Schema migrations from this pass, confirmed/unconfirmed status**: `llm_visibility_results` (LLM Visibility Check) **is confirmed applied** — real data was fetched from it against 6 live prospects mid-pass. `dataforseo_relevant_pages` (Relevant Pages) and the five diagnostic tracing columns above are **not confirmed applied**. Exact SQL for all of it is in §4/§6.
-- **A one-time cleanup route is live and not yet triggered**: `/api/audit/admin/regenerate-commentary-cleanup` regenerates commentary for 12 prospects whose reports were showing the original readiness-race mismatch (Miss Lilly's is the priority — confirmed already sent to a real prospect). Trigger via browser console (`fetch('/api/audit/admin/regenerate-commentary-cleanup', { method: 'POST' })`) while logged into `/audit/admin`, then delete the route — same disposable-script precedent as the old AI-visibility diagnostic route. See §6 item 2.
-- **A structurally identical, still-unfixed lock race exists in `lib/rescan-lock.ts`** (used by `regenerate-commentary`, not by `rescan`), flagged but not fixed this pass — lower severity since that path doesn't re-fetch PageSpeed, so it can't reproduce the freshness bug, just a possible duplicate Anthropic call. See §6.
-- Older unresolved items carry forward untouched this pass: whether Enze/Cake Mail/Miss Lilly's ever got rescanned for the revenue-formula fix, the Phase 4 `ai_gmb_commentary` migration, `NEXT_PUBLIC_SITE_URL`. See §6.
+**This doc went unmaintained for a month (last update 2026-08-14) while ~35 commits shipped.** Everything below is now current as of today, but treat any pre-2026-09-15 detail in the body sections as possibly superseded by what's in this banner and §7 first. Full commit list in §7.
+
+- **Everything committed is pushed and live on `origin/main`.** No local-only commits outstanding.
+- **The undocumented month, by theme** (see §7 for the full hash list): the entire **Growth Audit landing page** was built from scratch at `/audit` — a public lead-gen funnel, distinct from the Audit Portal in §4 — then A/B split into a second variant, then iterated on across several passes (Meta CAPI, GA4/Clarity, copy rewrites, a logo marquee, a nav hamburger). New architecture doc for it is §4A below. Separately: a homepage copy rewrite, a new case-studies page (Pupcases, Magniscan), a `*.png` static-build fix (images were silently not deploying), and one AU DataForSEO location-code fix (`64f2abd` — corrected wrong codes for the 8 existing cities; unrelated to, and does not fix, the missing-Gold-Coast gap found below).
+- **This pass (today) did three things, none of them touching the code above:**
+  1. Fixed four real bugs found while polishing Growth Audit variant B: an invisible CTA (`<a>` link text losing to a more specific CSS selector), a mobile logo-strip layout bug, a mobile hero-grid overflow/clipping bug, and a missing variant tag on the lead-notification email. All confirmed fixed and live — see §4A.
+  2. **Ran a real diagnostic against a live non-ecommerce prospect (`mactrans-2`, a Gold Coast freight company) and confirmed the Audit Portal's report template (§4) is not ready for any non-ecommerce niche.** Concrete, evidence-backed findings, not a guess: a hardcoded `$150`/`1.5%` ecommerce revenue model drives every dollar figure on every report regardless of business type; retail vocabulary ("store", "shopper", "order") is baked into both fixed template copy and the AI commentary prompt's own instructions, not just left over from bad niche data; `AU_CITY_MAP` (used for local geo-targeting) has no entry for Gold Coast or any non-capital city, and this is now **empirically confirmed** to have caused a real, live wrong result (an awkward LLM-visibility query, and "Gold Coast" itself getting extracted as a fake competitor name); and the CRO checklist has ~7 checks (cart, ATC, product schema, etc.) that can't meaningfully pass or fail for a service business, inflating its failure count. Full detail and the resulting build scope in §4's new "Local Service audit mode" subsection and §6.
+  3. **Shipped a one-off, hand-built static report for the real Mactrans prospect** at `/mactrans.html`, entirely outside the normal Audit Portal pipeline (because Local Service mode doesn't exist yet and the client needed something correct by the next day). Self-hosted its logo, wired the real `/book` CTA, added a lightweight client-side email gate. **This is explicitly not a template — see §5's `mactrans-2` row before generalizing anything from it.**
+- Everything in the old Aug-14 banner (the rescan/commentary-freshness investigation, the 12-prospect regeneration cleanup route, the Phase 4 `ai_gmb_commentary` migration, `NEXT_PUBLIC_SITE_URL`) **was not touched this pass and its status is unverified** — nothing here disproves it was resolved in one of the undocumented month's sessions, but nothing confirms it either. Treat §6's older items as still open until someone checks.
 
 ---
 
@@ -25,9 +27,10 @@ The repo contains two things:
 | Thing | What it is | Where |
 |---|---|---|
 | Static marketing site | Plain HTML/CSS/JS | `index.html` + supporting `.html` files in root |
-| Audit portal | Next.js 14 App Router app | `/audit/` subdirectory |
+| Growth Audit landing page | Public lead-gen funnel, two A/B variants — see §4A | `audit/app/page.tsx` (variant A) + `audit/app/b/` (variant B) |
+| Audit portal | Cold-outreach SEO/AI-visibility report tool — see §4 | `audit/app/[slug]/`, `audit/app/admin/` |
 
-They are deployed together via Vercel. The static site serves at `/`, the Next.js app serves at `/audit/`.
+The last two are the same Next.js 14 App Router app (`audit/` subdirectory) but are two different products serving two different purposes — don't conflate them. They are deployed together via Vercel. The static site serves at `/`, the Next.js app serves at `/audit/`.
 
 ---
 
@@ -326,6 +329,8 @@ const ASSUMED_AOV = 150
 
 **Already-sent audits carrying the old inflated figure**: Enze, Cake Mail, and Miss Lilly's were flagged for a rescan to correct this. Not confirmed whether that rescan actually happened — check before assuming it's resolved, this is the most urgent item in §6.
 
+**These two constants are also the exact mechanism behind the 2026-09-15 Local Service finding** — see the "Local Service audit mode" subsection further down. The ~67x drift above was two copies of an ecommerce revenue formula disagreeing with each other; the Local Service finding is that the formula itself, even correct and consistent, is an ecommerce-only assumption with no meaning for a non-ecommerce business. Piece 1 in §6 makes `ASSUMED_AOV` configurable per prospect rather than fixing the drift again.
+
 ### DataForSEO notes
 - `domain_overview/live` returns 404 on this plan — use `domain_rank_overview/live`
 - `keyword_gap/live` returns 404 — use `keywords_for_site/live`
@@ -422,6 +427,45 @@ PAGESPEED_SERVICE_URL
 ```
 `SUPABASE_SERVICE_ROLE_KEY` is marked Sensitive in Vercel — pulling env vars via CLI returns it empty. Use Vercel dashboard to read it if needed. **Standing rule: never attempt to work around this or pull the key another way.**
 
+### Local Service audit mode — scoped, not built (2026-09-15 diagnostic)
+
+The report template above (`ReportClient.tsx`, the AI commentary prompt, the CRO checklist, the competitor-extraction denylist) has only ever been built and tested against ecommerce/food-service prospects. A real diagnostic against a live non-ecommerce prospect (`mactrans-2` — a Gold Coast freight/haulage company, real inbound lead, real data, see §5) confirmed it is not ready to send to anything outside that niche. Findings, each independently verified against real stored data, not assumed:
+
+1. **Hardcoded ecommerce revenue model, highest severity.** `ReportClient.tsx:29-30` hardcodes `ASSUMED_CONVERSION_RATE = 0.015` and `ASSUMED_AOV = 150`. Every dollar-impact figure on every report — the hero "Revenue you could be capturing" number and all three "what this is costing you" line items — is `traffic × 1.5% × $150 × 12`, regardless of what the business actually sells. It's not just used silently either: the report prints "...1.5% baseline CR, $150 AOV" directly on the page. For Mactrans this fired for real and would have shown a B2B freight operation an AOV assumption that describes a $150 online order.
+2. **Retail language hardcoded into fixed (non-AI) template copy.** The hero fallback subtext, hero caption, and Scorecard section lead all say "store", "shoppers", "orders", "products" as static JSX text, not conditioned on niche.
+3. **The AI commentary prompt itself pushes retail framing** (`generate-commentary/route.ts`) — it literally tells the model the business is "a {niche} **store**", benchmarks against "**stores** this size", and repeatedly instructs it to write about "**shoppers**". Correcting niche interpolation alone will not fix this; the prompt's own scaffolding vocabulary has to change.
+4. **`AU_CITY_MAP` (`lib/local-target.ts`) has no entry for Gold Coast, or any non-capital city** — only the 8 state capitals are recognised. Empirically confirmed live consequence, not theoretical: Mactrans' stored `niche` is "freight company Gold Coast" with `location` null, which resolves non-local, which (a) produced the awkward LLM-visibility query `"best freight company Gold Coast in Australia"` instead of a real local query, (b) sent competitor/keyword discovery to the generic Australia location code (`2036`) instead of anything Gold-Coast-specific, and (c) caused "Gold Coast" itself to get extracted as a fake AI-recommended competitor in the generated priority list (`GENERIC_PLACE_TERMS` is built directly from `AU_CITY_MAP`, so a city missing from the map isn't filtered there either). Deliberately **not bundled into the Local Service build below** — Adam's call, timing undecided, revisit once Local Service audits actually start going out to non-capital-city prospects.
+5. **The CRO checklist has ~7 ecommerce-only checks** (Sticky Add-to-Cart, Cart Count Indicator, Quantity Selector, Product Image Gallery, Related Products, Product Schema Markup, and the product-page framing of Reviews/Trust Badges) that can't meaningfully pass or fail for a service business. Mactrans' "4 of 20, 6 critical" CRO score is inflated by checks that don't apply to it at all.
+
+**What's already fine, no changes needed:** the LLM-visibility query builder's core string interpolation, the Relevant Pages concentration math, the GBP/review commentary prompt, and the competitor-extraction mechanism itself (only its food-specific denylist needs a Local Service equivalent).
+
+**Scoped build, not started, two independently shippable pieces:**
+- **Piece 1 — configurable AOV (ecommerce only).** Small. Add an AOV input on the audit creation page, replace the hardcoded `$150`/`1.5%` with a per-prospect value, sensible `$150` fallback when left blank. Fixes the "an $86-AOV cakery gets the same revenue number as everyone else" problem without needing the mode split below.
+- **Piece 2 — a real "Local Service" audit type.** Large — Adam's own estimate is the same scale as the Audits/Pipeline unification (`87941d4`), and that's a fair sizing: it touches the DB schema, at least four separate admin create/edit surfaces (`admin/new`, `admin/pipeline`, `admin/outreach`, `admin/[slug]/edit`, all of which currently duplicate niche/location fields independently), a real reordering of report sections (not just a text swap — ranking/visibility findings lead instead of a dollar hero, no revenue figure at all, a new leads-lost estimate as supporting context only, no dollar value attached to it), a genuinely separate AI prompt instruction set (tested against Mactrans as the real test case), and a Local Service equivalent for the competitor denylist (or a more general non-industry-specific baseline — undecided, worth deciding during the build). Build order: diagnose exact schema/copy touchpoints first (this section is the starting point, not the finish line — the copy sweep above was not exhaustive over all ~2000 lines of `ReportClient.tsx`), then schema + dropdown, then template copy branch, then prompt branch, then denylist.
+
+---
+
+## 4A. Growth Audit Landing Page
+
+Public lead-gen funnel, not the same product as the Audit Portal above — this one has no prospect record, no admin creation step, no cold outreach. A visitor lands on it from an ad, fills in a form, and becomes a new `prospects` row via the same `create-prospect.ts` used elsewhere.
+
+### What it is
+- **Variant A** — `audit/app/page.tsx`, the original build (`8778fd9`, 2026-08-28), dark theme.
+- **Variant B** — `audit/app/b/page.tsx` + `audit/app/b/VariantBNav.tsx` (a client component for the mobile hamburger menu), added `7742d50` (2026-09-09), light theme, sales-focused copy, its own scrolling logo marquee.
+- Both variants share `audit/app/GrowthAuditForm.tsx` (the actual lead-capture form) and post to `audit/app/api/audit/apply/route.ts`, which creates the prospect record, fires the server-side Meta CAPI Lead event, and returns success/failure. The client then fires the browser Meta Pixel Lead event and a fire-and-forget POST to Web3Forms for the notification email (Web3Forms only accepts client-side submissions on the free plan — the CRM write above is the real source of truth, the email is just a notification).
+
+### A/B split mechanism
+- `audit/middleware.ts` matches only the exact path `/` (i.e. public `/audit`) — a first-time visitor gets a random 50/50 assignment, set as a 30-day `kliks_audit_variant` cookie, and the matched variant is rewritten in server-side (not client redirected). The same visitor always sees the same variant on return.
+- `audit/lib/growth-audit-cap.ts` computes the monthly cap/remaining-spots figure shown on both variants; fails open (shows full availability) if the Supabase query errors, rather than blocking the page.
+- **Direct QA link, unaffected by the split:** `kliks.com.au/audit/b` always serves variant B regardless of cookie, because the middleware only matches the exact root path — confirmed live, no extra code needed for this.
+- Every lead is tagged with which variant it came from, end to end: `variant` field in the `/api/audit/apply` POST body → `prospects.application_data` (Supabase) → outreach notes → the Web3Forms notification email's subject line and body (`landing_page: "Variant B"`) → a `variant` param on the GA4 `generate_lead` event. This is how conversion between the two variants actually gets compared — there's no dashboard for it, check the email subject lines or query `application_data`.
+
+### Bugs found and fixed this pass (all confirmed live)
+- **Invisible CTA text**: `.vb-root a { color: var(--orange); }` (a class+tag selector) beat `.vb-btn { color: #fff; }` (a single class) on specificity, rendering the final CTA button's text orange-on-orange. Same trap caught the nav wordmark link (`.vb-wordmark` as a plain class also lost to `.vb-root a`) — fixed the same way, with a `.vb-root a.vb-btn`-style override that wins on specificity rather than relying on source order. **Watch for this pattern in any future `.dc.html`-handoff-style page that styles a bare `a { color: ... }` globally and then reuses `<a>` for buttons/wordmarks.**
+- **Mobile hero-grid overflow**: `grid-template-columns: repeat(auto-fit, minmax(360px, 1fr))` forced a 360px minimum column width, wider than a 375px phone screen minus padding — content silently clipped at the edge on narrow phones. Fixed with `minmax(min(360px, 100%), 1fr)`.
+- **Mobile logo-strip layout**: converted to a proper scrolling marquee (matches the request that prompted it), which incidentally also fixed a layout bug where the label and logo list shared one flex row and could squeeze logos into a narrow column on some viewport widths.
+- **Missing variant tag on the notification email**: variant was tagged in Supabase but never made it into the Web3Forms email payload — fixed, now in both the subject line and body.
+
 ---
 
 ## 5. Current Prospects
@@ -442,6 +486,7 @@ Not independently re-verified — treat as approximate and check the admin dashb
 | `cake-in-a-box` | Cake In a Box | **Discrepancy found this pass, not resolved:** earlier docs say this was deleted after a pre-lock concurrent-rescan race. A live SQL query this pass returned real `llm_visibility_results` data for a prospect at this exact slug, meaning it currently exists (recreated at some point, or this note was already stale). Don't assume either the "deleted" note or this prospect's data integrity — check `/audit/admin/dashboard` directly before relying on it for anything. |
 | — | Cupcake Factory | Real audit created via a path that skipped `mark-converted` at the time — now fixed for all paths, but this specific prospect's `monitored_domains` row may still show un-actioned unless manually corrected or re-triggered |
 | `test-brand` | Test | Dev testing, email: wearekliks@gmail.com |
+| `mactrans-2` | Mactrans Gold Coast | Real inbound freight/haulage lead, real prospect record (`niche: "freight company Gold Coast"`, `location: null`). The 2026-09-15 Local Service diagnostic's real test case — see §4's new subsection. **Its actual sent audit is not this prospect's `/audit/mactrans-2/report` page** — that template is confirmed wrong for this niche. A hand-built one-off static page was shipped instead at `/mactrans.html` (client-side email-gated to `geoffpro@yahoo.com.au`), entirely outside the normal pipeline. Don't generalize that page into a template; don't assume the real `/audit/mactrans-2/report` page is what Geoff was actually sent. |
 
 Also seen with real `llm_visibility_results` data this pass (from the false-positive audit, not independently verified beyond that): `miss-lillys-bakery-cafe`, `bonbons-bakery`, `the-cupcake-room`.
 
@@ -462,9 +507,12 @@ Also seen with real `llm_visibility_results` data this pass (from the false-posi
 10. `keywords_total_count` null root cause — confirmed intermittent (some prospects get a real count, others the capped-50 fallback), not yet root-caused.
 11. Store URL normalization on save — a pasted ad-click URL currently surfaces as-is in a client-facing report rather than being cleaned to a bare domain.
 12. Resolve the `cake-in-a-box` discrepancy noted in §5 — earlier docs say deleted, real data this pass says it exists. Check the admin dashboard directly.
-13. Re-check whether the DataForSEO `40501 Invalid Field: location_code` error and `dataforseo-enrichment`'s own ~60s Vercel timeout warning still recur — both flagged early on, neither addressed, both may be stale given how much has changed since.
+13. Re-check whether the DataForSEO `40501 Invalid Field: location_code` error and `dataforseo-enrichment`'s own ~60s Vercel timeout warning still recur — both flagged early on, neither addressed, both may be stale given how much has changed since. **Partial update:** `64f2abd` (2026-08-17, in the undocumented gap) corrected wrong `location_code` values for the 8 existing AU cities in `AU_CITY_MAP`, which may well have been this exact 40501 error's cause — but that fix did not add coverage for any city outside those 8, see item 17 below. Whether the original 40501 symptom is actually gone is still unconfirmed.
 14. Danielle's onboarding — blocked on the above being solid; revisit once the freshness investigation and Phase 4 migration are both confirmed and a few more real audits have been sent.
 15. Decide whether to add a root-level `CLAUDE.md` so a fresh thread can orient itself without a full HANDOVER.md read — discussed two passes ago, not yet built, waiting on Adam to confirm he wants it.
+16. **Piece 1 — configurable AOV field (Ecommerce audits).** Small, independent, not started. See §4's "Local Service audit mode" subsection for full scope.
+17. **Piece 2 — Local Service audit type.** Large, not started, scoped in full in §4. Explicitly does not include item 18 below (Adam's call).
+18. **`AU_CITY_MAP` missing Gold Coast / any non-capital city** — deprioritized as a separate task from Piece 2, timing undecided, but now confirmed to have actually bitten on a real prospect (see §4). Revisit once Local Service audits are actually going out to non-capital-city prospects.
 
 ### Infrastructure
 - [ ] Add `PAGESPEED_SERVICE_URL` as proper Vercel env var (hardcoded fallback works but is untidy)
@@ -498,7 +546,61 @@ Kliks doesn't currently appear in any Shopify/digital-marketing-agency roundup a
 
 All confirmed live on `origin/main`, most recent first. Verified against `git log` directly rather than carried forward from memory.
 
-**This pass:**
+**Today (2026-09-15):**
+
+| Hash | Message |
+|---|---|
+| `f2c6212` | feat: gate Mactrans audit behind an email check, drop his own email from CTA |
+| `bb67c7e` | feat: add one-off Mactrans growth audit page |
+
+**This pass (2026-09-09, Growth Audit variant B):**
+
+| Hash | Message |
+|---|---|
+| `4740262` | fix(audit): show which landing page variant a lead came from in email |
+| `8c7467e` | feat(audit): copy tweaks, scrolling logo marquee, nav hamburger for variant B |
+| `468591e` | fix(audit): fix invisible CTA text, mobile logo stacking, and city |
+| `2a06041` | feat(audit): add Occasionly and Magniscan to variant B logo strip |
+| `7742d50` | feat(audit): add A/B split for Growth Audit landing page (variant B) |
+
+**The undocumented month (2026-08-14 → 2026-09-09), not individually narrated above — see §4A for what the Growth Audit landing page looks like today rather than treating this as a build log:**
+
+| Hash | Date | Message |
+|---|---|---|
+| `17dc22c` | 08-08 | feat(seo): add missing pages to sitemap, structured data to case studies |
+| `fde33f7` | 08-08 | fix(audit): remove phone field, correct ad spend figure to $7.5M |
+| `d613dcf` | 08-07 | feat(audit): add GA4 + Clarity tracking, mid-page CTA, copy fix |
+| `fd1c54b` | 08-06 | fix(audit): fix hard-clipped hero glow creating a sharp line on mobile |
+| `535a830` | 08-06 | feat(audit): rewrite Growth Audit page copy and layout for cold traffic conversion |
+| `a6c1d5c` | 08-05 | feat(audit): add logo marquee to Growth Audit and thank-you pages |
+| `804b595` | 08-04 | feat(audit): add dedicated thank-you page, fix missing background orbs |
+| `8352900` | 08-04 | fix(audit): use a real navigation to reach /audit/thank-you, not router.push |
+| `a11b31f` | 08-04 | fix(pipeline): close monitored_domains sync gap, guard discover endpoint |
+| `cc8eaba` | 08-31 | fix(case-studies): remove Claude mention from Magniscan build details |
+| `e698c03` | 08-30 | feat(case-studies): add Magniscan as a third built-in-house case study |
+| `ed10a5a` | 08-30 | fix(case-studies): link closing CTA straight to the application form |
+| `b19b6e2` | 08-30 | fix(homepage): size up Pupcases logo in case study cards |
+| `aa08d12` | 08-30 | Merge pull request #1 from heytadeka/fix/vercel-static-png-assets |
+| `5b75eca` | 08-30 | fix(deploy): include *.png in static builds so local images actually deploy |
+| `b9a238d` | 08-30 | feat(homepage): add dedicated case studies page and brand logos to cards |
+| `8981ed5` | 08-30 | feat(homepage): add Pupcases case study, tag Oh My Days as client work |
+| `ec7fc2f` | 08-29 | fix(audit): differentiate hero from homepage, fix form contrast and mobile grid |
+| `cefde9a` | 08-29 | feat(audit): support test_event_code for Meta CAPI verification |
+| `9c52c59` | 08-29 | fix(audit): update Meta CAPI to v26.0 and match documented token placement |
+| `be7100d` | 08-29 | feat(audit): add Meta Conversions API for Growth Audit form Leads |
+| `bc987d2` | 08-29 | feat(audit): add Meta Pixel + Lead event to Growth Audit page, slim hero CTA |
+| `3d2caed` | 08-28 | fix(audit): fix voice consistency and add homepage nav link on Growth Audit page |
+| `d95915b` | 08-28 | feat(audit): add Form Request badge, keyword field, fix apply notification |
+| `8778fd9` | 08-28 | feat(audit): build the Growth Audit landing page at /audit |
+| `c3b0410` | 08-28 | fix(homepage): correct Oh My Days case study to vegan patisserie and cake delivery |
+| `a52ad40` | 08-27 | feat(homepage): rewrite copy to founder-led growth-system positioning |
+| `64f2abd` | 08-17 | fix(dataforseo): correct AU city location_codes causing recurring 40501 errors |
+| `87941d4` | 08-17 | feat(audit): unify Audits into a real status/stage table with a shared detail panel |
+| `0457149` | 08-16 | feat(audit): unify outreach status into a 5-stage model with a Viewed badge |
+| `6476f79` | 08-16 | fix(audit): exclude already-opened prospects from Today's ready-to-reach-out list |
+| `d21fcb1` | 08-14 | feat(audit): surface commentary-generation status on the edit page, raise readiness cap |
+
+**Previous pass (2026-08-14, LLM Visibility / Relevant Pages):**
 
 | Hash | Message |
 |---|---|
@@ -515,7 +617,7 @@ All confirmed live on `origin/main`, most recent first. Verified against `git lo
 
 Note: the atomic-lock fix (`3127708`) and the tracing added on top of it (`2851429`) did **not** resolve the underlying symptom that motivated them — see §4's freshness-investigation note and §6 item 1. Both commits are still correct, verified fixes for the specific races they targeted; they're just not the whole story.
 
-**Previous pass:**
+**Pass before that:**
 
 | Hash | Message |
 |---|---|
@@ -583,6 +685,9 @@ Everything before `a5d6066` (Stage Rivers board, Today tab, the original "Crawls
 - **The PostgREST atomic-conditional-update pattern for closing TOCTOU races**: `.update({...}).eq('id', id).or('col.is.null,col.lt.<threshold>').select('id')`, then check `data.length === 0` to detect "someone else already held/updated it" — one round trip, no separate SELECT-then-UPDATE window for a race to land in. Used for `prospects.rescan_locked_at` in `rescan/route.ts` this pass; `lib/rescan-lock.ts` (used by `regenerate-commentary`) still has the older, unfixed read-then-write version — see §6.
 - **`react-markdown` component overrides leak a `node` prop that must be destructured out** (`{ node, ...props }`) or it renders literally as `node="[object Object]"` in the DOM. The resulting unused `node` needs `"@typescript-eslint/no-unused-vars": ["warn", { "ignoreRestSiblings": true }]` in `.eslintrc.json` or the default rule flags it.
 - **A stray `.env.local` at the repo root (outside `audit/`) is not read by anything in this codebase** — no `dotenv` dependency anywhere, and Next.js's own env loading is scoped to the `audit/` directory where `next.config.js` lives. One was found this pass containing live `ANTHROPIC_API_KEY` and Supabase credentials, confirmed never committed (`.gitignore`'s `.env*.local` pattern covered it, and a full git-history search found zero commits touching it), confirmed unused, and deleted without rotation. If a similar file turns up again: check gitignore coverage, search git history before assuming it's clean, confirm nothing reads it, then delete — don't rotate keys that were never exposed.
+- **A bare `a { color: X }` rule combined with reusing `<a>` for buttons/wordmarks is a specificity trap, confirmed to have shipped invisible text twice on Growth Audit variant B (2026-09-15).** `.vb-root a { color: var(--orange) }` is a class+tag selector; a plain single class like `.vb-btn { color: #fff }` or `.vb-wordmark { color: var(--ink) }` loses to it regardless of source order, because specificity is compared before falling back to declaration order. Fix is to bump the override's own specificity (`.vb-root a.vb-btn { color: #fff }`), not to reorder the CSS. Check for this pattern in any new page that styles anchors globally and then reuses `<a>` for something that needs a different color.
+- **A hardcoded per-niche assumption (a dollar figure, a checklist item, a prompt's own vocabulary) doesn't announce itself as niche-specific until tested against a real prospect outside the niche it was built for.** The entire report template, AI prompt, and CRO checklist were built and tested only against ecommerce/food-service prospects and passed every check for a year of that — the ecommerce-only assumptions (a `$150`/`1.5%` revenue model, "store"/"shopper" language baked into a prompt's own instructions, ecommerce-specific CRO checks) were only found by deliberately running a real non-ecommerce prospect through it. See §4's Local Service subsection. Same shape as the "the same number computed in more than one place, silently drifting apart" gotcha above — an assumption baked in once, silently wrong for every case it wasn't built for.
+- **A city-detection map that only covers the largest N cities silently fails for everything outside it, and the failure mode isn't an error — it's a plausible-looking wrong answer.** `AU_CITY_MAP` covering only the 8 state capitals meant a real Gold Coast prospect's geo-targeting silently fell back to national scope, and its LLM-visibility query silently became a mechanically awkward one, with no error or log line marking either as degraded. Confirmed on real data, not theoretical — see §4 and §6 item 18. Worth checking for this same shape (a lookup table treated as exhaustive when it's actually "the common cases") anywhere else in the codebase that maps free text to a fixed set of known values.
 
 ---
 
