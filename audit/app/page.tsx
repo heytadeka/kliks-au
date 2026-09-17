@@ -1,14 +1,6 @@
 import Script from 'next/script'
 import GrowthAuditForm from './GrowthAuditForm'
 
-// Zero dynamic API usage meant this page was fully static-prerendered and
-// served straight from Vercel's CDN edge cache, bypassing middleware.ts
-// entirely - so the A/B variant cookie/rewrite it depends on never ran.
-// Forces per-request rendering so middleware actually executes. See
-// HANDOVER.md #8 for the same "static route silently bypasses live logic"
-// gotcha shape, previously seen on a route handler, now a page.
-export const dynamic = 'force-dynamic'
-
 export const metadata = {
   title: 'Free Growth Audit - Kliks Digital',
   description: 'The KLIKS Growth Audit is currently free. I’ll personally review your marketing, creative, Shopify store, offer and customer journey to find the areas that deserve attention first.',
