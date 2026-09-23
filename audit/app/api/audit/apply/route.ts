@@ -125,6 +125,7 @@ async function handleApply(req: NextRequest) {
         eventId: event_id,
         email,
         firstName: first_name,
+        contentName: 'Growth Audit Request',
         clientIp: req.headers.get('x-forwarded-for')?.split(',')[0].trim(),
         userAgent: req.headers.get('user-agent') || undefined,
         fbp: req.cookies.get('_fbp')?.value,
