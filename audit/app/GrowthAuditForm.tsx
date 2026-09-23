@@ -54,7 +54,7 @@ export default function GrowthAuditForm({ variant = 'a' }: { variant?: 'a' | 'b'
       // fires here, after a genuinely successful submission - never on the
       // button click itself or a validation error.
       const fbq = (window as any).fbq
-      if (typeof fbq === 'function') fbq('track', 'Lead', { content_name: 'Growth Audit Request' }, { eventID: eventId })
+      if (typeof fbq === 'function') fbq('track', 'Lead', {}, { eventID: eventId })
 
       const gtag = (window as any).gtag
       if (typeof gtag === 'function') gtag('event', 'generate_lead', { event_id: eventId, variant })

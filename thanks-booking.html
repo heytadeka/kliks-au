@@ -33,10 +33,7 @@ t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
 fbq('init', '1875112903440305');
 fbq('track', 'PageView');
 </script>
-<!-- Lead now fires once, in book.html on Web3Forms success (with a shared
-     eventID for CAPI dedup) - firing it again here unconditionally on every
-     page load, including a direct/refresh visit with no real booking, was
-     double-counting every real booking. -->
+<script>fbq('track', 'Lead', {content_name: 'Strategy Call Booking'});</script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1875112903440305&ev=PageView&noscript=1"/></noscript>
 <!-- End Facebook Pixel -->
 

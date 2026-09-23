@@ -499,13 +499,8 @@ document.getElementById('auditForm').addEventListener('submit', async function(e
     return;
   }
 
-  // eventId shared between the browser pixel fire and the server-side CAPI
-  // call below so Meta dedupes them into one Lead, not two. The thank-you
-  // page (/thanks-patisserie) must NOT also fire Lead - that was
-  // double-counting every real request before this fix.
-  const eventId = crypto.randomUUID();
   if (typeof fbq !== 'undefined') {
-    fbq('track', 'Lead', {content_name: 'Patisserie Growth Audit'}, { eventID: eventId });
+    fbq('track', 'Lead', {content_name: 'Patisserie Growth Audit'});
   }
   if (typeof gtag !== 'undefined') {
     gtag('event', 'generate_lead', {
@@ -513,19 +508,6 @@ document.getElementById('auditForm').addEventListener('submit', async function(e
       event_label: 'Growth Audit Request'
     });
   }
-  fetch('/api/meta-capi', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      event_name: 'Lead',
-      event_id: eventId,
-      email,
-      first_name: name,
-      event_source_url: 'https://kliks.com.au/patisserie',
-      content_name: 'Patisserie Growth Audit',
-      test_event_code: new URLSearchParams(window.location.search).get('test_event_code') || undefined
-    })
-  }).catch(() => {});
 
   setTimeout(function() {
     window.location.href = '/thanks-patisserie';

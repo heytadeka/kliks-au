@@ -1816,31 +1816,6 @@
       return;
     }
 
-    // eventId shared between the browser pixel fire and the server-side CAPI
-    // call below so Meta dedupes them into one Lead, not two. Fires only
-    // here, after a genuinely successful submission - never on the button
-    // click itself or a validation error. This form previously fired no
-    // Meta event at all.
-    const eventId = crypto.randomUUID();
-    if (typeof fbq !== 'undefined') {
-      fbq('track', 'Lead', {}, { eventID: eventId });
-    }
-    fetch('/api/meta-capi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event_name: 'Lead',
-        event_id: eventId,
-        email,
-        first_name: firstName,
-        last_name: lastName || undefined,
-        phone: phone || undefined,
-        event_source_url: 'https://kliks.com.au/',
-        content_name: 'Homepage Contact Form',
-        test_event_code: new URLSearchParams(window.location.search).get('test_event_code') || undefined
-      })
-    }).catch(() => {});
-
     document.getElementById('contactForm').style.display    = 'none';
     document.getElementById('contactSuccess').style.display = 'block';
   });

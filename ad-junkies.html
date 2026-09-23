@@ -597,36 +597,14 @@ document.addEventListener('klaviyoForms', function(e) {
     e.detail.type === 'successMessage' ||
     e.detail.type === 'subscribeSuccess'
   ) {
-    // eventId shared between the browser pixel fire and the server-side CAPI
-    // call below so Meta dedupes them into one Subscribe, not two. Newsletter
-    // signups fire Subscribe, not Lead - keeps them from being conflated with
-    // actual sales leads (audit requests, contact form) when optimising ad
-    // campaigns. The thank-you page (/thanks) must NOT also fire this
-    // unconditionally on load - that was double-counting every real signup.
-    const eventId = crypto.randomUUID();
     if (typeof fbq !== 'undefined') {
-      fbq('track', 'Subscribe', {}, { eventID: eventId });
+      fbq('track', 'Lead');
     }
     if (typeof gtag !== 'undefined') {
       gtag('event', 'generate_lead', {
         event_category: 'Ad Junkies',
         event_label: 'Newsletter Signup'
       });
-    }
-    var email = e.detail.metaData && e.detail.metaData.email;
-    if (email) {
-      fetch('/api/meta-capi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_name: 'Subscribe',
-          event_id: eventId,
-          email: email,
-          event_source_url: 'https://kliks.com.au/ad-junkies',
-          content_name: 'Ad Junkies Newsletter',
-          test_event_code: new URLSearchParams(window.location.search).get('test_event_code') || undefined
-        })
-      }).catch(function () {});
     }
     setTimeout(function() {
       window.location.href = '/thanks';

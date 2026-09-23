@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 
-// Same pixel every page's browser-side fbq uses - CAPI events must land on
-// the same pixel to dedupe against the browser fire.
+// Same pixel the homepage and the Growth Audit page's browser-side fbq use -
+// CAPI events must land on the same pixel to dedupe against the browser fire.
 const PIXEL_ID = '1875112903440305'
 
 function hash(value: string): string {
@@ -18,20 +18,12 @@ function normalisePhone(phone: string): string {
   return digits
 }
 
-// General-purpose CAPI sender, shared by every form on the site (audit apply,
-// homepage contact form, book.html, patisserie.html, ad-junkies.html) so the
-// hashing/fbp/fbc/dedup logic exists in exactly one place rather than being
-// re-copied per page - same "one shared function" rule as resolveOrganicStats
-// elsewhere in this app.
-export async function sendMetaCapiEvent(params: {
-  eventName: string
+export async function sendMetaLeadEvent(params: {
   eventId: string
-  eventSourceUrl: string
   email: string
-  firstName?: string
+  firstName: string
   lastName?: string
   phone?: string
-  contentName?: string
   clientIp?: string
   userAgent?: string
   fbp?: string
@@ -46,8 +38,8 @@ export async function sendMetaCapiEvent(params: {
 
   const userData: Record<string, any> = {
     em: [hash(params.email)],
+    fn: [hash(params.firstName)],
   }
-  if (params.firstName) userData.fn = [hash(params.firstName)]
   if (params.lastName) userData.ln = [hash(params.lastName)]
   if (params.phone) userData.ph = [hash(normalisePhone(params.phone))]
   if (params.clientIp) userData.client_ip_address = params.clientIp
@@ -60,16 +52,15 @@ export async function sendMetaCapiEvent(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       data: [{
-        event_name: params.eventName,
+        event_name: 'Lead',
         event_time: Math.floor(Date.now() / 1000),
         event_id: params.eventId,
-        event_source_url: params.eventSourceUrl,
+        event_source_url: 'https://kliks.com.au/audit',
         action_source: 'website',
         user_data: userData,
-        ...(params.contentName ? { custom_data: { content_name: params.contentName } } : {}),
       }],
       // Ties this call to Meta's live Test Events debug view - pass ?test_event_code=
-      // on the page URL while testing, omit it for real submissions.
+      // on the /audit URL while testing, omit it for real applicant submissions.
       ...(params.testEventCode ? { test_event_code: params.testEventCode } : {}),
     }),
   })
@@ -78,26 +69,4 @@ export async function sendMetaCapiEvent(params: {
   if (!res.ok || json.error) {
     console.error('[meta-capi] event rejected:', JSON.stringify(json))
   }
-}
-
-// Thin wrapper kept for the existing /audit apply route so it didn't need to
-// change shape when this file was generalised for the rest of the site.
-export async function sendMetaLeadEvent(params: {
-  eventId: string
-  email: string
-  firstName: string
-  lastName?: string
-  phone?: string
-  contentName?: string
-  clientIp?: string
-  userAgent?: string
-  fbp?: string
-  fbc?: string
-  testEventCode?: string
-}) {
-  return sendMetaCapiEvent({
-    ...params,
-    eventName: 'Lead',
-    eventSourceUrl: 'https://kliks.com.au/audit',
-  })
 }
