@@ -16,6 +16,7 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/audit/api/$1" },
+    { "src": "/", "dest": "/index.html" },
     { "src": "https://www.kliks.com.au/(.*)", "headers": { "Location": "https://kliks.com.au/$1" }, "status": 301 },
     { "src": "/lukewood", "status": 302, "headers": { "Location": "/" } },
     { "src": "/oh-my-days", "status": 302, "headers": { "Location": "/" } },
