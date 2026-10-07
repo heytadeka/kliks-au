@@ -620,6 +620,70 @@
     }
   }
 
+  // ─── Klaviyo list sign-up ───
+  // Adds the lead to the strategy-call list (XqKPhV) via Klaviyo's client
+  // subscriptions endpoint. The old call went to /client/form-submissions,
+  // which doesn't exist (404), so leads never reached Klaviyo. This is
+  // secondary to Web3Forms: it only runs after Web3Forms has accepted the
+  // submission, never throws, and always resolves (success, failure, or the
+  // 1.5s cap) so the redirect can wait for it without ever being blocked.
+  var KLAVIYO_COMPANY_ID = 'QNNHsN';
+  var KLAVIYO_LIST_ID = 'XqKPhV';
+  var KLAVIYO_REVISION = '2026-07-15';
+
+  // Klaviyo rejects the whole request if phone_number isn't E.164, so only
+  // send one we can confidently convert (AU "04xx..." or an explicit +/00
+  // country code). Anything else is left off; the number still reaches you
+  // through the Web3Forms email.
+  function toE164(raw) {
+    var d = String(raw || '').replace(/[^\d+]/g, '');
+    if (!d) return null;
+    if (d.charAt(0) === '+') d = d.slice(1);
+    else if (d.slice(0, 2) === '00') d = d.slice(2);
+    else if (d.charAt(0) === '0') d = '61' + d.slice(1);
+    else return null;
+    return /^\d{9,15}$/.test(d) ? '+' + d : null;
+  }
+
+  function addToKlaviyoList(lead) {
+    return new Promise(function(resolve) {
+      var settled = false;
+      function done() { if (!settled) { settled = true; clearTimeout(cap); resolve(); } }
+      var cap = setTimeout(done, 1500);
+      try {
+        var attrs = {
+          email: lead.email,
+          first_name: lead.firstName,
+          last_name: lead.lastName || undefined,
+          phone_number: toE164(lead.phone) || undefined,
+          properties: {
+            store_url: lead.store || undefined,
+            monthly_ad_spend: lead.adSpend,
+            enquiry_comment: lead.comment || undefined,
+            lead_source: 'Strategy Call - book.html'
+          },
+          // Email marketing only. Leaving this out would default to
+          // subscribing a phone number to SMS marketing as well.
+          subscriptions: { email: { marketing: { consent: 'SUBSCRIBED' } } }
+        };
+        fetch('https://a.klaviyo.com/client/subscriptions?company_id=' + KLAVIYO_COMPANY_ID, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/vnd.api+json', 'revision': KLAVIYO_REVISION },
+          body: JSON.stringify({
+            data: {
+              type: 'subscription',
+              attributes: {
+                custom_source: 'Strategy Call - book.html',
+                profile: { data: { type: 'profile', attributes: attrs } }
+              },
+              relationships: { list: { data: { type: 'list', id: KLAVIYO_LIST_ID } } }
+            }
+          })
+        }).then(done, done);
+      } catch (err) { done(); }
+    });
+  }
+
   // ─── Form submission → Web3Forms (email to Adam) + Klaviyo (list) ───
   document.getElementById('bookForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -697,16 +761,19 @@
         })
       }).catch(() => {});
 
-      // Redirect only once BOTH are true: the 300ms grace the Meta calls
-      // above already relied on has passed, and the Google Ads conversion has
-      // been sent (or its fallback timeout hit). Fired here, on submit
-      // success, never on the thank-you page, so reloads can't double count.
-      var minWaitElapsed = false, googleDone = false;
+      // Redirect only once ALL THREE are true: the 300ms grace the Meta calls
+      // above already relied on has passed, the Google Ads conversion has
+      // been sent (or its fallback timeout hit), and the Klaviyo list sign-up
+      // has settled (or hit its 1.5s cap). All fired here, on submit success,
+      // never on the thank-you page, so reloads can't double count.
+      var minWaitElapsed = false, googleDone = false, klaviyoDone = false;
       function goToThanks() {
-        if (minWaitElapsed && googleDone) window.location.href = '/thanks-booking';
+        if (minWaitElapsed && googleDone && klaviyoDone) window.location.href = '/thanks-booking';
       }
       setTimeout(function() { minWaitElapsed = true; goToThanks(); }, 300);
       trackGoogleConversion(GADS_CALL, function() { googleDone = true; goToThanks(); });
+      addToKlaviyoList({ email: email, firstName: firstName, lastName: lastName, phone: phone, store: store, adSpend: adSpend, comment: comment })
+        .then(function() { klaviyoDone = true; goToThanks(); });
     } catch (err) {
       console.error('Submission error:', err);
       errorEl.textContent = 'Something went wrong. Please try again or email us at hello@kliks.com.au';
@@ -716,32 +783,8 @@
       return;
     }
 
-    // Secondary — Klaviyo (non-blocking, for list building)
-    const profileAttributes = {
-      email,
-      first_name: firstName,
-      last_name:  lastName,
-      properties: {
-        store_url:        store   || undefined,
-        monthly_ad_spend: adSpend,
-        enquiry_comment:  comment || undefined,
-        lead_source:      'Strategy Call - book.html'
-      }
-    };
-    if (phone) profileAttributes.phone_number = phone;
-    fetch('https://a.klaviyo.com/client/form-submissions/?company_id=QNNHsN', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'revision': '2023-12-15' },
-      body: JSON.stringify({
-        data: {
-          type: 'form-submission',
-          attributes: {
-            form_id: 'XV8BqD',
-            profile: { data: { type: 'profile', attributes: profileAttributes } }
-          }
-        }
-      })
-    }).catch(() => {});
+    // (Klaviyo list sign-up now happens in the success path above, so the
+    // redirect can wait for it. It used to live here and never worked.)
 
     document.getElementById('formWrap').style.display    = 'none';
     document.getElementById('formSuccess').style.display = 'block';
