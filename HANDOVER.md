@@ -4,7 +4,47 @@
 
 ---
 
-## State as of 2026-09-15
+## State as of 2026-10-07
+
+**Read this first.** This pass was about lead tracking (Meta, Google Ads, Klaviyo), two production incidents, and a privacy-policy rewrite. Where this banner disagrees with an older section below, the banner wins. "Live" below means on `origin/main` at `82ed2ea` (the HANDOVER update itself may sit one commit above that).
+
+### How Adam wants work done (hard rules from this pass)
+- **Preview branch first, never straight to `main`.** New work goes on a `preview/...` branch. Pushing a branch only builds a private preview; it does not touch the live site. Merging into `main` is the go-live step (Vercel then deploys kliks.com.au) and only happens when Adam says "merge". Earlier in this pass a few commits went straight to `main` with his OK, and two of them caused or exposed incidents (below).
+- **Never submit real forms on production to test.** A live submit creates real things: a Web3Forms email, a Klaviyo profile, a Supabase prospect (`/audit`), Meta and Google events. Test locally in headless Chromium with every backend stubbed at the network layer (Web3Forms, Klaviyo writes, Meta pixel, `/api/*`; abort GA4 collect), fake data only (`test+gads@example.com`). If a live test is genuinely needed, ask first and list exactly what it will create. Earlier live tests on 2026-09-22/23 left test emails and Klaviyo profiles behind - see §6.
+- **Never print secrets.** No credentials work: never log into admin, never work around Sensitive Vercel env vars.
+- **Adam is not a full-stack dev and loses the thread in long sessions.** Open with the plain-English answer, keep tables short, and always say what is live versus only on a branch.
+
+### What shipped this pass
+| What | Commit | Status |
+|---|---|---|
+| Per-prospect AOV on audit reports (`prospects.aov`, admin New/Edit forms, `$150` fallback) | `9ce6228` | Live. DB column added by Adam. |
+| Meta Conversions API for every lead form, homepage form now tracked, double-counted Lead on thank-you pages removed, Ad Junkies newsletter now `Subscribe` | `6cfc536` (reverted `eb419d0`, reapplied `935d65d`) | Live. `/api/meta-capi`, `audit/lib/meta-capi.ts` |
+| Explicit `/` → `/index.html` route in `vercel.json` | `68763d2` | Live. Fixed bare homepage 404ing ~50% of requests |
+| Google Ads conversion tracking (AUDIT + CALL labels) | `de0712b` | Live (merged 2026-10-07) |
+| Strategy-call leads into Klaviyo list `XqKPhV` | `6a3f203` | Live. Adam verified a test lead arrived with correct fields |
+| Privacy policy rewritten to name every third party | `11464b0`, `82ed2ea` | Live |
+| `force-dynamic` on `audit/app/page.tsx` (attempt to make the A/B middleware run) | `c9087d1` → reverted `233a668` | FAILED, do not retry (see below) |
+
+### Incidents this pass (so nobody repeats them)
+1. **`export const dynamic = 'force-dynamic'` on `audit/app/page.tsx` broke `/audit` for about 5 minutes.** Under this repo's legacy `builds` + `routes` `vercel.json`, once `/` stopped being a prerendered static page, `kliks.com.au/audit` resolved to `app/[slug]/page.tsx` with `slug = "audit"` and showed the email gate for a nonexistent prospect instead of the landing page. Reverted in `233a668`. Details and the real status of the A/B test are in §4A.
+2. **Bare `kliks.com.au/` was returning a Vercel 404 on roughly half of requests, and had been all along.** `vercel.json` had no rule for `/` (`/([^/.]+)$` needs at least one character), so it relied on an unreliable Vercel default. Every other path was stable. Found by hammering `/` with repeated GETs while testing the Meta work (it persisted after that work was reverted, proving it was not the cause). Fixed by `68763d2`; verified 40/40, then 50/50, then 20/20 afterwards.
+
+### Findings that closed old questions
+- **Meta Leads fell to zero on 2026-09-13 because Adam paused the campaign. Not a bug.** Dataset `1875112903440305` showed paired BROWSER + SERVER `Lead` events up to 2026-09-13 16:00 PT, then nothing while PageView kept climbing. The Meta campaign was still paused when this note was written (Adam hasn't said it was restarted).
+- **raw-passion "commentary disagrees with scores" (2026-09-23) was a transient mid-scan view, not the unresolved freshness bug in §6.** The trace columns showed no divergence and the stored commentary matched the current PageSpeed numbers. Two real gaps came out of it: the public report page shows no "scan in progress" indicator, and `audit_content.updated_at` is never written by any code path or trigger (it only holds the creation time), so it can't prove content was refreshed.
+- **Strategy-call leads had never reached Klaviyo** since the site was built (2026-04-23): `book.html` posted to `/client/form-submissions`, which does not exist in Klaviyo's API (404; the browser reports it as a CORS error and `.catch` hid it). Replaced with `/client/subscriptions` - see §3.
+- **The `/audit` A/B test has never split traffic in production** - see §4A.
+
+### Vercel
+- Two Vercel projects were both connected to the GitHub repo and built every push. **`kliks-au` is the real one** (holds `kliks.com.au`; repo-root `.vercel/project.json` links here). **`kliks.com.au` was a duplicate; Adam paused it on 2026-10-07.** GitHub now shows it as "failure" on every push - expected, ignore it (or disconnect its git integration to silence it). A third project, `audit`, is what `audit/.vercel/project.json` points at (stale, not git-connected - see §2).
+- Preview URLs now come from `kliks-au` (`kliks-<hash>-adams-projects-fc0efc7d.vercel.app`) and sit behind Vercel login, so an agent cannot open them.
+
+### What is left (full list in §6 "Tracking follow-ups")
+Adam: run Google Tag Assistant on the live site for each form, delete earlier test leftovers, check Ads conversion status, decide on a consent line for `/book`. Open engineering: A/B test, GA4 `generate_lead` double-fire on two thank-you pages, stale Calendly buttons on `privacy.html`, scan-in-progress indicator.
+
+---
+
+## Earlier state, as of 2026-09-15 (kept for history; the banner above wins where they differ)
 
 **This doc went unmaintained for a month (last update 2026-08-14) while ~35 commits shipped.** Everything below is now current as of today, but treat any pre-2026-09-15 detail in the body sections as possibly superseded by what's in this banner and §7 first. Full commit list in §7.
 
@@ -39,7 +79,7 @@ The last two are the same Next.js 14 App Router app (`audit/` subdirectory) but 
 **GitHub:** `heytadeka/kliks-au`
 **Local path:** `/Users/Pongi/Desktop/kliks.com.au`
 **Live URL:** `https://kliks.com.au`
-**Vercel project:** `kliks-au` under personal account `adam.nagy.mm@gmail.com` (account `adamnagymm-3717`). Auto-deploys on push to `main`, ~30-60s to live.
+**Vercel project:** `kliks-au` under personal account `adam.nagy.mm@gmail.com` (account `adamnagymm-3717`). Auto-deploys on push to `main`, ~30-60s to live. A duplicate project named `kliks.com.au` also used to build every push; Adam paused it on 2026-10-07 (see the 2026-10-07 banner). Pushes to any other branch build a private preview in `kliks-au`.
 
 ### Normal deploy (preferred)
 ```bash
@@ -59,14 +99,17 @@ vercel --prod
 `audit/.vercel/project.json` points to a stale separate Vercel project called "audit". Running `vercel` from inside `audit/` deploys to the wrong project. Never cd into audit/ to deploy. Never run `vercel env pull` from inside audit/.
 
 ### CRITICAL: vercel.json rules (DO NOT TOUCH)
-Order of routes is load-bearing. These rules must stay exactly as-is:
+Order of routes is load-bearing (routes are first-match-wins). These rules must stay exactly as-is:
 
-1. `/api/(.*)` → `/audit/api/$1` — must be first
-2. www redirect (301)
-3. `/lukewood` + `/oh-my-days` → `/` (302, temporary)
-4. `/audit/(.*)` → `/$1` — must be before `handle: filesystem`
-5. `handle: filesystem`
-6. `/([^/.]+)$` → `/$1.html`
+1. `/api/(.*)` → `/audit/api/$1` — must be first. This is also why `kliks.com.au/api/meta-capi` works: the route lives in the audit Next.js app.
+2. `/` → `/index.html` — added 2026-10-07 (`68763d2`). Without it bare `/` returned a Vercel 404 on ~50% of requests. Do not remove, and do not add a second rule for `/`.
+3. www redirect (301)
+4. `/lukewood` + `/oh-my-days` → `/` (302, temporary)
+5. `/audit/(.*)` → `/$1` — must be before `handle: filesystem`
+6. `handle: filesystem`
+7. `/([^/.]+)$` → `/$1.html`
+
+**Do not set `export const dynamic = 'force-dynamic'` on `audit/app/page.tsx`.** It makes `/audit` resolve to the `[slug]` route and shows a broken email gate (incident 1 in the 2026-10-07 banner). Any change to routing, `middleware.ts`, or how `/` renders needs a preview branch and request-level testing (many repeated GETs, not one), never a push to `main`.
 
 Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gated on `process.env.VERCEL`). `vercel.json` also has a `crons` block (traffic-drop monitoring for the Pipeline tab — see §4) — leave it alone unless you're deliberately changing that schedule.
 
@@ -76,6 +119,15 @@ Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gat
 ### Deploy previews
 `npx vercel` (no `--prod`) from repo root gives a preview URL without touching production — this is the normal way to visually check a rendering change before it's pushed to `main`. Confirm the target is the `kliks-au` project before running it. **Cannot verify new background-job routes** — see the `NEXT_PUBLIC_SITE_URL` gotcha in §8.
 
+### Preview branches (the normal way to ship anything risky)
+```bash
+git checkout -b preview/<name>      # work and commit here
+git push -u origin preview/<name>   # builds a private preview in kliks-au; live site untouched
+# after Adam says "merge":
+git checkout main && git merge --ff-only preview/<name> && git push origin main
+```
+Find the preview URL with `gh api repos/heytadeka/kliks-au/commits/<sha>/status` and the deployments API. Previews are behind Vercel login, so an agent cannot load them; test locally instead (see the testing gotchas in §8). A Vercel "Protection Bypass for Automation" secret exported as `VERCEL_BYPASS_SECRET` would let an agent test previews - not set up yet.
+
 ---
 
 ## 3. Static Marketing Site
@@ -83,13 +135,16 @@ Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gat
 ### Files
 - `index.html` — main homepage
 - `ad-junkies.html` — Ad Junkies newsletter page (subscriber count JS: base 1445 on 2026-05-26, grows 4-6/day)
-- `book.html` — Booking form page (single-step, Web3Forms backend, no Calendly redirect, redirects to `thanks-booking.html` on success)
+- `book.html` — Strategy-call booking form (single step). On Web3Forms success it fires Meta Lead + CAPI, the Google Ads CALL conversion and a Klaviyo list sign-up, then redirects to `thanks-booking.html`. See the lead tracking map below.
 - `thanks-booking.html` — thank-you page for the strategy-call booking form
-- `booked.html` — Legacy confirmation page (no longer used, superseded by `thanks-booking.html`)
+- `booked.html` — Legacy confirmation page, unlinked from the live flow. It is the only page that still fires a `Schedule` Meta event, so that event never fires in practice.
 - `patisserie.html` — KLIKS Patisserie sub-brand landing page (growth-audit funnel for the bakery/patisserie vertical), Web3Forms + GA4 + Meta Lead tracking
 - `thanks-patisserie.html` — thank-you page for the Patisserie funnel
 - `patisserie/` — design handoff reference for the Patisserie page (`Patisserie Landing.dc.html` mockup + `README.md` + `image-slot.js` helper). Not served — reference only. Same convention as the Stage Rivers design handoff used for the audit portal's Outreach board (a `.dc.html` mockup + `README.md` dropped in a feature-named folder before build).
-- `privacy.html` — privacy policy
+- `privacy.html` — privacy policy. Rewritten 2026-10-07 to name every third party that receives visitor or form data (Web3Forms, Supabase, Klaviyo, Calendly, Vercel, Google PageSpeed/DataForSEO/Anthropic for audits, Meta Conversions API, Google Analytics/Ads, Meta Pixel, Microsoft Clarity, fonts/image hosts). **Update it whenever a vendor, tag or form is added or removed.**
+- `thanks.html` — thank-you page for the Ad Junkies newsletter signup
+- `case-studies.html` — case studies page
+- `mactrans.html` — one-off hand-built client report, see §5 (not a template)
 - `luke-index.html` / `luke-apply.html` / `luke-results.html` — Luke funnel (separate design: Bebas Neue + DM Sans, lime green `#c8f040` accent)
 
 ### Design system (main site)
@@ -112,7 +167,7 @@ Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gat
 - Australian spelling where relevant.
 
 ### index.html form (Web3Forms)
-Both `index.html` and `book.html` use identical field sets: split first/last name, email, phone (optional), store URL (optional), ad spend dropdown, challenge textarea. Both submit via `fetch()` POST to Web3Forms JSON API, then fire Klaviyo non-blocking. `book.html` redirects to `thanks-booking.html` on success; check `index.html`'s current behaviour before assuming it matches (it may still use the inline success card rather than a redirect).
+Both `index.html` and `book.html` use identical field sets: split first/last name, email, phone (optional), store URL (optional), ad spend dropdown, challenge textarea, and both submit via `fetch()` POST to the Web3Forms JSON API. After Web3Forms accepts the submission, both fire Meta Lead + CAPI and the Google Ads CALL conversion (see the tracking map below). `book.html` also adds the lead to Klaviyo and redirects to `thanks-booking.html`. **`index.html` does not call Klaviyo and has no redirect or thank-you page**: it swaps the form for an inline success message, so URL-based goals are impossible for it.
 
 ### book.html availability slots
 Month slots auto-compute from `new Date()`. Current month = 0 spots (Fully booked). Next month = random 1-2 spots. Pattern matches index.html.
@@ -122,7 +177,30 @@ Month slots auto-compute from `new Date()`. Current month = 0 spots (Fully booke
 - Web3Forms key: `8d31ed39-c2e7-429c-b4ad-fa37a5ff26e5` (routes to `wearekliks@gmail.com`)
 - Klaviyo company ID: `QNNHsN`
 - Klaviyo form ID: `VaHVst` (embed: `<div class="klaviyo-form-VaHVst"></div>`)
-- Calendly URL: `https://calendly.com/kliks-hu/30min` (placeholder — AU version still needed)
+- Klaviyo **list** ID: `XqKPhV` (strategy-call leads from `book.html`; **single opt-in**, so no confirmation email goes to leads). Adding a lead via `/client/subscriptions` also subscribes them to email marketing.
+- Klaviyo form ID `XV8BqD`: **unused** (belonged to the old dead `/client/form-submissions` call). Only `VaHVst` (Ad Junkies embed) is live.
+- Google tag: container `GT-NC8XKMW5`, loaded as `gtag/js?id=G-57YSHYNH26` (GA4). Google Ads destination `AW-17756066541` is already a destination of that tag, so **do not add a second loader or a `gtag('config','AW-...')`**.
+- Google Ads conversion labels: **AUDIT** `AW-17756066541/qc76CJ3c6pMdEO2l4JJC` (`/audit` A and B, `patisserie.html`), **CALL** `AW-17756066541/EeRcCNSR85MdEO2l4JJC` (`book.html`, homepage form). Patisserie shares the AUDIT label for now; Adam may want its own.
+- Meta dataset / pixel: `1875112903440305`. Meta ad account "Kliks Digital": `1213172154204778` (not enabled for the Meta Ads MCP connector).
+- Microsoft Clarity project `yekdyxtdxs` loads only inside the Next.js app (`audit/app/layout.tsx`), not on the static pages.
+- Calendly URL: `https://calendly.com/kliks-hu/30min` — no longer used by `book.html` or `ad-junkies.html`; only two stale "Free Strategy Call" buttons on `privacy.html` still link to it
+
+### Lead tracking map (as of 2026-10-07)
+Every conversion fires **only inside the submit-success handler, never on a thank-you page load** (so reloads can't double count). Each Meta fire pairs a browser `fbq` call with a server-side Conversions API call through a shared `event_id` (dedup).
+
+| Form | Page | Fires after | Then | Meta (browser + CAPI) | Google Ads | Klaviyo |
+|---|---|---|---|---|---|---|
+| Homepage contact | `index.html` `#contactForm` | Web3Forms success | inline success message, no redirect | `Lead`, content_name "Homepage Contact Form" | CALL | none |
+| Strategy call | `book.html` | Web3Forms success | `/thanks-booking`, after ≥300ms and the Google hit (≤1s cap) and Klaviyo (≤1.5s cap) | `Lead`, "Strategy Call Booking" | CALL | list `XqKPhV` via `/client/subscriptions` |
+| Patisserie audit | `patisserie.html` | Web3Forms success | `/thanks-patisserie`, same waiting rules as `/book` minus Klaviyo | `Lead`, "Patisserie Growth Audit" | AUDIT | none |
+| Growth Audit (A and B) | `/audit`, `/audit/b` via `GrowthAuditForm.tsx` | `/api/audit/apply` success | `/audit/thank-you` after the Google hit (≤1s cap) | `Lead`, "Growth Audit Request" (server call is inside the apply route) | AUDIT | none |
+| Ad Junkies newsletter | `ad-junkies.html` Klaviyo embed `VaHVst` | Klaviyo `klaviyoForms` `submit` event | `/thanks` | `Subscribe` (not `Lead`, so newsletter signups aren't mixed with sales leads) | none (deliberate) | the embed itself |
+
+How it's built:
+- **Meta server side:** `audit/lib/meta-capi.ts` (`sendMetaCapiEvent`, SHA-256 hashing of email/name/phone, `fbp`/`fbc`, IP and user agent) behind the public route `audit/app/api/meta-capi/route.ts` (allowed events: `Lead`, `Subscribe`, `Schedule`). Reachable at `kliks.com.au/api/meta-capi` through the first `vercel.json` rule. Needs env var `META_CAPI_ACCESS_TOKEN`. Add `?test_event_code=...` to any page URL to send events to Meta's Test Events view.
+- **Google Ads:** `trackGoogleConversion(sendTo, onDone)` - try/catch, no-op without `gtag`, `onDone` always runs once (`event_callback` or a 1s fallback) so it can never block or lose a redirect. The static pages carry an inline copy each (the `vercel.json` `builds` list has no shared static JS asset, and adding one means touching routing); the Next app uses `audit/lib/google-ads.ts`.
+- **Klaviyo (`book.html`):** `POST https://a.klaviyo.com/client/subscriptions?company_id=QNNHsN`, header `revision: 2026-07-15`, content type `application/vnd.api+json`, list `XqKPhV`, `custom_source` "Strategy Call - book.html". **Email marketing consent only** (omitting `subscriptions` would default a phone number into SMS marketing too). Phone is converted to E.164 (`04xx` → `+614xx`) or left off, because Klaviyo rejects the whole request on a bad number. Properties sent: `store_url`, `monthly_ad_spend`, `enquiry_comment`, `lead_source`. Runs only after Web3Forms succeeds, so the email to Adam is unchanged and goes first.
+- **Thank-you pages fire only `PageView`** for Meta. `thanks-booking.html` and `thanks-patisserie.html` still fire a GA4 `generate_lead` on every load (pre-existing; it also reaches the Ads destination as an unlabelled event) - see §6.
 
 ---
 
@@ -331,6 +409,8 @@ const ASSUMED_AOV = 150
 
 **These two constants are also the exact mechanism behind the 2026-09-15 Local Service finding** — see the "Local Service audit mode" subsection further down. The ~67x drift above was two copies of an ecommerce revenue formula disagreeing with each other; the Local Service finding is that the formula itself, even correct and consistent, is an ecommerce-only assumption with no meaning for a non-ecommerce business. Piece 1 in §6 makes `ASSUMED_AOV` configurable per prospect rather than fixing the drift again.
 
+**AOV is now per-prospect (shipped `9ce6228`, 2026-09-15).** `prospects.aov numeric` (nullable; migration `ALTER TABLE prospects ADD COLUMN IF NOT EXISTS aov numeric` was run by Adam). Set it on `/audit/admin/new` or the Edit Audit page; `create-prospect.ts`, `admin/create` and `admin/update` write it. `ReportClient.tsx` derives `const aov = prospect.aov ?? ASSUMED_AOV` and uses it at all five call sites (three `revCalc` initiatives, the "What this costs you" box and its printed "$X AOV" caption). `ASSUMED_AOV = 150` is now only the fallback, and `ASSUMED_CONVERSION_RATE = 0.015` is still fixed. Existing prospects with a null `aov` behave exactly as before. Because `lib/supabase.ts` is untyped, a missing column never fails the build - it only fails at runtime.
+
 ### DataForSEO notes
 - `domain_overview/live` returns 404 on this plan — use `domain_rank_overview/live`
 - `keyword_gap/live` returns 404 — use `keywords_for_site/live`
@@ -420,6 +500,7 @@ GOOGLE_ADS_CLIENT_SECRET
 GOOGLE_ADS_REFRESH_TOKEN
 GOOGLE_ADS_CUSTOMER_ID
 META_ACCESS_TOKEN
+META_CAPI_ACCESS_TOKEN             (Meta Conversions API; used by lib/meta-capi.ts; confirmed working in Production)
 ANTHROPIC_API_KEY
 NEXT_PUBLIC_SITE_URL=https://kliks.com.au
 ADMIN_JWT_SECRET
@@ -440,7 +521,7 @@ The report template above (`ReportClient.tsx`, the AI commentary prompt, the CRO
 **What's already fine, no changes needed:** the LLM-visibility query builder's core string interpolation, the Relevant Pages concentration math, the GBP/review commentary prompt, and the competitor-extraction mechanism itself (only its food-specific denylist needs a Local Service equivalent).
 
 **Scoped build, not started, two independently shippable pieces:**
-- **Piece 1 — configurable AOV (ecommerce only).** Small. Add an AOV input on the audit creation page, replace the hardcoded `$150`/`1.5%` with a per-prospect value, sensible `$150` fallback when left blank. Fixes the "an $86-AOV cakery gets the same revenue number as everyone else" problem without needing the mode split below.
+- **Piece 1 — configurable AOV (ecommerce only). DONE (`9ce6228`, live) - see §4 Revenue model.** Original scope: small. Add an AOV input on the audit creation page, replace the hardcoded `$150`/`1.5%` with a per-prospect value, sensible `$150` fallback when left blank. Fixes the "an $86-AOV cakery gets the same revenue number as everyone else" problem without needing the mode split below.
 - **Piece 2 — a real "Local Service" audit type.** Large — Adam's own estimate is the same scale as the Audits/Pipeline unification (`87941d4`), and that's a fair sizing: it touches the DB schema, at least four separate admin create/edit surfaces (`admin/new`, `admin/pipeline`, `admin/outreach`, `admin/[slug]/edit`, all of which currently duplicate niche/location fields independently), a real reordering of report sections (not just a text swap — ranking/visibility findings lead instead of a dollar hero, no revenue figure at all, a new leads-lost estimate as supporting context only, no dollar value attached to it), a genuinely separate AI prompt instruction set (tested against Mactrans as the real test case), and a Local Service equivalent for the competitor denylist (or a more general non-industry-specific baseline — undecided, worth deciding during the build). Build order: diagnose exact schema/copy touchpoints first (this section is the starting point, not the finish line — the copy sweep above was not exhaustive over all ~2000 lines of `ReportClient.tsx`), then schema + dropdown, then template copy branch, then prompt branch, then denylist.
 
 ---
@@ -459,6 +540,17 @@ Public lead-gen funnel, not the same product as the Audit Portal above — this 
 - `audit/lib/growth-audit-cap.ts` computes the monthly cap/remaining-spots figure shown on both variants; fails open (shows full availability) if the Supabase query errors, rather than blocking the page.
 - **Direct QA link, unaffected by the split:** `kliks.com.au/audit/b` always serves variant B regardless of cookie, because the middleware only matches the exact root path — confirmed live, no extra code needed for this.
 - Every lead is tagged with which variant it came from, end to end: `variant` field in the `/api/audit/apply` POST body → `prospects.application_data` (Supabase) → outreach notes → the Web3Forms notification email's subject line and body (`landing_page: "Variant B"`) → a `variant` param on the GA4 `generate_lead` event. This is how conversion between the two variants actually gets compared — there's no dashboard for it, check the email subject lines or query `application_data`.
+
+### A/B split: NOT actually running in production (found 2026-10-07)
+Everything in "A/B split mechanism" above describes the *intent*. In production, every visitor to `kliks.com.au/audit` gets variant A, and nothing sets `kliks_audit_variant`:
+- Five fresh requests all returned `x-vercel-cache: HIT` with **no `set-cookie`**, even with a cache-busting query string, and sending `Cookie: kliks_audit_variant=b` returned a byte-identical page (115,677 bytes). Cause: `audit/app/page.tsx` has no dynamic API use, so Next prerenders it and Vercel serves the static HTML from the CDN without invoking `middleware.ts`. (Same mechanism as the "static route silently bypasses live logic" gotcha in §8.)
+- `middleware.ts` *is* compiled (`ƒ Middleware 26.4 kB` in the build output) - locally under `next start` the cookie does switch variants - but it never ran on Vercel for this route.
+- **The obvious fix, `force-dynamic`, breaks `/audit`** (incident 1 in the 2026-10-07 banner), and it's unknown whether Vercel deploys `audit/middleware.ts` at all under the legacy `builds` + `routes` config (Vercel's docs say middleware is auto-discovered at the project root; this repo's lives in `audit/`).
+- **Current workaround:** split ad traffic by hand - one ad set to `kliks.com.au/audit` (A) and one to `kliks.com.au/audit/b` (B). Both URLs work directly; every lead is already tagged with its variant (see above), so results can still be compared by email subject line.
+- **Options if the automatic split is wanted:** (a) keep the manual split, (b) fix it properly on a preview branch with request-level testing (many GETs, cookie forced both ways), (c) migrate off the legacy `builds`/`routes` config. Do not retry (b) by pushing to `main`.
+
+### Conversion tracking on the audit form
+`GrowthAuditForm.tsx` (shared by A and B) on `/api/audit/apply` success: browser `fbq('track','Lead', {content_name:'Growth Audit Request'}, {eventID})` (the matching server CAPI call is inside the apply route), GA4 `generate_lead` with the variant, the Web3Forms notification, then the Google Ads AUDIT conversion; the redirect to `/audit/thank-you` waits for the Google hit (1s cap). The apply route creates a real Supabase prospect, so **never submit it on production to test**.
 
 ### Bugs found and fixed this pass (all confirmed live)
 - **Invisible CTA text**: `.vb-root a { color: var(--orange); }` (a class+tag selector) beat `.vb-btn { color: #fff; }` (a single class) on specificity, rendering the final CTA button's text orange-on-orange. Same trap caught the nav wordmark link (`.vb-wordmark` as a plain class also lost to `.vb-root a`) — fixed the same way, with a `.vb-root a.vb-btn`-style override that wins on specificity rather than relying on source order. **Watch for this pattern in any future `.dc.html`-handoff-style page that styles a bare `a { color: ... }` globally and then reuses `<a>` for buttons/wordmarks.**
@@ -488,13 +580,34 @@ Not independently re-verified — treat as approximate and check the admin dashb
 | `test-brand` | Test | Dev testing, email: wearekliks@gmail.com |
 | `mactrans-2` | Mactrans Gold Coast | Real inbound freight/haulage lead, real prospect record (`niche: "freight company Gold Coast"`, `location: null`). The 2026-09-15 Local Service diagnostic's real test case — see §4's new subsection. **Its actual sent audit is not this prospect's `/audit/mactrans-2/report` page** — that template is confirmed wrong for this niche. A hand-built one-off static page was shipped instead at `/mactrans.html` (client-side email-gated to `geoffpro@yahoo.com.au`), entirely outside the normal pipeline. Don't generalize that page into a template; don't assume the real `/audit/mactrans-2/report` page is what Geoff was actually sent. |
 
+**`raw-passion`** (Raw Passion, vegan bakery, created 2026-09-02) - the 2026-09-23 "commentary doesn't match the scores" report. Diagnosed as a transient mid-scan view; stored content was fresh and matched the current PageSpeed data. Not an example of the unresolved freshness bug.
+
 Also seen with real `llm_visibility_results` data this pass (from the false-positive audit, not independently verified beyond that): `miss-lillys-bakery-cafe`, `bonbons-bakery`, `the-cupcake-room`.
 
 ---
 
 ## 6. Pending Tasks
 
-### Priority order (as of this pass)
+### Tracking follow-ups (added 2026-10-07; do these first)
+**Adam, by hand (an agent can't do these):**
+- [ ] **Google Tag Assistant on the live site** (tagassistant.google.com → add `https://kliks.com.au`). Submit `/book` and the homepage form (expect label `…EeRcCNSR85MdEO2l4JJC`) and `/patisserie` (expect `…qc76CJ3c6pMdEO2l4JJC`) with a throwaway email. If testing `/audit`, it creates a real prospect - delete it afterwards. This is the only real-browser proof the Google conversions fire; the Google Ads Conversions page cannot show it because test hits have no ad click.
+- [ ] **Delete leftovers from the 2026-09-22/23 live tests:** `claude-capi-test…@example.com` profiles (up to two) on the Ad Junkies Klaviyo list, the test profile(s) on list `XqKPhV` (including Adam's own `adam.nagy.mm@gmail.com` test lead), and the "CLAUDE" test emails in `wearekliks@gmail.com`. The fake Meta events can't be deleted and are harmless. About 11 labelled Google Ads test conversions were also sent on 2026-10-07 between ~14:00 and 14:30 AEDT, none with a click ID.
+- [ ] **Google Ads:** under Goals → Conversions → Summary, check the Status column of the AUDIT and CALL actions after the first real ad conversion (can lag a day or more), check that no other conversion action is keyed to `generate_lead` or form submit, and check the enhanced-conversions setting (the tag sends `ec_mode=a`, i.e. automatic user-provided data is on).
+- [ ] **Before restarting the Meta campaign** (paused since 2026-09-13): run one test lead with Tag Assistant open and confirm `Lead` arrives in Meta Events Manager with browser + server deduped.
+- [ ] **Decide on consent wording for `/book`.** Leads are now subscribed to email marketing in Klaviyo (Accepts Marketing = true) and the form has no consent text. Not legal advice - Adam's call. Also confirm `enquiry_comment` appears on the Klaviyo profile when a message is typed (it wasn't visible in the one screenshot checked).
+- [ ] Optionally disconnect git from the paused `kliks.com.au` Vercel project, and confirm `META_CAPI_ACCESS_TOKEN` and the Supabase vars live on `kliks-au`.
+
+**Engineering:**
+- [ ] **GA4 `generate_lead` fires on every load of `thanks-booking.html` and `thanks-patisserie.html`** (it also reaches the Ads destination, unlabelled). Same double-count pattern already fixed for Meta; remove it from the thank-you pages (it already fires on submit success in `book.html`/`patisserie.html`). Also check Ads has no conversion action keyed to `generate_lead`.
+- [ ] The Ad Junkies handler fires `generate_lead` to GA4 on newsletter signup, which the Ads destination also receives (unlabelled). Fine unless an Ads action keys off it.
+- [ ] `privacy.html`: two "Free Strategy Call" buttons (nav and CTA) still link to `calendly.com/kliks-hu/30min` while the rest of the site uses `/book`. Repoint them, then delete the Calendly paragraph from privacy §03.
+- [ ] Homepage contact form has no thank-you page, so no URL-based goals; optional `/thanks-contact`.
+- [ ] A/B test on `/audit` does not run in production - options in §4A.
+- [ ] Report page has no "scan in progress" indicator (viewers can see fresh scores with stale commentary mid-scan), and `audit_content.updated_at` is never written. Either set it in `generate-commentary` or drop it.
+- [ ] Patisserie uses the AUDIT conversion label; split it into its own Ads conversion action if Adam wants it reported separately.
+- [ ] `HANDOVER.md` and `PROJECT.md` still mention Formspree/Calendly flows in places; `PROJECT.md` is older than this file - trust this file.
+
+### Priority order (older audit-portal items, as of 2026-09-15; not re-verified since)
 1. **The rescan/commentary-freshness investigation — top priority, in progress, not solved.** Run the diagnostic-tracing migration first (exact SQL in §4's "Freshness investigation" note / migration block 8 above), then trigger **one single, deliberate rescan** (not a double-click, one tab) on a fresh prospect not already in the affected-12 list. Query the new trace columns (`commentary_readiness_saw_pagespeed_at`, `commentary_gen_invoked_at`, `commentary_gen_saw_pagespeed_at`, `commentary_gen_saw_tbt`, `commentary_gen_saw_speed_index`) against the final `pagespeed_fetched_at` to see directly which stage diverges, instead of inferring from two timestamps like the last two passes did. Don't assume either of this pass's two fixes (readiness-field reset, atomic lock) was wrong to make — both were real, confirmed bugs and are correctly fixed — just that neither is *the* explanation for this specific, smaller symptom.
 2. **Trigger the 12-prospect commentary regeneration** (`/api/audit/admin/regenerate-commentary-cleanup`, browser-console `fetch()` while logged into `/audit/admin`, exact snippet in the State-as-of banner), Miss Lilly's first — it's the one confirmed already sent to a real prospect. Delete the route once confirmed done for all 12.
 3. **Confirm whether Enze, Cake Mail, and Miss Lilly's were actually rescanned** to correct the older ~67x revenue-formula error (separate from, and older than, item 1's investigation). Those reports are live at their URLs and any of those prospects could reopen them.
@@ -510,7 +623,7 @@ Also seen with real `llm_visibility_results` data this pass (from the false-posi
 13. Re-check whether the DataForSEO `40501 Invalid Field: location_code` error and `dataforseo-enrichment`'s own ~60s Vercel timeout warning still recur — both flagged early on, neither addressed, both may be stale given how much has changed since. **Partial update:** `64f2abd` (2026-08-17, in the undocumented gap) corrected wrong `location_code` values for the 8 existing AU cities in `AU_CITY_MAP`, which may well have been this exact 40501 error's cause — but that fix did not add coverage for any city outside those 8, see item 17 below. Whether the original 40501 symptom is actually gone is still unconfirmed.
 14. Danielle's onboarding — blocked on the above being solid; revisit once the freshness investigation and Phase 4 migration are both confirmed and a few more real audits have been sent.
 15. Decide whether to add a root-level `CLAUDE.md` so a fresh thread can orient itself without a full HANDOVER.md read — discussed two passes ago, not yet built, waiting on Adam to confirm he wants it.
-16. **Piece 1 — configurable AOV field (Ecommerce audits).** Small, independent, not started. See §4's "Local Service audit mode" subsection for full scope.
+16. ~~**Piece 1 — configurable AOV field (Ecommerce audits).**~~ **DONE 2026-09-15 (`9ce6228`, live).** See §4 Revenue model.
 17. **Piece 2 — Local Service audit type.** Large, not started, scoped in full in §4. Explicitly does not include item 18 below (Adam's call).
 18. **`AU_CITY_MAP` missing Gold Coast / any non-capital city** — deprioritized as a separate task from Piece 2, timing undecided, but now confirmed to have actually bitten on a real prospect (see §4). Revisit once Local Service audits are actually going out to non-capital-city prospects.
 
@@ -518,7 +631,7 @@ Also seen with real `llm_visibility_results` data this pass (from the false-posi
 - [ ] Add `PAGESPEED_SERVICE_URL` as proper Vercel env var (hardcoded fallback works but is untidy)
 
 ### Copy / URLs
-- [ ] AU Calendly URL — replace `https://calendly.com/kliks-hu/30min` in `book.html` and `ad-junkies.html`
+- [ ] Calendly is no longer used by `book.html` or `ad-junkies.html`; the only remaining links are the two stale buttons on `privacy.html` (see Tracking follow-ups)
 
 ### When DataForSEO backlinks subscription is added
 - [ ] Re-enable `backlinks/summary/live` calls in dataforseo routes
@@ -546,7 +659,23 @@ Kliks doesn't currently appear in any Shopify/digital-marketing-agency roundup a
 
 All confirmed live on `origin/main`, most recent first. Verified against `git log` directly rather than carried forward from memory.
 
-**Today (2026-09-15):**
+**Lead tracking pass (2026-09-15 → 2026-10-07):**
+
+| Hash | Message |
+|---|---|
+| `82ed2ea` | docs(privacy): strategy call form now really adds leads to Klaviyo |
+| `6a3f203` | fix(book): actually add strategy-call leads to the Klaviyo list |
+| `11464b0` | docs(privacy): name every third party that gets visitor or form data |
+| `de0712b` | feat(ads): Google Ads conversion tracking on audit + call form success |
+| `935d65d` | Reapply "feat(pixel): server-side Meta CAPI for contact forms + newsletter, fix double-fires" |
+| `68763d2` | fix(routing): add explicit / -> /index.html rule to vercel.json |
+| `eb419d0` | Revert of `6cfc536` (turned out not to be the cause of the 404s; reapplied above) |
+| `6cfc536` | feat(pixel): server-side Meta CAPI for contact forms + newsletter, fix double-fires |
+| `233a668` | Revert "fix(audit): force dynamic rendering on / so A/B middleware actually runs" |
+| `c9087d1` | fix(audit): force dynamic rendering on / so A/B middleware actually runs (BROKE `/audit`, reverted) |
+| `9ce6228` | feat(audit): add per-prospect AOV field, replace hardcoded $150 |
+
+**2026-09-15 (earlier pass):**
 
 | Hash | Message |
 |---|---|
@@ -689,10 +818,24 @@ Everything before `a5d6066` (Stage Rivers board, Today tab, the original "Crawls
 - **A hardcoded per-niche assumption (a dollar figure, a checklist item, a prompt's own vocabulary) doesn't announce itself as niche-specific until tested against a real prospect outside the niche it was built for.** The entire report template, AI prompt, and CRO checklist were built and tested only against ecommerce/food-service prospects and passed every check for a year of that — the ecommerce-only assumptions (a `$150`/`1.5%` revenue model, "store"/"shopper" language baked into a prompt's own instructions, ecommerce-specific CRO checks) were only found by deliberately running a real non-ecommerce prospect through it. See §4's Local Service subsection. Same shape as the "the same number computed in more than one place, silently drifting apart" gotcha above — an assumption baked in once, silently wrong for every case it wasn't built for.
 - **A city-detection map that only covers the largest N cities silently fails for everything outside it, and the failure mode isn't an error — it's a plausible-looking wrong answer.** `AU_CITY_MAP` covering only the 8 state capitals meant a real Gold Coast prospect's geo-targeting silently fell back to national scope, and its LLM-visibility query silently became a mechanically awkward one, with no error or log line marking either as degraded. Confirmed on real data, not theoretical — see §4 and §6 item 18. Worth checking for this same shape (a lookup table treated as exhaustive when it's actually "the common cases") anywhere else in the codebase that maps free text to a fixed set of known values.
 
+- **A fully static (prerendered) route is served from Vercel's CDN and silently bypasses `middleware.ts`.** `x-vercel-cache: HIT`, no `set-cookie`, and identical bytes regardless of cookie are the tell. This is why the `/audit` A/B split never ran. `force-dynamic` is NOT a safe fix here (it re-routes `/audit` to `[slug]` under the legacy `builds` + `routes` config). See §4A.
+- **In `vercel.json`, bare `/` had no rule and flaked ~50%.** `/([^/.]+)$` can't match an empty path, so `/` leaned on an undocumented default. Routes are first-match-wins. Every route/render change needs request-level testing.
+- **For intermittent routing bugs, one clean round proves nothing.** After a deploy the old deployment keeps answering for ~1-2 minutes, so failures taper off. Poll many requests (50+) over a few minutes and look for a clear transition to 100% clean. A single all-200 round of 5 happened mid-incident and was noise. Also use GET, not HEAD (`curl -I` returned 200 on `/` while GETs were 404ing), and add a random query string to dodge CDN caching.
+- **Klaviyo client API:** `/client/form-submissions` does not exist (404; the browser shows a CORS error because the 404 has no CORS headers). To add someone to a list from the browser use `POST /client/subscriptions?company_id=…` with a list ID, `revision: 2026-07-15`, `Content-Type: application/vnd.api+json`. That call always subscribes (consent defaults to MARKETING), the phone must be E.164 or the whole request is rejected, and a preflight (`OPTIONS`) check with `curl` creates no record, so use it to verify an endpoint without side effects.
+- **Meta's pixel (`fbevents.js`) sends nothing from automated browsers** (`navigator.webdriver`). In a headless test use a normal user agent and hide `webdriver`, and stub `facebook.com/tr` so nothing is sent.
+- **Google Ads conversions don't appear in the Ads UI without an ad click ID.** An empty Conversions page after test hits is the expected, good result and also means that page can't prove the tag works - use Tag Assistant. `AW-17756066541` is already a destination inside the served `gtag.js` (`__dest_aw`), so only the `conversion` event is needed. One conversion is sent as a `googleadservices` `pagead/conversion` + `ccm/conversion` pair sharing one `random` ID, plus sometimes a `doubleclick` view-through twin with the same label: that is one conversion, not three. The tag also sends unlabelled `form_start`/`form_submit`/`generate_lead`/`gtag.config` events and `form-data` pings (`ec_mode=a`) to the Ads destination.
+- **Any redirect that happens right after a submit must wait for the tracking calls**, or the browser cancels them on navigation. Pattern used in `book.html`, `patisserie.html`, `GrowthAuditForm.tsx`: redirect only when a minimum grace period, the Google `event_callback` (1s fallback) and, for `/book`, the Klaviyo request (1.5s cap) have all finished.
+- **The static pages can't share a JS file** (`vercel.json` `builds` only lists `*.html`, `*.png`, `blog/*.html`, sitemap and robots), so small helpers are inlined per page.
+- **Local testing recipe (no real records).** Serve the repo root with a tiny Node server that maps clean URLs (`/book` → `book.html`), forwards `/audit/*` (prefix stripped) and `/_next/*` to `next start` built from the branch (start it with `env -i` so no shell secrets leak in; `audit/.env.local` holds only PageSpeed keys), and 404s every `/api/*`. Drive it with Playwright in headless Chromium, stub Web3Forms, Klaviyo writes, `facebook.com`, `/api/meta-capi` and `/api/audit/apply` with `page.route`, abort GA4 `/g/collect` and Clarity, let `googleadservices`/`doubleclick` through only if you accept real (click-ID-less) Ads hits. Measure timing from the DOM `submit` event, not from Playwright's click (the pages use `scroll-behavior: smooth`, which adds seconds). Group Ads requests by `random` to count real conversions. The harness lived in a temporary scratchpad and was not saved; rebuild it from this description.
+- **Local dev cannot reach Supabase** (`audit/.env.local` has only the two PageSpeed variables), so `[growth-audit-cap] availability query failed ... supabaseUrl is required` in local logs is expected and harmless, and anything that needs the database must be verified on a deployed environment or by Adam.
+- **Submitting `/audit` creates a real Supabase prospect and a notification email; `/book` creates a Klaviyo profile and an email; every form creates Meta and Google events.** Delete test records afterwards, and prefer the stubbed local recipe above.
+- **Meta Ads MCP connector** (when loaded) can read dataset `1875112903440305`: `ads_get_dataset_stats` with `aggregation: event` or `event_source` gives hourly counts split BROWSER/SERVER (this is how the 2026-09-13 stop was pinned down), `ads_get_dataset_quality` gives Event Match Quality, and `ads_get_dataset_details` gives `last_fired_time` (this summary field lags; prefer the hourly stats). Every Meta Ads tool call needs a `client_conversation_id` (20 random alphanumerics, reused for the whole conversation).
+- **GitHub shows two commit statuses per push** (one per connected Vercel project); the paused `kliks.com.au` one reports "failure" by design now. Judge deploy health by the `kliks-au` status and by a read-only check of the live site.
+
 ---
 
 ## 9. Owner
 
 **Adam Nagy** — `adam.nagy.mm@gmail.com` / `wearekliks@gmail.com`
 Founder, Kliks Digital. Not a full-stack dev. Can push to git, edit Supabase SQL, use Vercel dashboard.
-Communication style: direct, short, no fluff. Hyphens not em dashes. No bullet-point copy. Sends tightly-scoped, single-purpose requests — one bug or one feature per message, often with an explicit build order and an explicit instruction to stop and report back rather than guess when a diagnosis is ambiguous. Diagnose-first: expects a confirmed root cause (not a plausible one) before a fix is proposed, and expects "propose before building" to mean an actual stop, not a formality.
+Communication style: direct, short, no fluff. Hyphens not em dashes. No bullet-point copy. Sends tightly-scoped, single-purpose requests — one bug or one feature per message, often with an explicit build order and an explicit instruction to stop and report back rather than guess when a diagnosis is ambiguous. Diagnose-first: expects a confirmed root cause (not a plausible one) before a fix is proposed, and expects "propose before building" to mean an actual stop, not a formality. On this pass he also asked for plain-English summaries ("what are we doing and why") when sessions got long, wants new work on a preview branch with an explicit "merge" from him before anything goes live, and does not want real records created by testing.
