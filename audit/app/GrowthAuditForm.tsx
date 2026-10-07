@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { GADS_AUDIT, trackGoogleConversion } from '@/lib/google-ads'
 
 const REVENUE_OPTIONS = ['Under $20k', '$20k-$50k', '$50k-$100k', '$100k-$250k', '$250k+', 'Prefer not to say']
 
@@ -78,11 +79,17 @@ export default function GrowthAuditForm({ variant = 'a' }: { variant?: 'a' | 'b'
         }),
       }).catch(() => {})
 
+      // Google Ads conversion fires here, on submit success only (never on
+      // the thank-you page, so reloads can't double count) - and the
+      // redirect waits for it (or its 1s fallback) so the hit isn't lost
+      // when the page unloads. Same for variants A and B: both render this
+      // one form.
+      //
       // A full navigation, not router.push - the app has no basePath config,
       // so client-side routing only knows internal route names ('/thank-you'),
       // not the externally-rewritten public path. window.location goes through
       // Vercel's actual /audit/(.*) rewrite like any other page load does.
-      window.location.href = '/audit/thank-you'
+      trackGoogleConversion(GADS_AUDIT, () => { window.location.href = '/audit/thank-you' })
     } catch {
       setError('Something went wrong. Please try again or email adam@kliks.com.au directly.')
       setSubmitting(false)

@@ -447,6 +447,28 @@ img { display: block; max-width: 100%; }
 </footer>
 
 <script>
+// Google Ads conversion. Reuses the Google tag already loaded in <head>
+// (AW-17756066541 is a destination of it, so no extra gtag config is
+// needed). Never throws and never blocks: onDone always runs, either when
+// Google confirms the hit or after the fallback timeout (also immediately if
+// gtag is missing).
+var GADS_AUDIT = 'AW-17756066541/qc76CJ3c6pMdEO2l4JJC';
+function trackGoogleConversion(sendTo, onDone) {
+  var done = false;
+  function finish() {
+    if (done) return;
+    done = true;
+    if (typeof onDone === 'function') onDone();
+  }
+  try {
+    if (typeof gtag !== 'function') { finish(); return; }
+    gtag('event', 'conversion', { send_to: sendTo, event_callback: finish });
+    setTimeout(finish, 1000);
+  } catch (err) {
+    finish();
+  }
+}
+
 document.getElementById('auditForm').addEventListener('submit', async function(e) {
   e.preventDefault();
 
@@ -527,9 +549,16 @@ document.getElementById('auditForm').addEventListener('submit', async function(e
     })
   }).catch(() => {});
 
-  setTimeout(function() {
-    window.location.href = '/thanks-patisserie';
-  }, 300);
+  // Redirect only once BOTH are true: the 300ms grace the Meta calls above
+  // already relied on has passed, and the Google Ads conversion has been
+  // sent (or its fallback timeout hit). Fired here, on submit success, never
+  // on the thank-you page, so reloads can't double count.
+  var minWaitElapsed = false, googleDone = false;
+  function goToThanks() {
+    if (minWaitElapsed && googleDone) window.location.href = '/thanks-patisserie';
+  }
+  setTimeout(function() { minWaitElapsed = true; goToThanks(); }, 300);
+  trackGoogleConversion(GADS_AUDIT, function() { googleDone = true; goToThanks(); });
 });
 </script>
 

@@ -598,6 +598,28 @@
     `;
   })();
 
+  // ─── Google Ads conversion ───
+  // Reuses the Google tag already loaded in <head> (AW-17756066541 is a
+  // destination of it, so no extra gtag config is needed). Never throws and
+  // never blocks: onDone always runs, either when Google confirms the hit or
+  // after the fallback timeout (also immediately if gtag is missing).
+  var GADS_CALL = 'AW-17756066541/EeRcCNSR85MdEO2l4JJC';
+  function trackGoogleConversion(sendTo, onDone) {
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      if (typeof onDone === 'function') onDone();
+    }
+    try {
+      if (typeof gtag !== 'function') { finish(); return; }
+      gtag('event', 'conversion', { send_to: sendTo, event_callback: finish });
+      setTimeout(finish, 1000);
+    } catch (err) {
+      finish();
+    }
+  }
+
   // ─── Form submission → Web3Forms (email to Adam) + Klaviyo (list) ───
   document.getElementById('bookForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -674,9 +696,17 @@
           test_event_code: new URLSearchParams(window.location.search).get('test_event_code') || undefined
         })
       }).catch(() => {});
-      setTimeout(function() {
-        window.location.href = '/thanks-booking';
-      }, 300);
+
+      // Redirect only once BOTH are true: the 300ms grace the Meta calls
+      // above already relied on has passed, and the Google Ads conversion has
+      // been sent (or its fallback timeout hit). Fired here, on submit
+      // success, never on the thank-you page, so reloads can't double count.
+      var minWaitElapsed = false, googleDone = false;
+      function goToThanks() {
+        if (minWaitElapsed && googleDone) window.location.href = '/thanks-booking';
+      }
+      setTimeout(function() { minWaitElapsed = true; goToThanks(); }, 300);
+      trackGoogleConversion(GADS_CALL, function() { googleDone = true; goToThanks(); });
     } catch (err) {
       console.error('Submission error:', err);
       errorEl.textContent = 'Something went wrong. Please try again or email us at hello@kliks.com.au';
