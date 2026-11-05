@@ -130,7 +130,9 @@
 
     a { color: var(--white); }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 0 48px; position: relative; z-index: 1; }
+    /* 1196 = 1100 content + 2 x 48 side padding. Elements that also carry .container must set vertical
+       padding with padding-top/padding-bottom, never the shorthand, or it wipes the side padding. */
+    .container { max-width: 1196px; margin: 0 auto; padding: 0 48px; position: relative; z-index: 1; }
 
     /* ─── NAV — logo only, no distractions ─── */
     nav {
@@ -172,7 +174,7 @@
     .nav-back:hover { color: var(--white); }
 
     /* ─── PAGE HEADER ─── */
-    .page-header { padding: 160px 0 40px; }
+    .page-header { padding-top: 160px; padding-bottom: 40px; }
     .section-label {
       font-family: 'Space Mono', monospace;
       font-size: 11px;
@@ -193,7 +195,7 @@
     .page-sub { font-size: 18px; color: var(--muted); max-width: 640px; }
 
     /* ─── CASE STUDY CARDS ─── */
-    .cases { padding: 40px 0 100px; display: flex; flex-direction: column; gap: 28px; }
+    .cases { padding-top: 40px; padding-bottom: 100px; display: flex; flex-direction: column; gap: 28px; }
     .case-card {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
@@ -245,7 +247,7 @@
       transition: background 0.2s ease, transform 0.2s ease;
     }
     .btn:hover { background: var(--orange-dark); transform: translateY(-2px); }
-    .cta-section { text-align: center; padding: 40px 0 120px; }
+    .cta-section { text-align: center; padding-top: 40px; padding-bottom: 120px; }
     .cta-section h2 { font-size: clamp(28px, 3.5vw, 40px); margin-bottom: 16px; }
     .cta-section p { color: var(--muted); margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto; }
 
@@ -273,7 +275,7 @@
     @media (max-width: 900px) {
       .container { padding: 0 24px; }
       .nav-inner { padding: 0 24px; }
-      .page-header { padding: 120px 0 32px; }
+      .page-header { padding-top: 120px; padding-bottom: 32px; }
       .case-card { padding: 32px 24px; }
       .case-beats { grid-template-columns: 1fr; gap: 20px; }
       .footer-inner { padding: 0 24px; flex-direction: column; text-align: center; }
