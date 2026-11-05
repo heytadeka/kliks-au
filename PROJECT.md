@@ -141,8 +141,10 @@ const AVAILABILITY = {
 
 ### Fonts
 ```html
-<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
 ```
+Keep one family per link. Fontshare's CDN can serve a cached single-family answer for a two-family URL, which silently drops the second font (see HANDOVER.md section 8).
 - Headings: `Clash Display`
 - Body: `Satoshi`
 

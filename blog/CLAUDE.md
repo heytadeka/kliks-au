@@ -50,7 +50,7 @@ Run all three in parallel.
   - Article JSON-LD (author: Adam Nagy, publisher: Kliks Digital, datePublished)
   - FAQPage JSON-LD (use exact PAA questions from DataForSEO SERP research)
   - Facebook Pixel (ID: 1875112903440305)
-  - Fonts: Clash Display + Satoshi (Fontshare) + Space Mono (Google Fonts)
+  - Fonts: Clash Display + Satoshi (Fontshare, each in its own `<link>`, copy the pair from an existing post) + Space Mono (Google Fonts)
 </head>
 
 <body>
