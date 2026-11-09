@@ -116,6 +116,9 @@ Also: `assetPrefix: '/audit'` in `next.config.js` must be unconditional (not gat
 ### Deploy gotcha: stdout buffering
 `npx vercel --prod` stdout buffers heavily. The terminal looks frozen after "Building..." but the deploy may have already finished. Use `vercel inspect <deployment-url>` to check real status, or watch for the task completion notification. Do not kill a running deploy process.
 
+### Deploy gotcha: a push to `main` can build nothing (found 2026-11-09)
+On 2026-11-09 a fast-forward push to `main` (`85d8c34`, a commit already built as a preview) started no Vercel build, and a preview branch pushed afterwards also started none, 20+ minutes later. Vercel's status page showed no incident. Cause not confirmed: possibly the GitHub link or a project setting, so check `kliks-au` Settings > Git. The commit status on `main` still showed the earlier preview's "success" (look at its `updated_at`), which is easy to mistake for a production build. After any merge to `main`, confirm `vercel ls kliks-au` lists a new Production deployment before testing the live URL. If none appears within a few minutes, rebuild the approved preview as Production: `vercel redeploy https://<preview-url>.vercel.app --environment production --no-wait --scope adams-projects-fc0efc7d` (about 2 minutes to build, then the domain switched within about a minute). It changes the live site, so ask Adam first. Do not run `vercel --prod` from the main checkout when it is on another branch, because it uploads that checkout's files.
+
 ### Deploy previews
 `npx vercel` (no `--prod`) from repo root gives a preview URL without touching production — this is the normal way to visually check a rendering change before it's pushed to `main`. Confirm the target is the `kliks-au` project before running it. **Cannot verify new background-job routes** — see the `NEXT_PUBLIC_SITE_URL` gotcha in §8.
 
@@ -653,6 +656,12 @@ Kliks doesn't currently appear in any Shopify/digital-marketing-agency roundup a
 - [ ] Add LocalBusiness/ProfessionalService schema to the kliks.com.au homepage (currently only the blog has structured data)
 - [ ] Get 1-2 genuine third-party mentions (guest post, podcast, partner case study)
 - [ ] Consistently pair "Kliks Digital" with "Shopify" + "Australia"/"Sydney" + "Adam Nagy" in external mentions to disambiguate from the Madrid/Netherlands agencies
+
+### Blog follow-ups (added 2026-11-09)
+Live: `/blog/chatgpt-business-mention-count`, a news reaction to the Digiday report of an unreleased OpenAI business dashboard that counts ChatGPT mentions (merged as `85d8c34`, made live by the redeploy described in §2, checked with 220 repeated GETs). It says throughout that the feature is unconfirmed and attributes every figure, so revisit it if OpenAI launches, denies or changes the feature. It links to `/audit`; Adam confirmed on 2026-11-09 that the audit has an AI visibility section.
+- [ ] **Merge `preview/blog-cta-and-footer-fixes` (needs Adam's "merge").** One line per file: white, non-underlined CTA button text on the 8 older posts (the shared `.article-body a` rule beat `.btn`, giving lavender text at 1.46:1; now white at 3.46:1, the site standard), plus the "Kliks brands" footer link on the new post. Tested in headless Chrome only; Vercel built no preview for it (see §2).
+- [ ] **`preview/brands-footer-links` is not merged yet,** so the other pages lack the "Kliks brands" footer link. `main` has moved ahead of that branch, so `--ff-only` will fail: merge `origin/main` into it first. Do not reset `main` to it, or the new post, its blog index card and its sitemap entry would be dropped.
+- [ ] Adam: check `kliks-au` Settings > Git in Vercel to find out why pushes stopped building (see §2).
 
 ---
 
