@@ -662,10 +662,10 @@
     .related-posts { margin: 56px 0 0; }
     .related-posts .related-title { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--orange); margin: 0 0 16px; }
     .related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .related-card { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; color: var(--white); text-decoration: none; font-weight: 600; font-size: 16px; line-height: 1.4; transition: border-color 0.2s ease, transform 0.2s ease; }
-    .related-card:hover { border-color: rgba(100,75,255,0.3); transform: translateY(-4px); }
-    .related-card .related-more { font-size: 14px; font-weight: 500; color: var(--muted); }
-    .related-card:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+    .related-posts a.related-card { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; color: var(--white); text-decoration: none; font-weight: 600; font-size: 16px; line-height: 1.4; transition: border-color 0.2s ease, transform 0.2s ease; }
+    .related-posts a.related-card:hover { color: var(--white); border-color: rgba(100,75,255,0.3); transform: translateY(-4px); }
+    .related-posts a.related-card .related-more { font-size: 14px; font-weight: 500; color: var(--muted); }
+    .related-posts a.related-card:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
     @media (max-width: 720px) { .related-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
