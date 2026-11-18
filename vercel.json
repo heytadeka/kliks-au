@@ -18,6 +18,8 @@
     { "src": "/api/(.*)", "dest": "/audit/api/$1" },
     { "src": "/", "dest": "/index.html" },
     { "src": "https://www.kliks.com.au/(.*)", "headers": { "Location": "https://kliks.com.au/$1" }, "status": 301 },
+    { "src": "/lukewood\\.html", "dest": "/lukewood.html" },
+    { "src": "/oh-my-days\\.html", "dest": "/oh-my-days.html" },
     { "src": "/index\\.html", "status": 301, "headers": { "Location": "/" } },
     { "src": "/blog/index\\.html", "status": 301, "headers": { "Location": "/blog" } },
     { "src": "/blog/([^/.]+)\\.html", "status": 301, "headers": { "Location": "/blog/$1" } },
