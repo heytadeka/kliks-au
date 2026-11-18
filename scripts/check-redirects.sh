@@ -38,6 +38,9 @@ for pair in "/index.html:/" "/book.html:/book" "/ad-junkies.html:/ad-junkies" "/
 done
 echo "== clean URLs stay 200 (no redirect loop)"
 for p in / /book /ad-junkies /privacy /brands /case-studies /blog /blog/meta-ads-roas-shopify /blog/chatgpt-business-mention-count /patisserie /audit /thanks /thanks-booking /sitemap.xml /robots.txt; do check 200 "$p" ""; done
+echo "== prospect proposal pages: served at .html on purpose (not redirected), clean URLs go home"
+for p in /lukewood.html /oh-my-days.html; do check 200 "$p" ""; done
+for p in /lukewood /oh-my-days; do check 302 "$p" "/"; lands "$p"; done
 echo "== left as 404 on purpose"
 check 404 "/products/some-coffee-pods" ""
 echo; echo "passed: $pass   failed: $fail"; exit $fail
