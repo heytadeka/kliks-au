@@ -9,9 +9,12 @@ export const ANTHROPIC_MODEL = 'claude-sonnet-4-5'
 
 // Providers + models for the LLM Visibility Check (dataforseo-llm-visibility/route.ts).
 // v1 fires all three; Gemini is deliberately held back until this proves out. Single
-// source so a model swap (e.g. a provider retiring o4-mini) only needs one edit.
+// source so a model swap only needs one edit. Every model here must be on DataForSEO's
+// /v3/ai_optimization/{provider}/llm_responses/models list: a name that has left it is
+// rejected with task error 40501, the route stores that as an error, and the report then
+// silently hides that assistant (o4-mini did exactly this, found 2026-11-18).
 export const LLM_VISIBILITY_PROVIDERS = [
-  { provider: 'chat_gpt', model: 'o4-mini', label: 'ChatGPT' },
+  { provider: 'chat_gpt', model: 'gpt-5.4-mini', label: 'ChatGPT' },
   { provider: 'claude', model: 'claude-sonnet-5', label: 'Claude' },
   { provider: 'perplexity', model: 'sonar', label: 'Perplexity' },
 ] as const
