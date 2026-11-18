@@ -5,8 +5,9 @@
   <link rel="icon" type="image/png" href="/kliks-monogram-3A-solid.png">
   <link rel="apple-touch-icon" href="/kliks-monogram-3A-solid.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kliks Digital — Shopify Growth Agency</title>
+  <title>Shopify Ads, Creative and CRO Agency | Kliks Digital</title>
   <meta name="description" content="Kliks is your outsourced Shopify growth partner. Ads, creative, CRO, and Shopify, without hiring a full-time ecommerce manager.">
+  <link rel="canonical" href="https://kliks.com.au/">
   <link rel="preconnect" href="https://api.fontshare.com">
   <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet">
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
@@ -16,33 +17,64 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    "name": "Kliks Digital",
-    "alternateName": "Kliks",
-    "url": "https://kliks.com.au",
-    "logo": "https://kliks.com.au/favicon.ico",
-    "image": "https://cdn.shopify.com/s/files/1/0733/0693/1363/files/adam-ads.gif?v=1776520792",
-    "description": "Kliks Digital is a Shopify growth agency running Google Ads, Meta Ads and conversion rate optimisation for Australian ecommerce brands.",
-    "email": "adam@kliks.com.au",
-    "founder": {
-      "@type": "Person",
-      "name": "Adam Nagy"
-    },
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": "Sydney",
-      "addressRegion": "NSW",
-      "addressCountry": "AU"
-    },
-    "areaServed": {
-      "@type": "Country",
-      "name": "Australia"
-    },
-    "sameAs": [
-      "https://www.instagram.com/kliks.digital",
-      "https://www.tiktok.com/@adjunkies"
-    ],
-    "knowsAbout": ["Google Ads", "Meta Ads", "Shopify", "Conversion Rate Optimisation", "Performance Max", "Creative Strategy"]
+    "@graph": [
+      {
+        "@type": [
+          "Organization",
+          "ProfessionalService"
+        ],
+        "@id": "https://kliks.com.au/#organization",
+        "name": "Kliks Digital",
+        "alternateName": "Kliks",
+        "url": "https://kliks.com.au/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://kliks.com.au/kliks-monogram-3A-solid.png",
+          "width": 1080,
+          "height": 1080
+        },
+        "image": "https://cdn.shopify.com/s/files/1/0733/0693/1363/files/adam-ads.gif?v=1776520792",
+        "description": "Kliks Digital is a Shopify growth agency running Google Ads, Meta Ads and conversion rate optimisation for Australian ecommerce brands.",
+        "email": "adam@kliks.com.au",
+        "founder": {
+          "@type": "Person",
+          "name": "Adam Nagy"
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Sydney",
+          "addressRegion": "NSW",
+          "addressCountry": "AU"
+        },
+        "areaServed": {
+          "@type": "Country",
+          "name": "Australia"
+        },
+        "sameAs": [
+          "https://www.instagram.com/kliks.digital",
+          "https://www.tiktok.com/@adjunkies"
+        ],
+        "knowsAbout": [
+          "Google Ads",
+          "Meta Ads",
+          "Shopify",
+          "Conversion Rate Optimisation",
+          "Performance Max",
+          "Creative Strategy"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://kliks.com.au/#website",
+        "url": "https://kliks.com.au/",
+        "name": "Kliks Digital",
+        "alternateName": "Kliks",
+        "inLanguage": "en-AU",
+        "publisher": {
+          "@id": "https://kliks.com.au/#organization"
+        }
+      }
+    ]
   }
   </script>
 
@@ -670,6 +702,19 @@
     }
     .process-card p { color: rgba(255,255,255,0.55); font-size: 14.5px; line-height: 1.6; }
 
+    /* ─── HERO SUBLINE + EXPLORE LINKS ─── */
+    .hero-keyline { font-size: 17px; font-weight: 500; color: rgba(255,255,255,0.85); margin: -12px 0 20px; }
+    .explore-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .explore-card { display: flex; flex-direction: column; padding: 32px; }
+    .explore-card .metric-name { margin-bottom: 16px; }
+    .explore-card p { margin-bottom: 24px; }
+    .explore-links { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .explore-links a { color: var(--white); text-decoration: none; font-size: 15px; font-weight: 500; line-height: 1.5; }
+    .explore-links a:hover, .explore-more:hover { color: var(--orange); }
+    .explore-more { margin-top: auto; align-self: flex-start; color: var(--white); font-size: 15px; font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--orange); padding-bottom: 2px; }
+    .explore-card a:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; border-radius: 4px; }
+    @media (max-width: 900px) { .explore-grid { grid-template-columns: 1fr; } .explore-card { padding: 28px 24px; } }
+
     /* ─── RESULTS ─── */
     .results-grid {
       display: grid;
@@ -1236,7 +1281,7 @@
 
 <!-- ANNOUNCEMENT BAR -->
 <div class="announcement-bar">
-  <a href="ad-junkies.html">Killer ad examples every week? Join our newsletter <span class="bar-arrow">&rarr;</span></a>
+  <a href="/ad-junkies">Killer ad examples every week? Join our newsletter <span class="bar-arrow">&rarr;</span></a>
 </div>
 
 <!-- NAV -->
@@ -1279,6 +1324,7 @@
       <span>Booking Q3 — 2 spots open</span>
     </div>
     <h1 class="headline">Growth advice from someone who actually runs businesses.</h1>
+    <p class="hero-keyline">A Shopify ads, creative and CRO agency in Sydney.</p>
     <p class="hero-intro">KLIKS helps founder-led ecommerce brands turn scattered marketing into a growth system that actually makes sense.</p>
     <p style="color:rgba(255,255,255,0.45);font-size:15px;max-width:600px;margin:0 auto 36px;line-height:1.7;">Creative strategy, paid acquisition, Shopify optimisation and retention, all working toward one thing: helping the business move forward.</p>
     <div style="display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;">
@@ -1573,6 +1619,35 @@
   </div>
 </div>
 
+<!-- EXPLORE -->
+<section id="explore">
+  <div class="container">
+    <span class="section-label fade-up">Keep reading</span>
+    <h2 class="section-title fade-up">Where to go next.</h2>
+    <div class="explore-grid">
+      <div class="card explore-card fade-up">
+        <div class="metric-name">From the blog</div>
+        <ul class="explore-links">
+          <li><a href="/blog/meta-ads-roas-shopify">Meta Ads ROAS vs Blended ROAS for Shopify</a></li>
+          <li><a href="/blog/shopify-conversion-rate-optimization">Shopify Conversion Rate: Why Bad CRO Wastes Your Ad Spend</a></li>
+          <li><a href="/blog/google-ads-for-shopify-beginners">How to Set Up Google Ads for Shopify</a></li>
+        </ul>
+        <a href="/blog" class="explore-more">All posts &rarr;</a>
+      </div>
+      <div class="card explore-card fade-up">
+        <div class="metric-name">Our work</div>
+        <p>Client builds and the brands we run ourselves, with what we changed and what happened next.</p>
+        <a href="/case-studies" class="explore-more">See the case studies &rarr;</a>
+      </div>
+      <div class="card explore-card fade-up">
+        <div class="metric-name">The brands under Kliks</div>
+        <p>Kliks Digital, Occasionly, Magniscan and Pupcases.</p>
+        <a href="/brands" class="explore-more">Meet the brands &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CTA SECTION -->
 <section class="cta-section">
   <div class="cta-glow"></div>
@@ -1703,8 +1778,8 @@
       <span class="footer-copy">&copy; 2026 Kliks Digital. All rights reserved.</span>
     </div>
     <div class="footer-center">
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="ad-junkies.html">Ad Junkies</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/ad-junkies">Ad Junkies</a>
       <a href="/patisserie">Patisserie</a>
     </div>
     <div class="footer-right">
