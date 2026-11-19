@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Allow: /audit/_next/static/
 Disallow: /audit/
+Disallow: /api/
 
 Sitemap: https://kliks.com.au/sitemap.xml

@@ -1,5 +1,6 @@
 export const metadata = {
   title: 'Thank You - Kliks Digital',
+  robots: { index: false },
   description: 'Your Growth Audit application has been received.',
 }
 

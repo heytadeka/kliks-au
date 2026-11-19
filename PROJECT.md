@@ -227,7 +227,7 @@ CSS: `filter: brightness(0) invert(1)`, `opacity: 0.6`, hover `opacity: 1`
 | Platform | URL |
 |----------|-----|
 | Instagram | https://www.instagram.com/kliks.digital |
-| TikTok | https://www.tiktok.com/@adjunkies |
+| TikTok | https://www.tiktok.com/@theadjunkie |
 | Hungarian site | https://kliks.hu |
 
 ---

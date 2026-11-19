@@ -3,6 +3,7 @@ import GrowthAuditForm from './GrowthAuditForm'
 
 export const metadata = {
   title: 'Free Growth Audit - Kliks Digital',
+  alternates: { canonical: 'https://kliks.com.au/audit' },
   description: 'The KLIKS Growth Audit is currently free. I’ll personally review your marketing, creative, Shopify store, offer and customer journey to find the areas that deserve attention first.',
 }
 

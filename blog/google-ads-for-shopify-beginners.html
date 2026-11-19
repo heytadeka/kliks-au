@@ -28,11 +28,38 @@
     "headline": "How to Set Up Google Ads for Shopify Without Wasting Your First $1,000",
     "description": "Most first-time Shopify advertisers burn through $1,000 on Google Ads before they see a sale. Here is the exact setup checklist that stops it happening to you.",
     "author": { "@type": "Person", "name": "Adam Nagy", "url": "https://kliks.com.au" },
-    "publisher": { "@type": "Organization", "name": "Kliks Digital", "url": "https://kliks.com.au", "logo": { "@type": "ImageObject", "url": "https://kliks.com.au/favicon.ico" } },
+    "publisher": { "@type": "Organization", "name": "Kliks Digital", "url": "https://kliks.com.au", "logo": { "@type": "ImageObject", "url": "https://kliks.com.au/kliks-monogram-3A-solid.png" } },
     "datePublished": "2026-07-02",
     "dateModified": "2026-07-02",
     "mainEntityOfPage": { "@type": "WebPage", "@id": "https://kliks.com.au/blog/google-ads-for-shopify-beginners" },
     "keywords": ["google ads for shopify", "how to set up google ads for shopify", "shopify google ads", "google ads for shopify beginners", "google shopping ads shopify"]
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://kliks.com.au/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://kliks.com.au/blog"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "How to Set Up Google Ads for Shopify",
+        "item": "https://kliks.com.au/blog/google-ads-for-shopify-beginners"
+      }
+    ]
   }
   </script>
 
@@ -629,6 +656,15 @@
       .footer-center { justify-content: center; }
       .footer-right { justify-content: center; }
     }
+    /* Related posts */
+    .related-posts { margin: 56px 0 0; }
+    .related-posts .related-title { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--orange); margin: 0 0 16px; }
+    .related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .related-posts a.related-card { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; color: var(--white); text-decoration: none; font-weight: 600; font-size: 16px; line-height: 1.4; transition: border-color 0.2s ease, transform 0.2s ease; }
+    .related-posts a.related-card:hover { color: var(--white); border-color: rgba(100,75,255,0.3); transform: translateY(-4px); }
+    .related-posts a.related-card .related-more { font-size: 14px; font-weight: 500; color: var(--muted); }
+    .related-posts a.related-card:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+    @media (max-width: 720px) { .related-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -644,9 +680,8 @@
   <div class="nav-inner">
     <a href="/" class="logo">KLIKS<span>.</span></a>
     <ul class="nav-links">
-      <li><a href="/#services">Services</a></li>
-      <li><a href="/#process">Process</a></li>
-      <li><a href="/#results">Results</a></li>
+      <li><a href="/#growth-system">How We Work</a></li>
+      <li><a href="/case-studies">Results</a></li>
       <li><a href="/#about">About</a></li>
       <li><a href="/blog">Blog</a></li>
       <li><a href="/book" class="btn btn-sm">Free Strategy Call</a></li>
@@ -658,9 +693,8 @@
 </nav>
 
 <div class="nav-overlay">
-  <a href="/#services" onclick="document.body.classList.remove('nav-open')">Services</a>
-  <a href="/#process" onclick="document.body.classList.remove('nav-open')">Process</a>
-  <a href="/#results" onclick="document.body.classList.remove('nav-open')">Results</a>
+  <a href="/#growth-system" onclick="document.body.classList.remove('nav-open')">How We Work</a>
+  <a href="/case-studies" onclick="document.body.classList.remove('nav-open')">Results</a>
   <a href="/#about" onclick="document.body.classList.remove('nav-open')">About</a>
   <a href="/blog" onclick="document.body.classList.remove('nav-open')">Blog</a>
   <a href="/book" class="btn">Free Strategy Call</a>
@@ -848,6 +882,15 @@
       </div>
     </div>
 
+    <section class="related-posts" aria-labelledby="related-heading">
+      <h2 id="related-heading" class="related-title">Related posts</h2>
+      <div class="related-grid">
+        <a class="related-card" href="/blog/performance-max-vs-standard-shopping-shopify"><span>Performance Max vs Standard Shopping for Shopify</span><span class="related-more">Read the post &rarr;</span></a>
+        <a class="related-card" href="/blog/good-roas-shopify-break-even"><span>What Is a Good ROAS for Shopify?</span><span class="related-more">Read the post &rarr;</span></a>
+        <a class="related-card" href="/blog/chatgpt-business-mention-count"><span>ChatGPT Is Testing Business Mention Counts</span><span class="related-more">Read the post &rarr;</span></a>
+      </div>
+    </section>
+
     <div class="cta-block">
       <div class="cta-tag">Free Strategy Call</div>
       <h2>Setting up Google Ads for the first time?</h2>
@@ -872,7 +915,7 @@
     </div>
     <div class="footer-right">
       <a href="https://www.instagram.com/kliks.digital" target="_blank" rel="noopener">Instagram</a>
-      <a href="https://www.tiktok.com/@adjunkies" target="_blank" rel="noopener">TikTok</a>
+      <a href="https://www.tiktok.com/@theadjunkie" target="_blank" rel="noopener">TikTok</a>
     </div>
   </div>
 </footer>

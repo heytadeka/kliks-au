@@ -4,6 +4,24 @@
 
 ---
 
+## State as of 2026-11-18 (SEO pass from Search Console data)
+
+**Adds to the banners below.** Everything here was built on `preview/seo-fixes-2026-11`. If you are reading this on `main`, it is live; if you are on the branch, it is not live until Adam says "merge".
+
+- **Why:** Search Console showed `/book` as a duplicate with no canonical, and `/index.html` and `/ad-junkies.html` appearing as separate results. The live site really did serve every `.html` file as a 200 duplicate of its clean URL, and the old Shopify URLs 404ed.
+- **Redirects (`vercel.json`):** 301 `/index.html` to `/`, every root and blog `.html` to its clean URL, `/pages/contact` and `/pages/free-strategy-call` to `/book`, `/pages/about-us`, `/pages/faq` and `/shopify` to `/`, `/pages/join-the-ad-junkies` to `/ad-junkies`. `/products/*coffee-pods` stays 404 on purpose. Exception: `/lukewood.html` and `/oh-my-days.html` are not redirected (they are Kliks proposals for named prospects and keep serving at those URLs, now noindex; their clean URLs `/lukewood` and `/oh-my-days` still 302 to `/`). See the updated rule list in section 2.
+- **Canonicals:** added to `/`, `/book`, `/ad-junkies`, `/privacy`, `/audit` (in the Next app metadata). Thank-you pages stay noindex; `/audit/thank-you` is now noindex too. `mactrans.html` (a client's report), `booked.html` (legacy confirmation), `lukewood.html` and `oh-my-days.html` (proposals) are noindex and out of the sitemap. The Luke funnel (`luke-index`, `luke-apply`, `luke-results`) has no canonical and no meta robots, so it is indexable by default but outside the sitemap; left alone on purpose, see the open items.
+- **Sitemap:** now generated. Run `node scripts/generate-sitemap.mjs` after changing or adding a page (commit the page first, because `lastmod` is each file's last commit date), and `node scripts/generate-sitemap.mjs --check` to see if it is stale. A page is listed only if it has a self-referencing canonical and no noindex. `/audit` is added by hand in the script. No changefreq or priority.
+- **robots.txt:** `Disallow: /audit/` was also blocking `/audit/_next/static/` (all the CSS and JS the public `/audit` page needs), so Google could not render it. It now allows that one path, and also disallows `/api/`.
+- **Homepage:** title "Shopify Growth Agency in Australia | Kliks Digital" (Adam's choice), a subline under the unchanged H1, a "Keep reading" block linking to `/blog`, three posts (Meta Ads ROAS, Performance Max vs Standard Shopping, TikTok Spark Ads), `/case-studies` and `/brands`, and JSON-LD rebuilt as one Organization plus WebSite graph. The old `logo` pointed at `/favicon.ico`, which 404s; it now uses the monogram PNG.
+- **Blog:** every post has a related-posts block (3 links), a BreadcrumbList, and the same logo fix in its Article publisher.
+- **Internal links** on the pages above now use clean URLs so they do not hop through a 301. Pages left alone and still linking to `.html` (one hop, harmless): booked, the Luke funnel, thank-you pages, mactrans.
+- **How to check:** `scripts/check-redirects.sh https://kliks.com.au` (set `VERCEL_BYPASS_SECRET` to test a protected preview). It fails today for any redirect that is missing.
+- **Nav fix:** the dead `/#services`, `/#process` and `/#results` links (72 links on 9 posts, the blog index, `privacy.html` and `booked.html`) are replaced by one "How We Work" link to `/#growth-system` and "Results" to `/case-studies`. The Luke and patisserie pages use `#process` as a valid same-page anchor and were left alone. The CRO post's title tag is now "Shopify Conversion Rate: Fix It Before Ads | Kliks Digital"; its headline and JSON-LD are unchanged.
+- **Still open (Adam):** (1) JSON-LD `sameAs` lists exactly Instagram `kliks.digital` and TikTok `@theadjunkie` (confirmed by Adam; the old `@adjunkies` handle was replaced everywhere); Adam will send any other social and directory URLs. (2) The `www` to apex redirect answers 307 because of the Vercel domain setting; Adam is changing that in the dashboard, do not try to fix it in `vercel.json`. (3) The Luke funnel is live, indexable and outside the sitemap; left alone on purpose. (4) `preview/brands-footer-links` and `preview/blog-cta-and-footer-fixes` are unmerged; once Adam says they are merged, rebase this branch on `main`, resolve conflicts, rerun `scripts/check-redirects.sh` and the HTML validation on a fresh preview, and report before merging. `dateModified` on blog posts is deliberately left as is.
+
+---
+
 ## State as of 2026-10-07
 
 **Read this first.** This pass was about lead tracking (Meta, Google Ads, Klaviyo), two production incidents, and a privacy-policy rewrite. Where this banner disagrees with an older section below, the banner wins. "Live" below means on `origin/main` at `82ed2ea` (the HANDOVER update itself may sit one commit above that).
@@ -99,15 +117,20 @@ vercel --prod
 `audit/.vercel/project.json` points to a stale separate Vercel project called "audit". Running `vercel` from inside `audit/` deploys to the wrong project. Never cd into audit/ to deploy. Never run `vercel env pull` from inside audit/.
 
 ### CRITICAL: vercel.json rules (DO NOT TOUCH)
-Order of routes is load-bearing (routes are first-match-wins). These rules must stay exactly as-is:
+Order of routes is load-bearing (routes are first-match-wins). The current order in `vercel.json` must stay as-is:
 
-1. `/api/(.*)` → `/audit/api/$1` — must be first. This is also why `kliks.com.au/api/meta-capi` works: the route lives in the audit Next.js app.
-2. `/` → `/index.html` — added 2026-10-07 (`68763d2`). Without it bare `/` returned a Vercel 404 on ~50% of requests. Do not remove, and do not add a second rule for `/`.
-3. www redirect (301)
-4. `/lukewood` + `/oh-my-days` → `/` (302, temporary)
-5. `/audit/(.*)` → `/$1` — must be before `handle: filesystem`
-6. `handle: filesystem`
-7. `/([^/.]+)$` → `/$1.html`
+1. `/api/(.*)` → `/audit/api/$1` - must be first. This is also why `kliks.com.au/api/meta-capi` works: the route lives in the audit Next.js app.
+2. `/` → `/index.html` - added 2026-10-07 (`68763d2`). Without it bare `/` returned a Vercel 404 on ~50% of requests. Do not remove, and do not add a second rule for `/`.
+3. www redirect (301 in the file; the live domain setting answers with a 307 first, see the 2026-11-18 block)
+4. Two pass-through rules first, `/lukewood.html` and `/oh-my-days.html` (prospect proposal pages that keep serving 200 at their `.html` URLs, noindex), then the 301 `.html` to clean URL, four rules in this order: `/index.html`, `/blog/index.html`, `/blog/<slug>.html`, `/<page>.html`. The specific `/blog/index.html` rule must stay before the general blog one.
+5. 301 old Shopify URLs: `/pages/contact`, `/pages/free-strategy-call`, `/pages/about-us`, `/pages/faq`, `/pages/join-the-ad-junkies`, `/shopify`
+6. `/lukewood` + `/oh-my-days` → `/` (302, temporary)
+7. `/audit/(.*)` → `/$1` - must be before `handle: filesystem`
+8. `/blog` → `/blog/index.html` and `/blog/<slug>` → `/blog/<slug>.html`
+9. `handle: filesystem`
+10. `/([^/.]+)$` → `/$1.html`
+
+Changes to this list need a preview deployment and request-level testing: `scripts/check-redirects.sh` covers the redirects, the clean URLs and a redirect-loop check.
 
 **Do not set `export const dynamic = 'force-dynamic'` on `audit/app/page.tsx`.** It makes `/audit` resolve to the `[slug]` route and shows a broken email gate (incident 1 in the 2026-10-07 banner). Any change to routing, `middleware.ts`, or how `/` renders needs a preview branch and request-level testing (many repeated GETs, not one), never a push to `main`.
 
