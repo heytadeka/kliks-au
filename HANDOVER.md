@@ -4,6 +4,17 @@
 
 ---
 
+## State as of 2026-11-22 (The Copper Mill case study)
+
+Built on `preview/case-study-copper-mill`. If you are reading this on `main` it is live; on the branch it is not live until Adam says "merge".
+
+- **What was added:** The Copper Mill as a client case in three places: the second card in the homepage featured block (Oh My Days, The Copper Mill, Pupcases), the end of both repeated sets in the homepage logo strip, and the second entry on `/case-studies` (order now Oh My Days, The Copper Mill, Pupcases, Magniscan, Occasionly, kickers 01 to 05) with a matching Article in that page's JSON-LD. The copy is Adam's, verbatim, with no metrics, quotes or numbers.
+- **The logo:** `copper-mill-logo.png` sits in the repo root (624 x 468, RGBA, about 44 KB, cream `#f8f0e8` on a transparent background). There is no assets folder, and `vercel.json` only deploys root `*.png`. It is made for dark backgrounds, so it never gets the `brightness(0) invert(1)` filter that the other logos use: it carries `filter:none` (the logo strip uses the class `logo-cream`, which overrides only the filter, so opacity and hover stay the same as the other logos).
+- **No screenshot yet:** Adam supplied no screenshot, lead line, tags or "Visit" link for this case, so the `/case-studies` entry is text only. A small rule, `.case-grid:not(:has(.case-visual))`, lays a case without a `.case-visual` out as one column. To match the others, add the `.case-visual` browser-frame figure (it needs the store's confirmed URL), and re-alternate the `data-flip` values so the screenshots swap sides in turn.
+- **Homepage grid:** `.results-grid` is three columns above 1000px and one column at 1000px and below. The card logo row has a fixed height so card text lines up. `book.html` has its own copy of the logo strip, which was not changed.
+
+---
+
 ## State as of 2026-11-18 (SEO pass from Search Console data)
 
 **Adds to the banners below.** Everything here was built on `preview/seo-fixes-2026-11`. If you are reading this on `main`, it is live; if you are on the branch, it is not live until Adam says "merge".
