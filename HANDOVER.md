@@ -4,6 +4,17 @@
 
 ---
 
+## State as of 2026-11-22 (The Copper Mill case study)
+
+Built on `preview/case-study-copper-mill`. If you are reading this on `main` it is live; on the branch it is not live until Adam says "merge".
+
+- **What was added:** The Copper Mill as a client case in three places: the second card in the homepage featured block (Oh My Days, The Copper Mill, Pupcases), the end of both repeated sets in the homepage logo strip, and the second entry on `/case-studies` (order now Oh My Days, The Copper Mill, Pupcases, Magniscan, Occasionly, kickers 01 to 05) with a matching Article in that page's JSON-LD. The copy is Adam's, verbatim, with no metrics, quotes or numbers.
+- **The logo:** `copper-mill-logo.png` sits in the repo root (624 x 468, RGBA, about 44 KB, cream `#f8f0e8` on a transparent background). There is no assets folder, and `vercel.json` only deploys root `*.png`. It is made for dark backgrounds, so it never gets the `brightness(0) invert(1)` filter that the other logos use: it carries `filter:none` (the logo strip uses the class `logo-cream`, which overrides only the filter, so opacity and hover stay the same as the other logos).
+- **Screenshot:** the `/case-studies` entry has the same framed browser screenshot as the other cases (`case-copper-mill.png`, 1100 x 605, about 343 KB, captured from `thecoppermill.com.au` at 1440 wide with all analytics and non-GET requests blocked; the store is confirmed as the logo's store because its pages reference the same Shopify store id and the logo file). The screenshots now alternate sides by position (`data-flip` false, true, false, true, false); keep that when adding a case. It still has no lead line, tags or "Visit" button, because none were supplied. A case with no `.case-visual` also works: `.case-grid:not(:has(.case-visual))` lays it out as one column.
+- **Homepage grid:** `.results-grid` is three columns above 1000px and one column at 1000px and below. The card logo row has a fixed height so card text lines up. `book.html` has its own copy of the logo strip, which was not changed.
+
+---
+
 ## State as of 2026-11-18 (SEO pass from Search Console data)
 
 **Adds to the banners below.** Everything here was built on `preview/seo-fixes-2026-11`. If you are reading this on `main`, it is live; if you are on the branch, it is not live until Adam says "merge".

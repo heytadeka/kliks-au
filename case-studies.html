@@ -42,18 +42,24 @@
         {
           "@type": "Article",
           "position": 2,
+          "headline": "The Copper Mill: custom Shopify store and delivery calendar app for a Sydney cafe",
+          "description": "A Sydney cafe with a viral carrot cake. Kliks built a fully custom Shopify store, designed around the brand, and a custom Shopify app: a delivery calendar for the operator where every order lands by delivery date, can be viewed by day, week or month, and can be searched or filtered by order number."
+        },
+        {
+          "@type": "Article",
+          "position": 3,
           "headline": "Pupcases — custom dog portrait phone cases, built in-house by Kliks",
           "description": "A Kliks in-house brand: custom hand-illustrated dog portrait phone cases, designed and built from scratch. A fully custom product page flow with a before/after illustration slider, photo upload and reviews system, built as an editorial-style storefront to convert cold traffic through storytelling rather than a standard product listing."
         },
         {
           "@type": "Article",
-          "position": 3,
+          "position": 4,
           "headline": "Magniscan — security scanning SaaS, built in-house by Kliks",
           "description": "A Kliks in-house product: a security scanning SaaS for citizen developers, solo founders and makers who built their app with AI tools like Lovable, Bolt or Replit. A free passive scan plus a deep active scan powered by OWASP ZAP, built end-to-end in weeks including Stripe billing, domain verification and async scan architecture."
         },
         {
           "@type": "Article",
-          "position": 4,
+          "position": 5,
           "headline": "Occasionly — self-serve SaaS for occasion-driven retailers, built in-house by Kliks",
           "description": "A Kliks in-house product: a self-serve SaaS for occasion-driven retailers such as bakers, florists and gift shops. It saves the birthdays and anniversaries customers shop for and sends a branded reminder before each date so they reorder in time. Includes an embeddable white-label widget, a daily reminder engine, a merchant dashboard with revenue tracking, custom sender domains and an Omnisend integration in private beta."
         }
@@ -459,6 +465,10 @@
       .case, .browser, .link-btn, .btn { transition: none; }
       .case:hover .browser, .link-btn:hover, .btn:hover { transform: none; }
     }
+
+    /* A case without a screenshot (no .case-visual) is a single column at every width */
+    .case-grid:not(:has(.case-visual)) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; grid-template-areas: "head" "details"; }
+    .case-grid:not(:has(.case-visual)) .case-details { max-width: 760px; }
   </style>
 </head>
 <body>
@@ -523,12 +533,48 @@
       </article>
     </div>
 
-    <!-- 02 · Pupcases -->
+    <!-- 02 · The Copper Mill -->
     <div class="reveal">
-      <article class="case" id="pupcases">
-        <div class="case-meta"><span class="kicker">02 &middot; Built in-house</span><span>Our own brand</span></div>
+      <article class="case" id="the-copper-mill">
+        <div class="case-meta"><span class="kicker">02 &middot; Client work</span><span>Custom build</span></div>
         <div class="rule"></div>
         <div class="case-grid" data-flip="true">
+          <div class="case-head">
+            <div class="case-logo"><img src="/copper-mill-logo.png" alt="The Copper Mill logo" width="624" height="468" style="height:56px;width:auto;filter:none;opacity:1;"></div>
+            <h2 class="case-title">The Copper Mill</h2>
+          </div>
+          <div class="case-visual">
+            <figure class="browser">
+              <div class="browser-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="url">thecoppermill.com.au</span></div>
+              <img src="/case-copper-mill.png" width="1100" height="605" loading="lazy" decoding="async" alt="Screenshot of The Copper Mill homepage: the headline 'Every good story starts with a slice.' beside a photo of a carrot cake.">
+            </figure>
+          </div>
+          <div class="case-details">
+            <dl class="beats">
+              <div class="beat">
+                <dt>What was happening</dt>
+                <dd>The Copper Mill is a Sydney cafe with a viral carrot cake. People across the city wanted it, and a cafe isn't set up to run deliveries on the side.</dd>
+              </div>
+              <div class="beat">
+                <dt>What we changed</dt>
+                <dd>We built a fully custom Shopify store and a custom Shopify app. Not one pixel is template. Every section is designed around the brand, so the store tells the story: who Romi is, why she runs the business, and what makes the Copper Mill different from every other cafe. The app is a delivery calendar built for the operator. Every order lands on the calendar by delivery date. You can view it by day, week or month, and search or filter by order number. Nothing gets missed.</dd>
+              </div>
+              <div class="beat">
+                <dt>What happened next</dt>
+                <dd>The Copper Mill now sells its carrot cake Sydney wide. Delivery runs from one calendar, and the store tells their story instead of looking like everyone else's. Romi is happy with the result.</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- 03 · Pupcases -->
+    <div class="reveal">
+      <article class="case" id="pupcases">
+        <div class="case-meta"><span class="kicker">03 &middot; Built in-house</span><span>Our own brand</span></div>
+        <div class="rule"></div>
+        <div class="case-grid" data-flip="false">
           <div class="case-head">
             <div class="case-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" style="height:41px;"></div>
             <h2 class="case-title">Pupcases</h2>
@@ -564,12 +610,12 @@
       </article>
     </div>
 
-    <!-- 03 · Magniscan -->
+    <!-- 04 · Magniscan -->
     <div class="reveal">
       <article class="case" id="magniscan">
-        <div class="case-meta"><span class="kicker">03 &middot; Built in-house</span><span>Our own product</span></div>
+        <div class="case-meta"><span class="kicker">04 &middot; Built in-house</span><span>Our own product</span></div>
         <div class="rule"></div>
-        <div class="case-grid" data-flip="false">
+        <div class="case-grid" data-flip="true">
           <div class="case-head">
             <div class="case-logo"><img src="/magniscan-logo.png" alt="Magniscan" width="200" height="200" style="height:34px;width:auto;filter:none;opacity:1;"></div>
             <h2 class="case-title">Magniscan</h2>
@@ -605,12 +651,12 @@
       </article>
     </div>
 
-    <!-- 04 · Occasionly -->
+    <!-- 05 · Occasionly -->
     <div class="reveal">
       <article class="case" id="occasionly">
-        <div class="case-meta"><span class="kicker">04 &middot; Built in-house</span><span>Our own product</span></div>
+        <div class="case-meta"><span class="kicker">05 &middot; Built in-house</span><span>Our own product</span></div>
         <div class="rule"></div>
-        <div class="case-grid" data-flip="true">
+        <div class="case-grid" data-flip="false">
           <div class="case-head">
             <div class="case-logo"><img src="/occasionly-logo.png" alt="Occasionly" width="1558" height="352" style="height:30px;width:auto;filter:none;opacity:1;"></div>
             <h2 class="case-title">Occasionly</h2>
