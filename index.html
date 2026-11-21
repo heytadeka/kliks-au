@@ -629,6 +629,7 @@
       object-fit: contain;
     }
     .marquee-logo img:hover { opacity: 1; }
+    .marquee-logo img.logo-cream { filter: none; }
 
     /* ─── SERVICES ─── */
     .services-grid {
@@ -730,10 +731,11 @@
     /* ─── RESULTS ─── */
     .results-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 24px;
       margin-bottom: 24px;
     }
+    @media (max-width: 1000px) { .results-grid { grid-template-columns: 1fr; } }
     .result-card {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
@@ -745,7 +747,7 @@
       border-color: rgba(100,75,255,0.2);
       transform: translateY(-6px);
     }
-    .case-logo { margin-bottom: 16px; }
+    .case-logo { margin-bottom: 16px; min-height: 44px; display: flex; align-items: center; }
     .case-logo img { height: 26px; width: auto; filter: brightness(0) invert(1); opacity: 0.9; }
     .metric-name {
       font-family: 'Space Mono', monospace;
@@ -1395,6 +1397,7 @@
       <div class="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases"></div>
       <div class="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/the-billion-roses.png" alt="The Billion Roses"></div>
       <div class="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/bloom-de-luxe.png" alt="Bloom de Luxe"></div>
+      <div class="marquee-logo"><img class="logo-cream" src="/copper-mill-logo.png" alt="The Copper Mill logo"></div>
       <!-- Duplicate set for seamless loop -->
       <div class="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/bragster-logo.png" alt="Bragster"></div>
       <div class="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776944284/reset-logo.png" alt="Reset"></div>
@@ -1403,6 +1406,7 @@
       <div class="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases"></div>
       <div class="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/the-billion-roses.png" alt="The Billion Roses"></div>
       <div class="marquee-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/bloom-de-luxe.png" alt="Bloom de Luxe"></div>
+      <div class="marquee-logo"><img class="logo-cream" src="/copper-mill-logo.png" alt="The Copper Mill logo"></div>
     </div>
   </div>
 </div>
@@ -1481,6 +1485,12 @@
         <div class="metric-name">Client &middot; Custom build</div>
         <div class="metric-label">Oh My Days</div>
         <p>A growing vegan patisserie and cake delivery with strong product demand and room to improve the digital side. We worked across the website, ecommerce setup, acquisition and customer journey. Online orders grew week by week as the system started working better together.</p>
+      </div>
+      <div class="card result-card fade-up">
+        <div class="case-logo"><img src="/copper-mill-logo.png" alt="The Copper Mill logo" width="624" height="468" style="height:44px;filter:none;"></div>
+        <div class="metric-name">Client &middot; Custom build</div>
+        <div class="metric-label">The Copper Mill</div>
+        <p>A Sydney cafe selling its viral carrot cake across the city. Custom store, custom delivery calendar app.</p>
       </div>
       <div class="card result-card fade-up">
         <div class="case-logo"><img src="https://res.cloudinary.com/dfgyuhf8k/image/upload/q_auto/v1776943860/pupcases_logo.png" alt="Pupcases" style="height:36px;"></div>
